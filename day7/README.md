@@ -73,6 +73,9 @@ A 1200 × 3840px visual strategy document rendered in Python (Pillow), styled in
 - 6 biggest mistakes to avoid
 - Final one-model, one-effort-level recommendation
 
+**`claude_usage_stategy_artfact_ink `**
+Link: https://claude.ai/public/artifacts/ae5536fc-6f60-441b-a25f-c346c578c371
+
 ---
 
 ## 🛠️ Tools & Stack
