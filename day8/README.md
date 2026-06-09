@@ -3,7 +3,7 @@
 **ABTalks 60-Day Claude AI Mastery Challenge | Day 8 | June 8, 2026**
 
 ![Dashboard](./screenshots/dashboard-overview.png)
-*Add a screenshot of the full dashboard here after opening index.html in your browser*
+*Dashboard Overview*
 
 ---
 
@@ -213,13 +213,22 @@ Both bugs were identified through Node.js `--check` syntax validation and a char
 
 ## Screenshots
 
-*To add screenshots: open `index.html` in your browser, take screenshots of each tab, and save them to a `/screenshots` folder in this directory.*
+1.
+![Dashboard](./screenshots/dashboard-overview.png)
+`dashboard-overview.png` — full Overview tab with all charts visible
 
-Suggested screenshots:
-- `dashboard-overview.png` — full Overview tab with all charts visible
-- `health-analysis.png` — Health Analysis tab for Lagos
-- `report-card.png` — Report Card tab showing score ring and radar chart
+2.
+![Health Analysis](./screenshots/health-analysis.png)
+`health-analysis.png` — Health Analysis tab for Lagos
+
+3.
+![insights](./screenshots/insights.png)
 - `insights.png` — Insights and Recommendations tab
+
+4.
+![report-card](./screenshots/report-card.png)
+- `report-card.png` — Report Card tab showing score ring and radar chart
+
 
 ---
 
