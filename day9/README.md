@@ -34,17 +34,19 @@ Both applications are production-ready, mobile-responsive, and deployable by ope
 
 ### MVP — NutriScope
 ```
-📸 SCREENSHOT 1: Dashboard — Energy ring, macro doughnut, micro stats sidebar
+📸 Dashboard — Energy ring, macro doughnut, micro stats sidebar
 ```
 ![Dashboard](./Screenshots/MVP-Dashboard.png)    
 
-
-📸 SCREENSHOT 2: Food Log — Search dropdown + food table with type badges
-     [Replace with: screenshot showing a few foods logged]
-
-📸 SCREENSHOT 3: Nutrient Table + Recommendations
-     [Replace with: screenshot of full breakdown and recommendation cards]
 ```
+📸 Food Log — Search dropdown + food table with type badges
+```
+![Food_Log](./Screenshots/MVP-Food-Log.png)
+
+```
+📸 Nutrient Table + Recommendations
+```
+![NutrientTable+Recommendations](./Screenshots/MVP-NutrientTable+Recommendations.png)
 
 ### Enhanced — NutriScope Pro
 
