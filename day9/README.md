@@ -48,7 +48,7 @@ Both applications are production-ready, mobile-responsive, and deployable by ope
 ```
 ![NutrientTable+Recommendations](./Screenshots/MVP-NutrientTable+Recommendations.png)
 
-### Enhanced — NutriScope Pro
+### ENHANCED — NutriScope PRO
 
 ```
 📸 Full Dashboard — Energy ring + macro chart + radar chart + bar chart
