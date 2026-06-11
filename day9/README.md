@@ -51,21 +51,29 @@ Both applications are production-ready, mobile-responsive, and deployable by ope
 ### Enhanced — NutriScope Pro
 
 ```
-📸 SCREENSHOT 4: Full Dashboard — Energy ring + macro chart + radar chart + bar chart
-     [Replace with: screenshot of NutriScopePro.html dashboard with all 4 visualisations]
-
-📸 SCREENSHOT 5: CSV Upload zone — drag-and-drop interface + format detection
-     [Replace with: screenshot of the expanded CSV upload section]
-
-📸 SCREENSHOT 6: 2-Day Meal Planner — both day columns with food entries
-     [Replace with: screenshot of populated meal planner]
-
-📸 SCREENSHOT 7: Risk Analysis — populated risk cards (High/Moderate/Low)
-     [Replace with: screenshot of at least 4-5 risk cards showing different severity levels]
-
-📸 SCREENSHOT 8: Full Nutrient Table — grouped rows (Macros/Minerals/Vitamins/Fats)
-     [Replace with: screenshot of the 18-nutrient grouped table with status badges]
+📸 Full Dashboard — Energy ring + macro chart + radar chart + bar chart
 ```
+![Full-Dashboard](./Screenshots/Enhanced-Full-Dashborad.png)
+
+```
+📸 CSV Upload zone — drag-and-drop interface + format detection
+```
+![CSV-Upload-zone](./Screenshots/Enhanced-CSV-Upload-zone.png)
+
+```
+📸 2-Day Meal Planner — both day columns with food entries
+```
+![2-Day-Meal-Planner](./Screenshots/Enhanced-2-day-meal-planner.png)
+
+```
+📸 Risk Analysis — populated risk cards (High/Moderate/Low)
+```
+![Risk-Analysis](./Screenshots/Enhanced-Risk-Analysis.png)
+```
+📸 Full Nutrient Table — grouped rows (Macros/Minerals/Vitamins/Fats)
+```
+![Full-Nutrient-Table](./Screenshots/Enhanced-full-Nutrient-Table.png)
+
 
 ---
 
