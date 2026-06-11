@@ -35,6 +35,7 @@ Both applications are production-ready, mobile-responsive, and deployable by ope
 ### MVP — NutriScope
 ```
 📸 SCREENSHOT 1: Dashboard — Energy ring, macro doughnut, micro stats sidebar
+```
 ![Dashboard](./Screenshots/MVP-Dashboard.png)    
 
 
