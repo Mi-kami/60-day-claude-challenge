@@ -32,13 +32,13 @@ Both applications are production-ready, mobile-responsive, and deployable by ope
 
 ## 🖼️ Screenshots
 
-> **How to capture:** Open each `.html` file in Chrome/Firefox → Press `F12` → Toggle device toolbar for mobile views.
-
 ### MVP — NutriScope
 
 ```
 📸 SCREENSHOT 1: Dashboard — Energy ring, macro doughnut, micro stats sidebar
      [Replace with: browser screenshot of NutriScope.html dashboard section]
+![Dashboard](./Screenshots/MVP Dashboard.png)
+
 
 📸 SCREENSHOT 2: Food Log — Search dropdown + food table with type badges
      [Replace with: screenshot showing a few foods logged]
