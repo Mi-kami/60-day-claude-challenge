@@ -2,6 +2,9 @@
 
 A personal life analysis web app. Built for Day 15 of the **ABTalks 60-Day Claude AI Mastery Challenge**.
 
+##Artifact Link
+https://claude.ai/public/artifacts/6b7795d3-caa8-47af-81c5-7fc05e09110d
+
 ## The backstory
 
 The original Day 15 prompt was a full Vedic astrology life reading tool — birth charts, Dasha periods, doshas, the whole Indian astrology system. I’m Christian, so I couldn’t personally relate to most of the prompt.
