@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Georgia',serif;background:linear-gradient(135deg,#0F1B35 0%,#1A2744 55%,#0D2137 100%);min-height:100vh;color:#fff}
+#app{position:relative;z-index:1}
+.screen{max-width:540px;margin:0 auto;padding:28px 20px;min-height:100vh;display:flex;flex-direction:column}
+.center{align-items:center;justify-content:center;text-align:center}
+.logo-sm{font-size:14px;color:#D4A853;font-weight:700;letter-spacing:2px;margin-bottom:20px;font-family:sans-serif}
+.logo-lg{font-size:54px;color:#D4A853;margin-bottom:8px}
+.brand{font-size:36px;color:#fff;letter-spacing:3px;font-weight:700}
+.brand-sub{font-size:11px;color:#D4A853;font-family:sans-serif;letter-spacing:2px;text-transform:uppercase;margin-top:4px;margin-bottom:24px}
+.welcome-lead{font-size:15px;color:rgba(255,255,255,.7);line-height:1.75;max-width:400px;margin-bottom:28px;font-family:sans-serif}
+.features{display:flex;flex-direction:column;gap:8px;margin-bottom:32px;text-align:left;width:100%;max-width:340px}
+.feat{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:10px 14px;font-family:sans-serif;font-size:13px;color:rgba(255,255,255,.72)}
+.steps{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:26px}
+.dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.15);transition:all .3s}
+.dot.on{background:#D4A853;width:28px;border-radius:4px}
+.dot.done{background:rgba(212,168,83,.4)}
+.step-h{font-size:22px;color:#fff;margin-bottom:5px}
+.step-sub{font-size:13px;color:rgba(255,255,255,.42);font-family:sans-serif;margin-bottom:22px;line-height:1.6}
+.glass{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:20px;margin-bottom:14px}
+.lbl{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:rgba(255,255,255,.42);font-family:sans-serif;margin-bottom:5px}
+.hint{font-size:10px;color:rgba(255,255,255,.22);font-weight:400;text-transform:none;letter-spacing:0}
+input[type=text],input[type=number],select,textarea{width:100%;padding:11px 13px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:#fff;font-size:14px;font-family:sans-serif;outline:none}
+input:focus,select:focus,textarea:focus{border-color:#D4A853;background:rgba(255,255,255,.1)}
+input::placeholder,textarea::placeholder{color:rgba(255,255,255,.22)}
+select option{background:#1A2744;color:#fff}
+textarea{resize:none;height:78px;line-height:1.55}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+.field{margin-bottom:13px}
+.btn{width:100%;padding:14px;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:sans-serif}
+.btn-gold{background:#D4A853;color:#0F1B35}
+.btn-ghost{background:transparent;color:rgba(255,255,255,.45);border:1px solid rgba(255,255,255,.12);font-size:13px;padding:10px;margin-top:8px}
+.err-box{background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.25);color:#FCA5A5;padding:11px 15px;border-radius:10px;font-family:sans-serif;font-size:12px;margin-bottom:13px;line-height:1.6}
+.faith-row{display:flex;align-items:center;gap:12px;cursor:pointer;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:14px}
+input[type=checkbox]{width:18px;height:18px;cursor:pointer;accent-color:#D4A853;flex-shrink:0}
+.faith-lbl p:first-child{font-size:13px;font-weight:700;font-family:sans-serif;color:rgba(255,255,255,.8)}
+.faith-lbl p:last-child{font-size:11px;color:rgba(255,255,255,.32);font-family:sans-serif;margin-top:2px}
+.fine{text-align:center;color:rgba(255,255,255,.22);font-family:sans-serif;font-size:11px;margin-top:10px}
+.orb{width:90px;height:90px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#D4A853,#7A5A10);box-shadow:0 0 40px rgba(212,168,83,.4);animation:pulse 2s ease-in-out infinite;display:flex;align-items:center;justify-content:center;font-size:36px;margin-bottom:28px}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+.load-msg{font-size:17px;color:rgba(255,255,255,.88);min-height:26px;margin-bottom:6px}
+.load-sub{font-size:12px;color:rgba(255,255,255,.32);font-family:sans-serif}
+.ptrack{width:200px;height:3px;background:rgba(255,255,255,.07);border-radius:2px;margin-top:32px;overflow:hidden}
+.pfill{height:100%;background:#D4A853;border-radius:2px;width:0%;transition:width .4s}
+.result-wrap{max-width:540px;margin:0 auto;padding:24px 20px}
+.hero{background:linear-gradient(135deg,rgba(212,168,83,.14),rgba(212,168,83,.03));border:1px solid rgba(212,168,83,.26);border-radius:16px;padding:22px;margin-bottom:12px;text-align:center}
+.hero-tag{font-size:11px;color:#D4A853;font-family:sans-serif;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px}
+.hero-hl{font-size:17px;font-style:italic;line-height:1.65;color:#fff;margin-bottom:6px}
+.hero-by{font-size:11px;color:rgba(255,255,255,.3);font-family:sans-serif}
+.tabs{display:flex;gap:5px;overflow-x:auto;padding-bottom:12px;margin-bottom:6px}
+.tab{padding:7px 14px;border:1px solid rgba(255,255,255,.1);border-radius:20px;font-size:11px;cursor:pointer;font-family:sans-serif;font-weight:700;background:transparent;color:rgba(255,255,255,.42);white-space:nowrap}
+.tab.on{background:#D4A853;color:#0F1B35;border-color:#D4A853}
+.sec{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#D4A853;font-family:sans-serif;margin-bottom:10px}
+.btext{color:rgba(255,255,255,.7);font-family:sans-serif;font-size:13px;line-height:1.75}
+.ci{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:14px;margin-bottom:10px}
+.ci-q{font-size:11px;color:#D4A853;font-family:sans-serif;font-weight:700;margin-bottom:5px}
+.ci-a{font-size:13px;color:rgba(255,255,255,.7);font-family:sans-serif;line-height:1.65}
+.cr{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px}
+.ct{font-family:sans-serif;font-size:13px;color:rgba(255,255,255,.7);line-height:1.55}
+.ar{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.al{font-family:sans-serif;font-size:11px;color:rgba(255,255,255,.45);width:90px;flex-shrink:0}
+.btr{flex:1;height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden}
+.bf{height:100%;border-radius:3px;background:linear-gradient(90deg,#8B6914,#D4A853)}
+.ascr{font-family:sans-serif;font-size:11px;color:#D4A853;font-weight:700;width:28px;text-align:right;flex-shrink:0}
+.fc{border-bottom:1px solid rgba(255,255,255,.06);padding:12px 0;display:grid;grid-template-columns:90px 1fr;gap:0 10px;align-items:start}
+.fy{font-weight:700;color:#fff;font-family:sans-serif;font-size:14px}
+.fv{font-size:10px;color:rgba(255,255,255,.32);font-family:sans-serif;margin-top:2px;font-style:italic}
+.fi{font-family:sans-serif;font-size:13px;color:rgba(255,255,255,.65);line-height:1.55;padding-top:2px}
+.tag{display:inline-block;padding:2px 8px;border-radius:8px;font-size:10px;font-family:sans-serif;font-weight:700;margin-top:4px}
+.tp{background:rgba(74,222,128,.14);color:#4ADE80}
+.tn{background:rgba(147,197,253,.14);color:#93C5FD}
+.tc{background:rgba(248,113,113,.14);color:#F87171}
+.arow{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px}
+.anum{border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;font-family:sans-serif}
+.scr-card{background:linear-gradient(135deg,rgba(212,168,83,.1),rgba(212,168,83,.02));border:1px solid rgba(212,168,83,.2);border-radius:16px;padding:22px;margin-bottom:14px}
+.scr-txt{font-size:17px;font-style:italic;line-height:1.7;color:#fff;margin-top:8px}
+.share{width:100%;padding:11px;background:rgba(212,168,83,.1);border:1px solid rgba(212,168,83,.22);border-radius:10px;color:#D4A853;font-family:sans-serif;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:10px}
+.stat-hl{font-size:26px;font-weight:700;color:#D4A853;margin-top:4px}
+@media(max-width:460px){.g2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+let loadInt=null,progInt=null,loadTimeout=null;
+const S={step:'welcome',form:{name:'',age:'',gender:'',status:'',profession:'',city:'',c1:'',c2:'',c3:'',faith:false},data:null,tab:'concerns',err:''};
+const MSGS=["Reading between the lines of your life...","Mapping your personality patterns...","Examining your strengths and blind spots...","Diving into your relationship dynamics...","Charting your 5-year outlook...","Assembling your personal insights...","Crafting your action plan...","Almost ready..."];
+
+/* ============== LOCAL ANALYSIS ENGINE — no API, always works ============== */
+function hashStr(s){let h=0;for(let i=0;i<s.length;i++){h=(h*31+s.charCodeAt(i))>>>0;}return h;}
+
+const GENERIC_STRENGTHS=["Naturally resilient under pressure","Quick to learn from mistakes","Genuinely cares about doing things right","Good instincts, even when underconfident","Shows up consistently, even when it's hard"];
+const GENERIC_BLINDSPOTS=["Slow to ask for help until overwhelmed","Holds themselves to an unrealistic standard","Compares their timeline to other people's","Avoids difficult conversations too long","Underestimates how far they've already come"];
+const PROFESSION_STRENGTH={tech:"Sharp, structured problem solver",creative:"Sees angles other people miss",business:"Strategic, naturally thinks ahead",student:"Still building — more capable than this stage suggests",care:"Genuinely attentive to other people's needs",general:"Adaptable, figures things out without a manual"};
+const PROFESSION_PERSONALITY={tech:"analytical and detail-oriented — you want to understand the 'why' before trusting the 'what'",creative:"intuitive and expressive, often seeing possibilities other people miss entirely",business:"strategic and outcome-driven, naturally thinking several steps ahead",student:"still actively shaping your path, which carries more freedom than it feels like right now",care:"naturally attuned to other people's needs, sometimes at the cost of your own",general:"resourceful and adaptable, used to figuring things out without much of a manual"};
+const GENERIC_CAREER_LINES={tech:"Your analytical edge is real — the next unlock is usually visibility, not more skill-building.",creative:"Your creative instincts are a genuine asset — the challenge is packaging them for people who think in spreadsheets.",business:"You think several steps ahead naturally — that's rare, and worth leaning into more publicly.",student:"You're earlier in the timeline than it feels — most of what looks like falling behind is actually still loading.",care:"You give a lot to others through your work — make sure that's recognized and compensated, not just appreciated.",general:"You're more capable than your current results reflect — the gap is usually positioning, not ability."};
+const GENERIC_REL_LINE="Relationships tend to mirror how well you know your own patterns — the more self-aware you get, the better the choices become.";
+const GENERIC_FIN_LINE="Money habits are more about systems than discipline — small consistent structure beats big sporadic effort.";
+const GENERIC_HEALTH_LINE="Energy is a resource like any other — protecting it deliberately changes everything else downstream.";
+const GENERIC_GROWTH_LINE="Growth rarely feels dramatic in the moment — it's usually only visible in hindsight, a year later.";
+
+const CONTENT={
+  career:{
+    insight:["This usually means the effort is real but the visibility isn't — strong work happening in rooms nobody senior is watching.","Hard work without a feedback loop just feels like running in place — the gap is often in positioning, not effort."],
+    blindSpot:"Undervalues self-promotion and visibility",
+    strength:"Strong work ethic and follow-through",
+    line:"Your edge is depth over speed — the right fit rewards that, but you have to be selective about where you place it.",
+    actionsNow:["Update one visible profile (LinkedIn/portfolio) with your single best recent project","Reach out to 3 people already working where you want to be, just to ask how they got there","Write down exactly what 'progress' would look like in 90 days, so you can measure it honestly"],
+    actionsSoon:["Build one public proof-of-work piece tied directly to the roles you want","Get on at least 5 real conversations (not just applications) with people in your target companies"],
+    actionsLong:["Re-evaluate whether the industry, not just the role, is the right fit","Build a track record solid enough that opportunities start coming to you"],
+    scripture:{sv:"Commit your work to the LORD, and your plans will be established. — Proverbs 16:3",fp:"Diligence matters, but it works alongside surrender — you plan, but you don't have to carry the outcome alone.",fw:"Pray for open doors in the next season, and for peace while you wait for them."}
+  },
+  money:{
+    insight:["Money stress often isn't really about the amount — it's about not having a system, so every naira feels like a decision under pressure.","This usually points to income timing, not income size — the stress is in the gaps, not necessarily the total."],
+    blindSpot:"Avoids looking closely at the numbers",
+    strength:"Resourceful under pressure",
+    line:"You likely manage scarcity better than most people manage abundance — the next phase is building margin, not just surviving.",
+    actionsNow:["Write down every income source and every fixed cost on one page, however small","Track one expense category for 14 days, just to see the real pattern","Find one small, immediate way to create breathing room this month"],
+    actionsSoon:["Build a small buffer fund, even if it starts tiny","Find one additional income stream that uses a skill you already have"],
+    actionsLong:["Move from reactive money decisions to a written monthly plan","Start a small, boring savings habit that compounds quietly over time"],
+    scripture:{sv:"Give, and it will be given to you... for with the measure you use, it will be measured back to you. — Luke 6:38",fp:"Provision is rarely about the lump sum — it tends to arrive at the moment of need, not before.",fw:"Pray for wisdom in the small money decisions, since that's usually where the real shift happens."}
+  },
+  love:{
+    insight:["Often the pattern isn't about the people you're attracting — it's about which version of yourself shows up first in something new.","This usually says less about your worth and more about the filter you're using to decide who gets close."],
+    blindSpot:"Moves fast before fully vetting compatibility",
+    strength:"Deeply loyal once committed",
+    line:"You give fully — the work now is making sure that's met with equal effort, not just equal affection.",
+    actionsNow:["Write down, honestly, the non-negotiables you keep overriding for other people","Notice the pattern in your last few connections — what repeats?","Give yourself one season of observing before initiating anything new"],
+    actionsSoon:["Get honest feedback from one close friend who'll tell you the truth about your patterns","Practice slowing down the early stage of a connection, even when it's exciting"],
+    actionsLong:["Build a life full enough that you're choosing a partner, not completing yourself with one","Stay open, but stop auditioning — let people qualify for your time"],
+    scripture:{sv:"Above all else, guard your heart, for everything you do flows from it. — Proverbs 4:23",fp:"Guarding your heart isn't the same as closing it — it just means being intentional about who gets access.",fw:"Pray for discernment in who you let close, and patience while you wait for the right one."}
+  },
+  family:{
+    insight:["Family tension often comes from unspoken expectations on both sides, not from a lack of love.","This usually points to a need for clearer boundaries, not less connection."],
+    blindSpot:"Takes on more emotional weight than was asked of them",
+    strength:"Deeply committed to the people closest to them",
+    line:"Your loyalty is real — the skill to build now is boundaries that protect that loyalty instead of draining it.",
+    actionsNow:["Name, specifically, one expectation you've never actually said out loud","Have one honest, calm conversation about a boundary you need","Give yourself permission to disappoint one person this week if it protects your peace"],
+    actionsSoon:["Build one recurring, low-pressure way to stay connected that doesn't cost you everything","Get clear on what support you can realistically give without resentment"],
+    actionsLong:["Redefine your role in the family as one of several adults, not the only one holding it together","Build relationships outside the family that share some of the emotional load"],
+    scripture:{sv:"Honor your father and mother, that it may go well with you. — Ephesians 6:2-3",fp:"Honoring family doesn't require carrying everything for them — it can coexist with healthy limits.",fw:"Pray for wisdom in family relationships, and for peace where there's tension you can't fully resolve."}
+  },
+  health:{
+    insight:["Often what reads as low energy is actually a sign you've been operating past your real capacity for a while.","This usually isn't a willpower problem — it's a signal your current pace isn't sustainable."],
+    blindSpot:"Treats rest as something to earn, not a baseline",
+    strength:"Pushes through more than most people realize",
+    line:"You're carrying more than is visible from outside — recovery needs to be treated as non-negotiable, not optional.",
+    actionsNow:["Protect one full night of real rest this week, no exceptions","Tell one person what you're actually carrying right now, out loud","Cut one commitment this week that's draining more than it's giving"],
+    actionsSoon:["Build one small daily habit that's just for recovery — a walk, quiet time, anything non-negotiable","Get one honest check-in with a doctor or counselor if this has been going on a while"],
+    actionsLong:["Redesign your week around sustainable pace, not just pushing through","Make rest a planned part of your calendar, not a reaction to burnout"],
+    scripture:{sv:"Come to me, all who labor and are heavy laden, and I will give you rest. — Matthew 11:28",fp:"Rest isn't a reward for finishing — it's part of how you're meant to function.",fw:"Pray for physical and mental rest, and for the discipline to actually take it when it's offered."}
+  },
+  identity:{
+    insight:["Feeling lost is usually a sign you've outgrown an old version of yourself faster than you've built language for the new one.","This often shows up right before a real shift — the discomfort is the signal, not the problem."],
+    blindSpot:"Looks outward for validation of direction",
+    strength:"Self-aware enough to notice the disconnect",
+    line:"You're not actually lost — you're between versions of yourself, and that's a slower, quieter season than people talk about.",
+    actionsNow:["Write, without editing, what you actually enjoyed doing before anyone paid you for it","Spend a few minutes a day in silence, no input, just noticing what surfaces","Name one thing you're doing right now purely because it's expected of you"],
+    actionsSoon:["Try one small experiment outside your usual identity — a class, a hobby, a new circle","Talk to one person who knew you years ago and ask what's changed"],
+    actionsLong:["Build a personal definition of success that isn't borrowed from anyone else","Let your direction become clear through action, not just more thinking"],
+    scripture:{sv:"For I know the plans I have for you, declares the LORD, plans for welfare and not for harm, to give you a future and a hope. — Jeremiah 29:11",fp:"Clarity rarely arrives all at once — it tends to come step by step, after you start moving.",fw:"Pray for peace in the unclear season, and for the courage to take the next small step anyway."}
+  },
+  general:{
+    insight:["This sounds like a season of recalibration more than a crisis — worth taking seriously, but not catastrophizing.","What you're describing is common in seasons of transition — the discomfort itself is often a sign of growth happening underneath."],
+    blindSpot:"Holds a lot internally before asking for help",
+    strength:"Reflective and willing to look honestly at their own life",
+    line:"You're asking the right questions at the right time — that alone puts you ahead of where most people are.",
+    actionsNow:["Name the one thing actually bothering you, as specifically as possible","Talk to one person you trust about what's really going on","Give yourself permission to not have it all figured out yet"],
+    actionsSoon:["Pick one area from this analysis to focus on for the next 60 days","Build one small, repeatable habit that supports the change you want"],
+    actionsLong:["Revisit this analysis in a year and see what's shifted","Keep choosing clarity over comfort, even when it's slower"],
+    scripture:{sv:"Trust in the LORD with all your heart, and do not lean on your own understanding. — Proverbs 3:5",fp:"Not having every answer right now doesn't mean you're off track — some clarity only comes with time.",fw:"Pray for peace in the not-knowing, and for the next right step to become clear."}
+  }
+};
+
+function classify(text){
+  const t=(text||'').toLowerCase();
+  const cats=[
+    ['career',['job','career','work','promotion','boss','interview','hire','business','hustle','grind','employ']],
+    ['money',['money','financ','broke','debt','salary','income','afford','poor','wealth']],
+    ['love',['relationship','love','partner','marriage','dating','attract','lonely','single','breakup','heartbreak']],
+    ['family',['family','parents','mother','father','sibling','mom','dad']],
+    ['health',['health','anxious','anxiety','stress','tired','burnout','sick','exhaust','sleep','energy']],
+    ['identity',['myself','identity','purpose','lost','direction','confus','meaning','stuck']]
+  ];
+  for(const [cat,kws] of cats){ if(kws.some(k=>t.includes(k))) return cat; }
+  return 'general';
+}
+function classifyProfession(text){
+  const t=(text||'').toLowerCase();
+  if(['data','engineer','develop','program','tech','software','scientist','analy','ml','ai'].some(k=>t.includes(k))) return 'tech';
+  if(['design','writer','artist','music','creative','content','film','photo'].some(k=>t.includes(k))) return 'creative';
+  if(['business','sales','market','finance','account','consult','entrepreneur','founder'].some(k=>t.includes(k))) return 'business';
+  if(['student','school','university','college'].some(k=>t.includes(k))) return 'student';
+  if(['teacher','nurse','doctor','health','care','medic'].some(k=>t.includes(k))) return 'care';
+  return 'general';
+}
+
+function generateAnalysis(form){
+  const h=hashStr(form.name+form.age+form.profession);
+  const concerns=[form.c1,form.c2,form.c3].filter(Boolean);
+  const cats=concerns.map(classify);
+  const topCat=cats[0]||'general';
+  const profCat=classifyProfession(form.profession);
+  const name=form.name;
+
+  const ci=concerns.map((c,i)=>{
+    const cat=cats[i];
+    const pool=CONTENT[cat].insight;
+    return {q:c.length>70?c.slice(0,67)+'...':c, a:pool[(h+i)%pool.length]};
+  });
+
+  let sc=[7,7,6,7,8];
+  const idxMap={career:0,love:1,family:1,money:2,health:3,identity:4};
+  cats.forEach(cat=>{const idx=idxMap[cat];if(idx!==undefined) sc[idx]=Math.max(4,sc[idx]-2);});
+  sc=sc.map((v,i)=>{const variance=((h>>(i*3))%3)-1;return Math.min(9,Math.max(3,v+variance));});
+
+  const st=[CONTENT[topCat].strength, PROFESSION_STRENGTH[profCat], GENERIC_STRENGTHS[h%GENERIC_STRENGTHS.length]];
+  const bs=[CONTENT[topCat].blindSpot, GENERIC_BLINDSPOTS[h%GENERIC_BLINDSPOTS.length], GENERIC_BLINDSPOTS[(h+3)%GENERIC_BLINDSPOTS.length]];
+
+  const ca=cats.includes('career')?CONTENT.career.line:GENERIC_CAREER_LINES[profCat];
+  const relCat=cats.includes('love')?'love':(cats.includes('family')?'family':null);
+  const re=relCat?CONTENT[relCat].line:GENERIC_REL_LINE;
+  const fi=cats.includes('money')?CONTENT.money.line:GENERIC_FIN_LINE;
+  const he=cats.includes('health')?CONTENT.health.line:GENERIC_HEALTH_LINE;
+  const gr=cats.includes('identity')?CONTENT.identity.line:GENERIC_GROWTH_LINE;
+
+  const age=parseInt(form.age,10)||25;
+  const br=`${age+1}-${age+5}`;
+
+  const HEADLINES=[
+    `${name} is closer to a breakthrough than the last few weeks have felt.`,
+    `${name} is in a quiet rebuilding season, not a stuck one.`,
+    `${name} is doing more right than the self-doubt is giving credit for.`,
+    `${name} is one clear decision away from real momentum.`
+  ];
+  const TAGLINES=["Rebuilding, not stuck","Closer than it feels","Quiet season, real progress","One decision from momentum"];
+  const pick=h%HEADLINES.length;
+
+  const p=`You come across as ${PROFESSION_PERSONALITY[profCat]} At this stage of life, you're likely doing more foundational work than it feels like from inside it.`;
+
+  const yearCat={career:"Clarity replaces confusion about direction",money:"A stronger handle on income and expenses",love:"A clearer read on what you actually want",family:"Healthier boundaries start to form",health:"Better boundaries around rest and energy",identity:"First real signs of a settled direction",general:"Quiet but real internal shifts"}[topCat];
+  const fc=[
+    ["2026","Foundation building",yearCat,"positive"],
+    ["2027","Testing what works","Some experiments succeed, some don't — both teach you something","neutral"],
+    ["2028","Real momentum","A visible breakthrough opportunity appears","positive"],
+    ["2029","A harder season","An unexpected challenge tests what you've built","challenging"],
+    ["2030","Compounding gains","Earlier consistency starts paying off clearly","positive"]
+  ];
+
+  const dn=CONTENT[topCat].actionsNow, s6=CONTENT[topCat].actionsSoon, ly=CONTENT[topCat].actionsLong;
+  const f=!!form.faith;
+  const scr=CONTENT[topCat].scripture;
+
+  return {h:HEADLINES[pick],t:TAGLINES[pick],sc,p,st,bs,ci,ca,re,fi,he,gr,br,fc,dn,s6,ly,f,sv:f?scr.sv:'',fp:f?scr.fp:'',fw:f?scr.fw:''};
+}
+/* ============== END ANALYSIS ENGINE ============== */
+
+function render(){
+  if(loadInt){clearInterval(loadInt);loadInt=null;}
+  if(progInt){clearInterval(progInt);progInt=null;}
+  if(loadTimeout){clearTimeout(loadTimeout);loadTimeout=null;}
+  const app=document.getElementById('app');
+  if(S.step==='welcome') app.innerHTML=rWelcome();
+  else if(S.step===1) app.innerHTML=rStep1();
+  else if(S.step===2) app.innerHTML=rStep2();
+  else if(S.step===3) app.innerHTML=rStep3();
+  else if(S.step==='loading'){app.innerHTML=rLoading();startAnim();}
+  else if(S.step==='result') app.innerHTML=rResult();
+  bind();
+}
+function rWelcome(){return`<div class="screen center"><div class="logo-lg">✦</div><p class="brand">LifeLens</p><p class="brand-sub">Personal Life Analysis</p><p class="welcome-lead">Answer a few honest questions. Get a deep, personal look at your personality, patterns, relationships, career, and where you're truly headed.</p><div class="features"><div class="feat">🧠 Psychology-based personality read</div><div class="feat">💼 Career & money outlook with timelines</div><div class="feat">❤️ Relationship patterns & what you need</div><div class="feat">📅 5-year life forecast</div><div class="feat">✝️ Optional Christian faith perspective</div></div><button class="btn btn-gold" id="b-start">Get My Analysis →</button><p class="fine" style="margin-top:12px">Free · No account needed · Takes 2 minutes</p></div>`;}
+function prog(n){return`<div class="steps">${[1,2,3].map(i=>`<div class="dot ${i<n?'done':i===n?'on':''}"></div>`).join('')}</div>`;}
+function errHtml(){if(!S.err)return'';return`<div class="err-box">${S.err}</div>`;}
+function rStep1(){return`<div class="screen"><p class="logo-sm">✦ LifeLens</p>${prog(1)}<p class="step-h">Let's start with you</p><p class="step-sub">Just the basics — takes 30 seconds</p>${errHtml()}<div class="glass"><div class="g2"><div class="field"><label class="lbl">Your Name *</label><input type="text" id="fn" value="${S.form.name}" placeholder="First name is fine"/></div><div class="field"><label class="lbl">Your Age *</label><input type="number" id="fa" value="${S.form.age}" placeholder="e.g. 26"/></div></div><div class="g2"><div class="field"><label class="lbl">Gender</label><select id="fg"><option value="">Select...</option>${['Female','Male','Non-binary','Prefer not to say'].map(o=>`<option${S.form.gender===o?' selected':''}>${o}</option>`).join('')}</select></div><div class="field"><label class="lbl">Relationship Status</label><select id="fs"><option value="">Select...</option>${['Single','Dating','Engaged','Married',"It's complicated"].map(o=>`<option${S.form.status===o?' selected':''}>${o}</option>`).join('')}</select></div></div></div><button class="btn btn-gold" id="b-n1">Continue →</button></div>`;}
+function rStep2(){return`<div class="screen"><p class="logo-sm">✦ LifeLens</p>${prog(2)}<p class="step-h">Good to meet you, ${S.form.name||'you'}.</p><p class="step-sub">Tell me about your world</p>${errHtml()}<div class="glass"><div class="field"><label class="lbl">What do you do? *</label><input type="text" id="fp" value="${S.form.profession}" placeholder="e.g. Student, Data Scientist..."/></div><div class="field"><label class="lbl">Where are you based?</label><input type="text" id="fc" value="${S.form.city}" placeholder="e.g. Lagos, Nigeria"/></div></div><button class="btn btn-gold" id="b-n2">Continue →</button><button class="btn btn-ghost" id="b-b1">← Back</button></div>`;}
+function rStep3(){return`<div class="screen"><p class="logo-sm">✦ LifeLens</p>${prog(3)}<p class="step-h">What's really going on?</p><p class="step-sub">Be real. This can be anything — work, love, money, identity, purpose, fear.</p>${errHtml()}<div class="glass"><div class="field"><label class="lbl">Concern #1 * <span class="hint">(biggest thing right now)</span></label><textarea id="f1" placeholder="e.g. I work so hard but nothing moves forward...">${S.form.c1}</textarea></div><div class="field"><label class="lbl">Concern #2 <span class="hint">(optional)</span></label><textarea id="f2" placeholder="e.g. I keep attracting the wrong people...">${S.form.c2}</textarea></div><div class="field"><label class="lbl">Concern #3 <span class="hint">(optional)</span></label><textarea id="f3" placeholder="e.g. I feel like I'm losing myself...">${S.form.c3}</textarea></div><label class="faith-row"><input type="checkbox" id="ff" ${S.form.faith?'checked':''}/><div class="faith-lbl"><p>Include a Christian / Biblical lens</p><p>Add scripture and faith-based wisdom for your situation</p></div></label></div><button class="btn btn-gold" id="b-sub">✦ Reveal My Analysis</button><button class="btn btn-ghost" id="b-b2">← Back</button></div>`;}
+function rLoading(){return`<div class="screen center"><div class="orb">✦</div><p class="load-msg" id="lm">${MSGS[0]}</p><p class="load-sub">Analyzing ${S.form.name||'your'}'s full life profile...</p><div class="ptrack"><div class="pfill" id="pf"></div></div></div>`;}
+function startAnim(){
+  let i=0;
+  loadInt=setInterval(()=>{i=(i+1)%MSGS.length;const el=document.getElementById('lm');if(el){el.style.opacity='0';setTimeout(()=>{if(el){el.textContent=MSGS[i];el.style.opacity='1';}},250);}},650);
+  let w=0;
+  progInt=setInterval(()=>{w=Math.min(w+8,100);const pf=document.getElementById('pf');if(pf)pf.style.width=w+'%';},250);
+  loadTimeout=setTimeout(()=>{
+    S.data=generateAnalysis(S.form);
+    S.step='result';S.tab='concerns';render();
+  },3200);
+}
+function makeRadar(sc){const cx=110,cy=110,R=75;const lbls=['Career','Relationships','Finances','Health','Growth'];const angs=sc.map((_,i)=>(270+i*72)*Math.PI/180);const pt=(r,a)=>({x:cx+r*Math.cos(a),y:cy+r*Math.sin(a)});const ps=pts=>pts.map(p=>`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');const outer=angs.map(a=>pt(R,a));const rings=[.33,.66,1].map(f=>angs.map(a=>pt(R*f,a)));const score=sc.map((v,i)=>pt((v||5)/10*R,angs[i]));const lblPts=angs.map((a,i)=>{const p=pt(R+20,a);return{...p,l:lbls[i]};});return`<div style="display:flex;justify-content:center;margin:6px 0"><svg viewBox="0 0 220 220" width="190" height="190">${rings.map(r=>`<polygon points="${ps(r)}" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="1"/>`).join('')}${angs.map((a,i)=>`<line x1="${cx}" y1="${cy}" x2="${outer[i].x.toFixed(1)}" y2="${outer[i].y.toFixed(1)}" stroke="rgba(255,255,255,.07)" stroke-width="1"/>`).join('')}<polygon points="${ps(score)}" fill="rgba(212,168,83,.15)" stroke="#D4A853" stroke-width="1.5"/>${score.map((p,i)=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" fill="#D4A853" stroke="#0F1B35" stroke-width="1.5"/><text x="${p.x.toFixed(1)}" y="${(p.y-9).toFixed(1)}" text-anchor="middle" fill="rgba(212,168,83,.9)" font-size="8" font-family="sans-serif" font-weight="700">${sc[i]||5}</text>`).join('')}${lblPts.map(l=>`<text x="${l.x.toFixed(1)}" y="${l.y.toFixed(1)}" text-anchor="middle" dominant-baseline="middle" fill="rgba(255,255,255,.5)" font-size="9" font-family="sans-serif" font-weight="600">${l.l}</text>`).join('')}</svg></div>`;}
+function rResult(){
+  const d=S.data;if(!d)return'';
+  const sc=d.sc||[5,5,5,5,5];const lbls=['Career','Relationships','Finances','Health','Growth'];
+  const ttag=t=>`<span class="tag ${t==='positive'?'tp':t==='challenging'?'tc':'tn'}">${t}</span>`;
+  const tabs=[{id:'concerns',label:'Your Concerns'},{id:'overview',label:'Overview'},{id:'career',label:'Career & Money'},{id:'relationships',label:'Relationships'},{id:'forecast',label:'5-Year Forecast'},{id:'actions',label:'Action Plan'},...(d.f?[{id:'faith',label:'✝ Faith'}]:[])];
+  let panel='';
+  if(S.tab==='concerns'){panel=`<div class="glass" style="margin-bottom:14px"><p class="sec">Your Concerns — Directly Addressed</p>${(d.ci||[]).map(ci=>`<div class="ci"><p class="ci-q">"${ci.q}"</p><p class="ci-a">${ci.a}</p></div>`).join('')}</div><div class="glass"><p class="sec">Core Strengths</p>${(d.st||[]).map(s=>`<div class="cr"><span style="color:#4ADE80;font-size:13px;flex-shrink:0">✓</span><span class="ct">${s}</span></div>`).join('')}<p class="sec" style="margin-top:16px">Blind Spots</p>${(d.bs||[]).map(b=>`<div class="cr"><span style="color:#F59E0B;font-size:13px;flex-shrink:0">!</span><span class="ct">${b}</span></div>`).join('')}</div>`;}
+  else if(S.tab==='overview'){panel=`<div class="glass" style="margin-bottom:14px"><p class="sec">Life Energy Scores</p>${makeRadar(sc)}<div style="margin-top:14px">${sc.map((v,i)=>`<div class="ar"><span class="al">${lbls[i]}</span><div class="btr"><div class="bf" style="width:${v*10}%"></div></div><span class="ascr">${v}/10</span></div>`).join('')}</div></div><div class="glass"><p class="sec">Personality Read</p><p class="btext">${d.p}</p></div>`;}
+  else if(S.tab==='career'){panel=`<div class="glass" style="margin-bottom:14px;text-align:center"><p class="sec">Career Breakthrough Expected</p><p class="stat-hl">Age ${d.br}</p></div><div class="glass" style="margin-bottom:14px"><p class="sec">Career Direction</p><p class="btext">${d.ca}</p></div><div class="glass" style="margin-bottom:14px"><p class="sec">Financial Outlook</p><p class="btext">${d.fi}</p></div><div class="glass"><p class="sec">Personal Growth</p><p class="btext">${d.gr}</p></div>`;}
+  else if(S.tab==='relationships'){panel=`<div class="glass" style="margin-bottom:14px"><p class="sec">Your Relationship Style</p><p class="btext">${d.re}</p></div><div class="glass"><p class="sec">Health & Energy</p><p class="btext">${d.he}</p></div>`;}
+  else if(S.tab==='forecast'){panel=`<div class="glass"><p class="sec">5-Year Life Forecast · 2026–2030</p>${(d.fc||[]).map(r=>`<div class="fc"><div><p class="fy">${r[0]}</p><p class="fv">${r[1]}</p>${ttag(r[3])}</div><p class="fi">${r[2]}</p></div>`).join('')}</div>`;}
+  else if(S.tab==='actions'){const al=(items,color,label,tc)=>`<div class="glass" style="margin-bottom:14px;border-left:3px solid ${color}"><p class="sec">${label}</p>${(items||[]).map((a,i)=>`<div class="arow"><div class="anum" style="background:${color};color:${tc}">${i+1}</div><span class="ct">${a}</span></div>`).join('')}</div>`;panel=al(d.dn,'#D4A853','Do Now — This Month','#0F1B35')+al(d.s6,'#93C5FD','Within 6 Months','#0F1B35')+al(d.ly,'#4ADE80','Within 2 Years','#0F1B35');}
+  else if(S.tab==='faith'&&d.f){panel=`<div class="scr-card"><p class="sec">Scripture for Your Season</p><p class="scr-txt">"${d.sv}"</p></div><div class="glass" style="margin-bottom:14px"><p class="sec">Biblical Principle</p><p class="btext">${d.fp}</p></div><div class="glass"><p class="sec">Prayer Focus</p><p class="btext" style="font-style:italic">${d.fw}</p></div>`;}
+  return`<div class="result-wrap"><p class="logo-sm">✦ LifeLens</p><div class="hero"><p class="hero-tag">${d.t}</p><p class="hero-hl">"${d.h}"</p><p class="hero-by">— ${S.form.name}'s Personal Life Analysis</p></div><button class="share" id="b-copy">📋 Copy Your Headline</button><div class="tabs">${tabs.map(t=>`<button class="tab ${S.tab===t.id?'on':''}" data-tab="${t.id}">${t.label}</button>`).join('')}</div>${panel}<button class="btn btn-ghost" id="b-rst" style="margin-top:12px">↩ Start New Analysis</button><p class="fine" style="margin-top:10px">LifeLens · Day 15 · ABTalks 60-Day Challenge</p></div>`;
+}
+function bind(){
+  const on=(id,fn)=>{const el=document.getElementById(id);if(el)el.addEventListener('click',fn);};
+  on('b-start',()=>{S.step=1;render();});
+  on('b-n1',()=>{const n=document.getElementById('fn')?.value.trim()||'';const a=document.getElementById('fa')?.value.trim()||'';if(!n||!a){S.err='Please enter your name and age.';render();return;}S.form.name=n;S.form.age=a;S.form.gender=document.getElementById('fg')?.value||'';S.form.status=document.getElementById('fs')?.value||'';S.err='';S.step=2;render();});
+  on('b-b1',()=>{S.step=1;S.err='';render();});
+  on('b-n2',()=>{const p=document.getElementById('fp')?.value.trim()||'';if(!p){S.err='Please tell us what you do.';render();return;}S.form.profession=p;S.form.city=document.getElementById('fc')?.value.trim()||'';S.err='';S.step=3;render();});
+  on('b-b2',()=>{S.step=2;S.err='';render();});
+  on('b-sub',submit);
+  on('b-copy',()=>{const txt=`"${S.data?.h||''}" — My LifeLens Analysis`;navigator.clipboard?.writeText(txt).then(()=>{const b=document.getElementById('b-copy');if(b){b.textContent='✓ Copied!';setTimeout(()=>{b.textContent='📋 Copy Your Headline';},2000);}}).catch(()=>{});});
+  on('b-rst',()=>{S.step='welcome';S.form={name:'',age:'',gender:'',status:'',profession:'',city:'',c1:'',c2:'',c3:'',faith:false};S.data=null;S.tab='concerns';S.err='';render();});
+  document.querySelectorAll('.tab[data-tab]').forEach(b=>b.addEventListener('click',e=>{S.tab=e.target.dataset.tab;render();}));
+}
+function submit(){
+  const c1=document.getElementById('f1')?.value.trim()||'';
+  if(!c1){S.err='Please share at least one concern.';render();return;}
+  S.form.c1=c1;S.form.c2=document.getElementById('f2')?.value.trim()||'';S.form.c3=document.getElementById('f3')?.value.trim()||'';S.form.faith=document.getElementById('ff')?.checked||false;
+  S.step='loading';render();
+}
+render();
+</script>
+</body>
+</html>
