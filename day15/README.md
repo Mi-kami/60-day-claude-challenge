@@ -2,7 +2,7 @@
 
 A personal life analysis web app. Built for Day 15 of the **ABTalks 60-Day Claude AI Mastery Challenge**.
 
-##Artifact Link
+## Artifact Link
 https://claude.ai/public/artifacts/6b7795d3-caa8-47af-81c5-7fc05e09110d
 
 ## The backstory
