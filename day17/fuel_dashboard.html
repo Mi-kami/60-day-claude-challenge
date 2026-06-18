@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fuel Intelligence Dashboard</title>
+<style>
+  :root {
+    --bg: #0a0f1e;
+    --bg2: #0d1428;
+    --glass: rgba(255,255,255,0.04);
+    --glass-border: rgba(255,255,255,0.08);
+    --amber: #f59e0b;
+    --amber-light: #fcd34d;
+    --blue: #3b82f6;
+    --blue-light: #93c5fd;
+    --grey: #9ca3af;
+    --grey-light: #d1d5db;
+    --green: #22c55e;
+    --green-light: #86efac;
+    --purple: #a855f7;
+    --purple-light: #d8b4fe;
+    --text: #e2e8f0;
+    --text-dim: #64748b;
+    --text-muted: #94a3b8;
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: radial-gradient(ellipse at 20% 20%, rgba(59,130,246,0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 80%, rgba(168,85,247,0.05) 0%, transparent 60%),
+                radial-gradient(ellipse at 50% 0%, rgba(245,158,11,0.04) 0%, transparent 50%);
+    pointer-events: none; z-index: 0;
+  }
+  .wrap { max-width: 1200px; margin: 0 auto; position: relative; z-index: 1; }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, rgba(245,158,11,0.12) 0%, rgba(13,20,40,0.9) 60%);
+    border: 1px solid rgba(245,158,11,0.25);
+    border-radius: var(--radius);
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    display: flex; align-items: center; gap: 20px;
+    backdrop-filter: blur(12px);
+  }
+  .header-icon {
+    width: 52px; height: 52px; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--amber), #d97706);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+  }
+  .header-title { font-size: clamp(15px, 2.5vw, 20px); font-weight: 700; color: #fff; letter-spacing: -0.3px; }
+  .header-sub { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+  .header-badge {
+    margin-left: auto; flex-shrink: 0;
+    background: rgba(245,158,11,0.15);
+    border: 1px solid rgba(245,158,11,0.35);
+    color: var(--amber-light);
+    font-size: 12px; font-weight: 600;
+    padding: 6px 14px; border-radius: 20px;
+    letter-spacing: 0.5px;
+  }
+
+  /* GLASS CARD */
+  .card {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    backdrop-filter: blur(8px);
+    padding: 20px;
+  }
+  .card-title {
+    font-size: 11px; font-weight: 700; letter-spacing: 1.2px;
+    text-transform: uppercase; color: var(--text-dim);
+    margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+  }
+  .card-title::after { content: ''; flex: 1; height: 1px; background: var(--glass-border); }
+
+  /* KPI GRID */
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .kpi {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    padding: 18px 16px;
+    position: relative; overflow: hidden;
+  }
+  .kpi::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: var(--accent, var(--blue));
+  }
+  .kpi-label { font-size: 11px; color: var(--text-dim); font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; }
+  .kpi-value { font-size: clamp(22px, 3vw, 30px); font-weight: 800; color: var(--accent, #fff); margin: 6px 0 2px; line-height: 1; }
+  .kpi-sub { font-size: 11px; color: var(--text-muted); }
+
+  /* CHART ROW */
+  .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  @media (max-width: 700px) { .chart-row { grid-template-columns: 1fr; } }
+
+  /* SVG CHARTS */
+  svg { overflow: visible; }
+  .bar-label { font-size: 11px; fill: var(--text-muted); font-family: 'Segoe UI', sans-serif; }
+  .bar-value { font-size: 10px; fill: #fff; font-family: 'Segoe UI', sans-serif; font-weight: 700; }
+  .axis-line { stroke: rgba(255,255,255,0.06); stroke-width: 1; }
+  .axis-label { font-size: 10px; fill: var(--text-dim); font-family: 'Segoe UI', sans-serif; }
+
+  /* TOOLTIP */
+  .tooltip {
+    position: fixed; background: rgba(13,20,40,0.95);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 8px; padding: 10px 14px;
+    font-size: 12px; color: #fff; pointer-events: none;
+    z-index: 100; display: none; backdrop-filter: blur(12px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    min-width: 140px;
+  }
+  .tooltip-title { font-weight: 700; margin-bottom: 4px; font-size: 13px; }
+  .tooltip-row { display: flex; justify-content: space-between; gap: 16px; color: var(--text-muted); }
+  .tooltip-val { color: #fff; font-weight: 600; }
+
+  /* LINE CHART */
+  .line-path { fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+  .age-line { stroke: rgba(245,158,11,0.6); stroke-width: 1.5; stroke-dasharray: 4,3; }
+  .age-label { font-size: 10px; fill: var(--amber); font-family: 'Segoe UI', sans-serif; font-weight: 700; }
+
+  /* LEGEND */
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-muted); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+  /* GAUGE */
+  .gauge-wrap { display: flex; align-items: center; gap: 28px; }
+  .gauge-svg { flex-shrink: 0; }
+  .gauge-info { flex: 1; }
+  .gauge-score { font-size: 52px; font-weight: 900; color: var(--amber); line-height: 1; }
+  .gauge-max { font-size: 20px; color: var(--text-dim); font-weight: 400; }
+  .gauge-verdict { margin-top: 12px; font-size: 14px; color: var(--text-muted); line-height: 1.5; }
+  .gauge-breakdown { margin-top: 14px; display: flex; flex-direction: column; gap: 6px; }
+  .gauge-bar-row { display: flex; align-items: center; gap: 10px; font-size: 11px; color: var(--text-dim); }
+  .gauge-bar-bg { flex: 1; height: 5px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
+  .gauge-bar-fill { height: 100%; border-radius: 3px; background: var(--amber); }
+  .gauge-pts { font-weight: 700; color: var(--text); min-width: 32px; text-align: right; }
+
+  /* PARADOX */
+  .paradox-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-top: 4px; }
+  .paradox-item { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 14px; text-align: center; }
+  .paradox-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; margin-bottom: 8px; }
+  .paradox-val { font-size: 24px; font-weight: 800; }
+  .paradox-desc { font-size: 10px; color: var(--text-muted); margin-top: 4px; line-height: 1.4; }
+  .positive { color: #22c55e; }
+  .negative { color: #f87171; }
+  .neutral { color: var(--amber); }
+
+  /* FUEL CARDS */
+  .fuel-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .fuel-card {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    padding: 18px 16px;
+    position: relative; overflow: hidden;
+  }
+  .fuel-card.highlighted {
+    border-color: rgba(59,130,246,0.5);
+    background: rgba(59,130,246,0.07);
+    box-shadow: 0 0 24px rgba(59,130,246,0.15), inset 0 0 0 1px rgba(59,130,246,0.2);
+  }
+  .fuel-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .fuel-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+  .fuel-name { font-size: 13px; font-weight: 700; }
+  .fuel-you { font-size: 10px; background: rgba(59,130,246,0.2); color: var(--blue-light); padding: 2px 8px; border-radius: 10px; margin-left: auto; }
+  .fuel-stat { font-size: 11px; color: var(--text-dim); margin-bottom: 10px; }
+  .fuel-stat span { color: var(--text); font-weight: 600; }
+  .fuel-list { list-style: none; font-size: 11px; line-height: 1.7; color: var(--text-muted); }
+  .fuel-list li::before { margin-right: 5px; }
+  .fuel-best { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--glass-border); font-size: 11px; color: var(--text-dim); }
+  .fuel-best span { color: var(--text-muted); }
+
+  /* AGE TABLE */
+  .age-table-wrap { overflow-x: auto; margin-top: 4px; }
+  .age-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .age-table th { background: rgba(255,255,255,0.04); color: var(--text-dim); font-weight: 600; font-size: 10px; letter-spacing: 0.8px; text-transform: uppercase; padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--glass-border); }
+  .age-table td { padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.03); color: var(--text-muted); }
+  .age-table td:first-child { color: var(--text); font-weight: 600; }
+  .age-table tr.car-age td { background: rgba(59,130,246,0.07); color: var(--text); }
+  .age-table tr.car-age td:first-child { color: var(--blue-light); }
+  .age-badge { display: inline-block; background: rgba(59,130,246,0.2); color: var(--blue-light); font-size: 9px; padding: 1px 6px; border-radius: 6px; margin-left: 6px; font-weight: 700; }
+
+  /* BOTTOM ROW */
+  .bottom-row { display: grid; grid-template-columns: 1fr 1.5fr; gap: 16px; margin-bottom: 24px; }
+  @media (max-width: 750px) { .bottom-row { grid-template-columns: 1fr; } }
+
+  /* DOUGHNUT */
+  .doughnut-wrap { display: flex; flex-direction: column; align-items: center; }
+  .doughnut-center { text-align: center; margin-top: 12px; }
+  .doughnut-total { font-size: 11px; color: var(--text-dim); }
+
+  @media (max-width: 500px) {
+    .gauge-wrap { flex-direction: column; }
+    .header { flex-wrap: wrap; }
+    .header-badge { margin-left: 0; }
+    body { padding: 12px; }
+  }
+</style>
+</head>
+<body>
+<div id="tooltip" class="tooltip"></div>
+<div class="wrap">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-icon">🚗</div>
+    <div>
+      <div class="header-title">Toyota Camry 2018 · Petrol (E20) · Age: 8y · 1,000 km/mo</div>
+      <div class="header-sub">Fuel Intelligence Dashboard — Nigerian market context · All figures in NGN (Nigerian Naira)</div>
+    </div>
+    <div class="header-badge">LIVE ANALYSIS</div>
+  </div>
+
+  <!-- KPI CARDS -->
+  <div class="kpi-grid" id="kpiGrid"></div>
+
+  <!-- BAR + DOUGHNUT -->
+  <div class="chart-row">
+    <div class="card">
+      <div class="card-title">Cost per km · by fuel type</div>
+      <svg id="barChart" width="100%" style="display:block"></svg>
+      <div class="legend" id="barLegend"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">CO₂ per km · fuel share</div>
+      <div class="doughnut-wrap">
+        <svg id="doughnut" width="220" height="220" style="display:block;margin:0 auto"></svg>
+        <div class="legend" id="donutLegend" style="justify-content:center;margin-top:10px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LINE CHART -->
+  <div class="card" style="margin-bottom:24px">
+    <div class="card-title">Cost per km vs vehicle age</div>
+    <svg id="lineChart" width="100%" style="display:block"></svg>
+    <div class="legend" id="lineLegend"></div>
+  </div>
+
+  <!-- BOTTOM ROW: GAUGE + AGE TABLE -->
+  <div class="bottom-row">
+    <div class="card">
+      <div class="card-title">E85 Flex-Fuel Score</div>
+      <div class="gauge-wrap" id="gaugeWrap"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Cost/km & Maintenance by age bucket · Your car marked</div>
+      <div class="age-table-wrap"><table class="age-table" id="ageTable"></table></div>
+    </div>
+  </div>
+
+  <!-- E85 PARADOX -->
+  <div class="card" style="margin-bottom:24px">
+    <div class="card-title">E85 Flex-Fuel Paradox</div>
+    <div class="paradox-grid" id="paradoxGrid"></div>
+  </div>
+
+  <!-- FUEL CARDS -->
+  <div class="card" style="margin-bottom:24px">
+    <div class="card-title">Fuel profile comparison</div>
+    <div class="fuel-cards" id="fuelCards"></div>
+  </div>
+
+</div>
+
+<script>
+// ── RAW DATA ────────────────────────────────────────────────────────────────
+const raw = [
+  {f:"CNG",age:7,dist:1316,fc:22987,co2:167.3,mc:4249,rt:8,fp:400,ml:22.9},
+  {f:"Diesel",age:4,dist:2343,fc:134526,co2:399.9,mc:5969,rt:5,fp:1200,ml:20.9},
+  {f:"CNG",age:2,dist:1450,fc:22308,co2:181.5,mc:3431,rt:8,fp:400,ml:26.0},
+  {f:"Electric (EV)",age:3,dist:2457,fc:61425,co2:218.5,mc:1626,rt:45,fp:165,ml:6.6},
+  {f:"CNG",age:3,dist:970,fc:15709,co2:116.7,mc:3346,rt:8,fp:400,ml:24.7},
+  {f:"CNG",age:3,dist:1094,fc:17717,co2:136.3,mc:3868,rt:8,fp:400,ml:24.7},
+  {f:"Petrol (E20)",age:4,dist:1294,fc:90807,co2:213.8,mc:3299,rt:5,fp:1200,ml:17.1},
+  {f:"Diesel",age:4,dist:1348,fc:77397,co2:230.1,mc:4503,rt:5,fp:1200,ml:20.9},
+  {f:"Electric (EV)",age:1,dist:1142,fc:26919,co2:106.0,mc:1499,rt:45,fp:165,ml:7.0},
+  {f:"Petrol (E20)",age:8,dist:1673,fc:127063,co2:290.1,mc:4075,rt:5,fp:1200,ml:15.8},
+  {f:"Diesel",age:3,dist:2448,fc:140555,co2:415.4,mc:4559,rt:5,fp:1200,ml:20.9},
+  {f:"E85 (Flex-Fuel)",age:1,dist:1067,fc:73869,co2:77.9,mc:3036,rt:5,fp:900,ml:13.0},
+  {f:"E85 (Flex-Fuel)",age:1,dist:2749,fc:190315,co2:184.3,mc:2670,rt:5,fp:900,ml:13.0},
+  {f:"E85 (Flex-Fuel)",age:1,dist:1686,fc:116723,co2:112.5,mc:2693,rt:5,fp:900,ml:13.0},
+  {f:"Electric (EV)",age:2,dist:903,fc:21285,co2:85.2,mc:1189,rt:45,fp:165,ml:7.0},
+  {f:"Electric (EV)",age:1,dist:2774,fc:65387,co2:259.2,mc:1513,rt:45,fp:165,ml:7.0},
+  {f:"CNG",age:6,dist:1585,fc:27686,co2:201.4,mc:5236,rt:8,fp:400,ml:22.9},
+  {f:"Diesel",age:6,dist:1502,fc:92907,co2:276.8,mc:6218,rt:5,fp:1200,ml:19.4},
+  {f:"Electric (EV)",age:4,dist:1115,fc:27875,co2:101.9,mc:1701,rt:45,fp:165,ml:6.6},
+  {f:"Diesel",age:6,dist:962,fc:59505,co2:181.4,mc:6260,rt:5,fp:1200,ml:19.4},
+  {f:"E85 (Flex-Fuel)",age:2,dist:925,fc:64038,co2:62.4,mc:2491,rt:5,fp:900,ml:13.0},
+  {f:"Diesel",age:12,dist:951,fc:66349,co2:172.3,mc:7285,rt:5,fp:1200,ml:17.2},
+  {f:"CNG",age:4,dist:1191,fc:19287,co2:150.2,mc:3953,rt:8,fp:400,ml:24.7},
+  {f:"E85 (Flex-Fuel)",age:1,dist:1586,fc:109800,co2:112.7,mc:2961,rt:5,fp:900,ml:13.0},
+  {f:"Electric (EV)",age:2,dist:1188,fc:28003,co2:103.8,mc:1396,rt:45,fp:165,ml:7.0},
+  {f:"Petrol (E20)",age:8,dist:1540,fc:116962,co2:266.5,mc:3299,rt:5,fp:1200,ml:15.8},
+  {f:"Petrol (E20)",age:7,dist:3105,fc:235823,co2:519.1,mc:3417,rt:5,fp:1200,ml:15.8},
+  {f:"E85 (Flex-Fuel)",age:2,dist:1614,fc:111738,co2:109.8,mc:3107,rt:5,fp:900,ml:13.0},
+  {f:"CNG",age:3,dist:1534,fc:24842,co2:190.9,mc:3591,rt:8,fp:400,ml:24.7},
+  {f:"Petrol (E20)",age:5,dist:1513,fc:106175,co2:260.1,mc:3215,rt:5,fp:1200,ml:17.1},
+  {f:"Petrol (E20)",age:7,dist:3119,fc:236886,co2:560.6,mc:3281,rt:5,fp:1200,ml:15.8},
+  {f:"Petrol (E20)",age:3,dist:959,fc:67298,co2:151.4,mc:3078,rt:5,fp:1200,ml:17.1},
+  {f:"Electric (EV)",age:1,dist:1496,fc:35263,co2:128.5,mc:1278,rt:45,fp:165,ml:7.0},
+  {f:"Diesel",age:9,dist:1333,fc:82454,co2:231.7,mc:7163,rt:5,fp:1200,ml:19.4},
+  {f:"E85 (Flex-Fuel)",age:1,dist:1491,fc:103223,co2:106.1,mc:3116,rt:5,fp:900,ml:13.0},
+  {f:"E85 (Flex-Fuel)",age:2,dist:1633,fc:113054,co2:111.1,mc:2942,rt:5,fp:900,ml:13.0},
+  {f:"CNG",age:8,dist:2523,fc:44070,co2:308.1,mc:5156,rt:8,fp:400,ml:22.9},
+  {f:"Petrol (E20)",age:7,dist:1116,fc:84759,co2:195.3,mc:3375,rt:5,fp:1200,ml:15.8},
+  {f:"Petrol (E20)",age:6,dist:1598,fc:121367,co2:280.9,mc:3525,rt:5,fp:1200,ml:15.8},
+  {f:"E85 (Flex-Fuel)",age:1,dist:1003,fc:69438,co2:72.6,mc:2547,rt:5,fp:900,ml:13.0},
+  {f:"E85 (Flex-Fuel)",age:3,dist:1504,fc:110049,co2:105.4,mc:3586,rt:5,fp:900,ml:12.3},
+  {f:"Electric (EV)",age:4,dist:1063,fc:26575,co2:102.2,mc:1866,rt:45,fp:165,ml:6.6},
+  {f:"CNG",age:6,dist:951,fc:16611,co2:126.4,mc:4413,rt:8,fp:400,ml:22.9},
+  {f:"Electric (EV)",age:1,dist:1371,fc:32316,co2:128.0,mc:1213,rt:45,fp:165,ml:7.0},
+  {f:"CNG",age:5,dist:1299,fc:21036,co2:159.9,mc:3722,rt:8,fp:400,ml:24.7},
+  {f:"Electric (EV)",age:1,dist:1579,fc:37219,co2:138.8,mc:1504,rt:45,fp:165,ml:7.0},
+  {f:"Diesel",age:11,dist:1452,fc:101302,co2:282.4,mc:8122,rt:5,fp:1200,ml:17.2},
+  {f:"Electric (EV)",age:3,dist:1654,fc:41350,co2:151.9,mc:1762,rt:45,fp:165,ml:6.6},
+  {f:"E85 (Flex-Fuel)",age:3,dist:1289,fc:94317,co2:93.9,mc:3934,rt:5,fp:900,ml:12.3},
+  {f:"Petrol (E20)",age:7,dist:2361,fc:179316,co2:419.4,mc:3436,rt:5,fp:1200,ml:15.8},
+  {f:"Petrol (E20)",age:5,dist:1031,fc:72351,co2:164.2,mc:2886,rt:5,fp:1200,ml:17.1},
+  {f:"Diesel",age:4,dist:972,fc:55809,co2:170.0,mc:5316,rt:5,fp:1200,ml:20.9}
+];
+
+const COLORS = {
+  "E85 (Flex-Fuel)": "#f59e0b",
+  "Petrol (E20)": "#3b82f6",
+  "Diesel": "#9ca3af",
+  "CNG": "#22c55e",
+  "Electric (EV)": "#a855f7"
+};
+const FUEL_KEY = "Petrol (E20)";
+const CAR_AGE = 8;
+
+// ── GROUP & COMPUTE ──────────────────────────────────────────────────────────
+function groupBy(arr, key) {
+  return arr.reduce((acc, r) => { (acc[r[key]] = acc[r[key]] || []).push(r); return acc; }, {});
+}
+const byFuel = groupBy(raw, 'f');
+
+function avg(arr, fn) { return arr.reduce((s, r) => s + fn(r), 0) / arr.length; }
+
+const metrics = {};
+Object.entries(byFuel).forEach(([f, rows]) => {
+  metrics[f] = {
+    cpkm: avg(rows, r => r.fc / r.dist),
+    co2pkm: avg(rows, r => r.co2 / r.dist),
+    mckm: avg(rows, r => r.mc / r.dist),
+    rt: avg(rows, r => r.rt),
+    n: rows.length
+  };
+});
+
+// Age buckets
+const buckets = {
+  "New (0–2y)": [0,2],
+  "Mid-life (3–5y)": [3,5],
+  "Aged (6–9y)": [6,9],
+  "Old (10+y)": [10,99]
+};
+
+function ageBucket(age) {
+  if (age <= 2) return "New (0–2y)";
+  if (age <= 5) return "Mid-life (3–5y)";
+  if (age <= 9) return "Aged (6–9y)";
+  return "Old (10+y)";
+}
+
+const carBucket = ageBucket(CAR_AGE); // Aged (6-9y)
+
+const ageData = {};
+Object.keys(buckets).forEach(b => {
+  const rows = raw.filter(r => {
+    const [lo,hi] = buckets[b];
+    return r.age >= lo && r.age <= hi;
+  });
+  ageData[b] = rows.length > 0 ? {
+    cpkm: avg(rows, r => r.fc / r.dist),
+    mckm: avg(rows, r => r.mc / r.dist),
+    n: rows.length
+  } : null;
+});
+
+// E85 Paradox
+const e85cpkm = metrics["E85 (Flex-Fuel)"].cpkm;
+const petrolcpkm = metrics["Petrol (E20)"].cpkm;
+const e85price = 900;
+const petrolPrice = 1200;
+const e85ml = avg(byFuel["E85 (Flex-Fuel)"], r => r.ml);
+const petrolMl = avg(byFuel["Petrol (E20)"], r => r.ml);
+
+const pumpSaving = ((petrolPrice - e85price) / petrolPrice) * 100;
+const runPenalty = ((e85cpkm - petrolcpkm) / petrolcpkm) * 100;
+const breakEven = (e85ml / petrolMl) * petrolPrice;
+
+// E85 Score
+const fuels = Object.keys(metrics);
+const best = (fn) => Math.min(...fuels.map(fn));
+const worst = (fn) => Math.max(...fuels.map(fn));
+
+function score01(val, lo, hi, inverse=true) {
+  if (hi === lo) return 1;
+  const s = (val - lo) / (hi - lo);
+  return inverse ? 1 - s : s;
+}
+
+const e85 = metrics["E85 (Flex-Fuel)"];
+const costScore  = score01(e85.cpkm,  best(f=>metrics[f].cpkm),  worst(f=>metrics[f].cpkm))  * 4;
+const co2Score   = score01(e85.co2pkm,best(f=>metrics[f].co2pkm),worst(f=>metrics[f].co2pkm)) * 3;
+const refuelScore= score01(e85.rt,    best(f=>metrics[f].rt),    worst(f=>metrics[f].rt))     * 2;
+const maintScore = score01(e85.mckm,  best(f=>metrics[f].mckm),  worst(f=>metrics[f].mckm))   * 1;
+const totalScore = costScore + co2Score + refuelScore + maintScore;
+
+// My monthly cost
+const myMonthlyCost = petrolcpkm * 1000;
+
+// ── TOOLTIP ──────────────────────────────────────────────────────────────────
+const tip = document.getElementById('tooltip');
+function showTip(e, html) {
+  tip.innerHTML = html; tip.style.display = 'block';
+  moveTip(e);
+}
+function moveTip(e) {
+  const x = e.clientX + 14, y = e.clientY - 10;
+  const mw = tip.offsetWidth + 20, mh = tip.offsetHeight + 20;
+  tip.style.left = (x + mw > window.innerWidth ? x - mw : x) + 'px';
+  tip.style.top  = (y + mh > window.innerHeight ? y - mh : y) + 'px';
+}
+function hideTip() { tip.style.display = 'none'; }
+document.addEventListener('mousemove', e => { if(tip.style.display==='block') moveTip(e); });
+
+// ── KPI CARDS ────────────────────────────────────────────────────────────────
+const kpiGrid = document.getElementById('kpiGrid');
+const kpis = [
+  { label: 'Your Fuel Cost/km', value: '₦'+petrolcpkm.toFixed(2), sub: 'Petrol (E20) fleet avg', accent: '#3b82f6' },
+  { label: 'E85 Cost/km', value: '₦'+e85cpkm.toFixed(2), sub: 'E85 Flex-Fuel fleet avg', accent: '#f59e0b' },
+  { label: 'E85 Running Premium', value: (runPenalty>0?'+':'')+runPenalty.toFixed(1)+'%', sub: 'vs Petrol cost/km', accent: runPenalty > 0 ? '#f87171' : '#22c55e' },
+  { label: 'Break-even Price', value: '₦'+breakEven.toFixed(1), sub: 'E85 price to match Petrol', accent: '#f59e0b' },
+  { label: 'Your Monthly Cost', value: '₦'+Math.round(myMonthlyCost).toLocaleString(), sub: '@1,000 km/mo · Petrol', accent: '#3b82f6' }
+];
+kpis.forEach(k => {
+  const d = document.createElement('div');
+  d.className = 'kpi';
+  d.style.setProperty('--accent', k.accent);
+  d.innerHTML = `<div class="kpi-label">${k.label}</div>
+    <div class="kpi-value">${k.value}</div>
+    <div class="kpi-sub">${k.sub}</div>`;
+  kpiGrid.appendChild(d);
+});
+
+// ── BAR CHART ────────────────────────────────────────────────────────────────
+function drawBar() {
+  const svg = document.getElementById('barChart');
+  const W = svg.parentElement.clientWidth - 40;
+  const fuelList = Object.keys(metrics);
+  const vals = fuelList.map(f => metrics[f].cpkm);
+  const maxV = Math.max(...vals);
+  const H = 220, pad = {l:10, r:10, t:20, b:60}, barH = 28, gap = 14;
+
+  svg.setAttribute('height', H);
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+  const chartW = W - pad.l - pad.r;
+  const barY = (i) => pad.t + i * (barH + gap);
+
+  fuelList.forEach((f, i) => {
+    const v = metrics[f].cpkm;
+    const bw = (v / maxV) * chartW;
+    const y = barY(i);
+    const col = COLORS[f];
+    const isMe = f === FUEL_KEY;
+
+    const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    rect.setAttribute('x', pad.l);
+    rect.setAttribute('y', y);
+    rect.setAttribute('width', bw);
+    rect.setAttribute('height', barH);
+    rect.setAttribute('rx', 5);
+    rect.setAttribute('fill', col);
+    rect.setAttribute('opacity', isMe ? '1' : '0.55');
+    rect.style.cursor = 'pointer';
+    rect.addEventListener('mouseenter', e => showTip(e,
+      `<div class="tooltip-title" style="color:${col}">${f}</div>
+       <div class="tooltip-row">Cost/km <span class="tooltip-val">₦${v.toFixed(2)}</span></div>
+       <div class="tooltip-row">CO₂/km <span class="tooltip-val">${metrics[f].co2pkm.toFixed(3)} kg</span></div>
+       <div class="tooltip-row">Maint/km <span class="tooltip-val">₦${metrics[f].mckm.toFixed(2)}</span></div>`
+    ));
+    rect.addEventListener('mouseleave', hideTip);
+    svg.appendChild(rect);
+
+    if (isMe) {
+      const glow = document.createElementNS('http://www.w3.org/2000/svg','rect');
+      glow.setAttribute('x', pad.l-2); glow.setAttribute('y', y-2);
+      glow.setAttribute('width', bw+4); glow.setAttribute('height', barH+4);
+      glow.setAttribute('rx', 7); glow.setAttribute('fill','none');
+      glow.setAttribute('stroke', col); glow.setAttribute('stroke-width','1.5');
+      glow.setAttribute('opacity','0.5');
+      svg.appendChild(glow);
+    }
+
+    const label = document.createElementNS('http://www.w3.org/2000/svg','text');
+    label.setAttribute('x', pad.l + bw + 6);
+    label.setAttribute('y', y + barH/2 + 4);
+    label.setAttribute('class','bar-label');
+    label.textContent = '₦'+v.toFixed(2);
+    svg.appendChild(label);
+
+    const fname = document.createElementNS('http://www.w3.org/2000/svg','text');
+    fname.setAttribute('x', pad.l);
+    fname.setAttribute('y', y - 4);
+    fname.setAttribute('class','axis-label');
+    fname.setAttribute('fill', isMe ? col : '#64748b');
+    fname.setAttribute('font-weight', isMe ? '700' : '400');
+    fname.textContent = f + (isMe ? ' ← YOUR FUEL' : '');
+    svg.appendChild(fname);
+  });
+
+  // Legend
+  const leg = document.getElementById('barLegend');
+  leg.innerHTML = Object.entries(COLORS).map(([f,c]) =>
+    `<div class="legend-item"><div class="legend-dot" style="background:${c}"></div>${f}</div>`
+  ).join('');
+}
+
+// ── DOUGHNUT ─────────────────────────────────────────────────────────────────
+function drawDonut() {
+  const svg = document.getElementById('doughnut');
+  const cx=110, cy=110, R=85, r=55;
+  const fuelList = Object.keys(metrics);
+  const vals = fuelList.map(f => metrics[f].co2pkm);
+  const total = vals.reduce((a,b) => a+b, 0);
+  let angle = -Math.PI/2;
+
+  fuelList.forEach((f, i) => {
+    const slice = (vals[i]/total) * 2 * Math.PI;
+    const x1=cx+R*Math.cos(angle), y1=cy+R*Math.sin(angle);
+    const x2=cx+R*Math.cos(angle+slice), y2=cy+R*Math.sin(angle+slice);
+    const xi1=cx+r*Math.cos(angle), yi1=cy+r*Math.sin(angle);
+    const xi2=cx+r*Math.cos(angle+slice), yi2=cy+r*Math.sin(angle+slice);
+    const large=slice>Math.PI?1:0;
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    const d=`M${xi1},${yi1} L${x1},${y1} A${R},${R} 0 ${large},1 ${x2},${y2} L${xi2},${yi2} A${r},${r} 0 ${large},0 ${xi1},${yi1} Z`;
+    path.setAttribute('d',d);
+    path.setAttribute('fill', COLORS[f]);
+    path.setAttribute('opacity', f===FUEL_KEY?'1':'0.6');
+    path.style.cursor='pointer';
+    path.addEventListener('mouseenter', e => showTip(e,
+      `<div class="tooltip-title" style="color:${COLORS[f]}">${f}</div>
+       <div class="tooltip-row">CO₂/km <span class="tooltip-val">${metrics[f].co2pkm.toFixed(3)} kg</span></div>
+       <div class="tooltip-row">Share <span class="tooltip-val">${(vals[i]/total*100).toFixed(1)}%</span></div>`
+    ));
+    path.addEventListener('mouseleave', hideTip);
+    svg.appendChild(path);
+
+    angle += slice;
+  });
+
+  const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  c.setAttribute('cx',cx); c.setAttribute('cy',cy); c.setAttribute('r',r-2);
+  c.setAttribute('fill','#0a0f1e'); svg.appendChild(c);
+
+  const t1=document.createElementNS('http://www.w3.org/2000/svg','text');
+  t1.setAttribute('x',cx); t1.setAttribute('y',cy-5);
+  t1.setAttribute('text-anchor','middle'); t1.setAttribute('fill','#e2e8f0');
+  t1.setAttribute('font-size','13'); t1.setAttribute('font-weight','800');
+  t1.textContent='CO₂/km'; svg.appendChild(t1);
+
+  const t2=document.createElementNS('http://www.w3.org/2000/svg','text');
+  t2.setAttribute('x',cx); t2.setAttribute('y',cy+14);
+  t2.setAttribute('text-anchor','middle'); t2.setAttribute('fill','#64748b');
+  t2.setAttribute('font-size','10');
+  t2.textContent='hover for detail'; svg.appendChild(t2);
+
+  const leg=document.getElementById('donutLegend');
+  leg.innerHTML=Object.entries(COLORS).map(([f,c])=>
+    `<div class="legend-item"><div class="legend-dot" style="background:${c}"></div>${f.replace(' (Flex-Fuel)','').replace(' (EV)','').replace(' (E20)','')}</div>`
+  ).join('');
+}
+
+// ── LINE CHART ───────────────────────────────────────────────────────────────
+function drawLine() {
+  const svg = document.getElementById('lineChart');
+  const W = svg.parentElement.clientWidth - 40 || 600;
+  const H = 220;
+  const pad = {l:36, r:20, t:20, b:36};
+  svg.setAttribute('height', H);
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+  const chartW = W - pad.l - pad.r;
+  const chartH = H - pad.t - pad.b;
+  const ages = [0,1,2,3,4,5,6,7,8,9,10,11,12];
+
+  // Build per-fuel per-age data
+  const fuelAgeData = {};
+  Object.keys(COLORS).forEach(f => {
+    const rows = raw.filter(r => r.f === f);
+    const byAge = {};
+    rows.forEach(r => {
+      (byAge[r.age] = byAge[r.age] || []).push(r.fc/r.dist);
+    });
+    fuelAgeData[f] = byAge;
+  });
+
+  // Get actual data points per fuel
+  const fuelPoints = {};
+  Object.keys(COLORS).forEach(f => {
+    const pts = [];
+    Object.entries(fuelAgeData[f]).forEach(([a, vals]) => {
+      pts.push({ age: +a, cpkm: vals.reduce((s,v)=>s+v,0)/vals.length });
+    });
+    pts.sort((a,b)=>a.age-b.age);
+    fuelPoints[f] = pts;
+  });
+
+  const allVals = Object.values(fuelPoints).flatMap(pts => pts.map(p => p.cpkm));
+  const maxV = Math.max(...allVals) * 1.1;
+  const minV = 0;
+
+  function px(age) { return pad.l + (age / 12) * chartW; }
+  function py(v)   { return pad.t + chartH - ((v - minV) / (maxV - minV)) * chartH; }
+
+  // Grid lines
+  [0,20,40,60,80,100].forEach(v => {
+    const y = py(v);
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1', pad.l); line.setAttribute('x2', pad.l+chartW);
+    line.setAttribute('y1', y); line.setAttribute('y2', y);
+    line.setAttribute('class','axis-line'); svg.appendChild(line);
+    const lbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+    lbl.setAttribute('x', pad.l-4); lbl.setAttribute('y', y+4);
+    lbl.setAttribute('text-anchor','end'); lbl.setAttribute('class','axis-label');
+    lbl.textContent = '₦'+v; svg.appendChild(lbl);
+  });
+
+  // X axis labels
+  [0,3,6,9,12].forEach(a => {
+    const x = px(a);
+    const lbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+    lbl.setAttribute('x', x); lbl.setAttribute('y', H-pad.b+14);
+    lbl.setAttribute('text-anchor','middle'); lbl.setAttribute('class','axis-label');
+    lbl.textContent = a+'y'; svg.appendChild(lbl);
+  });
+
+  // Lines
+  Object.keys(COLORS).forEach(f => {
+    const pts = fuelPoints[f];
+    if (pts.length < 2) return;
+    const d = pts.map((p,i) => `${i===0?'M':'L'}${px(p.age)},${py(p.cpkm)}`).join(' ');
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d', d);
+    path.setAttribute('class','line-path');
+    path.setAttribute('stroke', COLORS[f]);
+    path.setAttribute('opacity', f===FUEL_KEY ? '1' : '0.45');
+    path.setAttribute('stroke-width', f===FUEL_KEY ? '3' : '2');
+    svg.appendChild(path);
+
+    // Dots
+    pts.forEach(p => {
+      const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      dot.setAttribute('cx', px(p.age)); dot.setAttribute('cy', py(p.cpkm));
+      dot.setAttribute('r', f===FUEL_KEY ? '4' : '3');
+      dot.setAttribute('fill', COLORS[f]);
+      dot.setAttribute('opacity', f===FUEL_KEY ? '1' : '0.5');
+      dot.style.cursor='pointer';
+      dot.addEventListener('mouseenter', e => showTip(e,
+        `<div class="tooltip-title" style="color:${COLORS[f]}">${f}</div>
+         <div class="tooltip-row">Age <span class="tooltip-val">${p.age}y</span></div>
+         <div class="tooltip-row">Cost/km <span class="tooltip-val">₦${p.cpkm.toFixed(2)}</span></div>`
+      ));
+      dot.addEventListener('mouseleave', hideTip);
+      svg.appendChild(dot);
+    });
+  });
+
+  // Car age vertical line
+  const ax = px(CAR_AGE);
+  const ageLine = document.createElementNS('http://www.w3.org/2000/svg','line');
+  ageLine.setAttribute('x1', ax); ageLine.setAttribute('x2', ax);
+  ageLine.setAttribute('y1', pad.t); ageLine.setAttribute('y2', pad.t+chartH);
+  ageLine.setAttribute('class','age-line'); svg.appendChild(ageLine);
+
+  const ageTxt = document.createElementNS('http://www.w3.org/2000/svg','text');
+  ageTxt.setAttribute('x', ax+4); ageTxt.setAttribute('y', pad.t+12);
+  ageTxt.setAttribute('class','age-label'); ageTxt.textContent = '← '+CAR_AGE+'y (your car)';
+  svg.appendChild(ageTxt);
+
+  document.getElementById('lineLegend').innerHTML = Object.entries(COLORS).map(([f,c])=>
+    `<div class="legend-item"><div class="legend-dot" style="background:${c}"></div>${f}</div>`
+  ).join('');
+}
+
+// ── GAUGE ────────────────────────────────────────────────────────────────────
+function drawGauge() {
+  const score = totalScore;
+  const pct = score / 10;
+  const wrap = document.getElementById('gaugeWrap');
+
+  const cx=70, cy=70, R=60;
+  const startA = Math.PI, endA = 2*Math.PI;
+  const angle = startA + pct*(endA-startA);
+
+  function arcPt(a) { return { x: cx+R*Math.cos(a), y: cy+R*Math.sin(a) }; }
+  const p0=arcPt(startA), p1=arcPt(angle);
+  const large = (angle-startA)>Math.PI?1:0;
+
+  wrap.innerHTML = `
+    <svg class="gauge-svg" width="140" height="80" viewBox="0 0 140 80">
+      <path d="M${cx-R},${cy} A${R},${R} 0 0,1 ${cx+R},${cy}"
+            fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="12" stroke-linecap="round"/>
+      <path d="M${p0.x},${p0.y} A${R},${R} 0 ${large},1 ${p1.x},${p1.y}"
+            fill="none" stroke="#f59e0b" stroke-width="12" stroke-linecap="round"
+            style="stroke-dasharray:${Math.PI*R};stroke-dashoffset:${Math.PI*R};
+                   animation:gaugeAnim 1.4s ease-out forwards"/>
+      <circle cx="${cx}" cy="${cy}" r="5" fill="#f59e0b" opacity="0.6"/>
+      <style>@keyframes gaugeAnim{to{stroke-dashoffset:${Math.PI*R*(1-pct)}}}</style>
+    </svg>
+    <div class="gauge-info">
+      <div><span class="gauge-score">${score.toFixed(1)}</span><span class="gauge-max">/10</span></div>
+      <div class="gauge-verdict">E85 scores <strong style="color:#f59e0b">${score.toFixed(1)}/10</strong> overall — its CO₂ advantage is real, but with Flex-Fuel vehicles nearly absent in Nigeria and running costs still higher than Petrol, it's not a practical switch for most Nigerian drivers today.</div>
+      <div class="gauge-breakdown">
+        ${[
+          ['Cost (4pt)', costScore, 4],
+          ['CO₂ (3pt)', co2Score, 3],
+          ['Refuel (2pt)', refuelScore, 2],
+          ['Maint (1pt)', maintScore, 1]
+        ].map(([l,v,mx]) => `
+          <div class="gauge-bar-row">
+            <span style="min-width:90px;font-size:10px">${l}</span>
+            <div class="gauge-bar-bg"><div class="gauge-bar-fill" style="width:${v/mx*100}%;opacity:0.85"></div></div>
+            <span class="gauge-pts">${v.toFixed(1)}</span>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+// ── AGE TABLE ────────────────────────────────────────────────────────────────
+function drawAgeTable() {
+  const t = document.getElementById('ageTable');
+  const bucketNames = Object.keys(buckets);
+  t.innerHTML = `<thead><tr>
+    <th>Age Bucket</th>
+    <th>Avg Cost/km (all fuels)</th>
+    <th>Avg Maint/km (all fuels)</th>
+    <th>Records</th>
+  </tr></thead><tbody>` +
+  bucketNames.map(b => {
+    if (!ageData[b]) return '';
+    const isCar = b === carBucket;
+    const badge = isCar ? `<span class="age-badge">YOUR CAR ${CAR_AGE}y</span>` : '';
+    return `<tr class="${isCar?'car-age':''}">
+      <td>${b}${badge}</td>
+      <td>₦${ageData[b].cpkm.toFixed(2)}</td>
+      <td>₦${ageData[b].mckm.toFixed(2)}</td>
+      <td>${ageData[b].n}</td>
+    </tr>`;
+  }).join('') + '</tbody>';
+}
+
+// ── E85 PARADOX ──────────────────────────────────────────────────────────────
+function drawParadox() {
+  const g = document.getElementById('paradoxGrid');
+  g.innerHTML = `
+    <div class="paradox-item">
+      <div class="paradox-label">Pump Price Saving</div>
+      <div class="paradox-val positive">-${pumpSaving.toFixed(1)}%</div>
+      <div class="paradox-desc">E85 (₦900/L) vs Petrol (₦1,200/L)<br>lower pump price per litre</div>
+    </div>
+    <div class="paradox-item">
+      <div class="paradox-label">Running Cost Penalty</div>
+      <div class="paradox-val ${runPenalty > 0 ? 'negative' : 'positive'}">${runPenalty>0?'+':''}${runPenalty.toFixed(1)}%</div>
+      <div class="paradox-desc">E85 costs ₦${e85cpkm.toFixed(2)}/km vs Petrol ₦${petrolcpkm.toFixed(2)}/km<br>lower mileage erodes fuel savings</div>
+    </div>
+    <div class="paradox-item">
+      <div class="paradox-label">E85 Mileage</div>
+      <div class="paradox-val neutral">${e85ml.toFixed(1)} km/L</div>
+      <div class="paradox-desc">vs Petrol ${petrolMl.toFixed(1)} km/L<br>${((1-e85ml/petrolMl)*100).toFixed(1)}% worse mileage</div>
+    </div>
+    <div class="paradox-item">
+      <div class="paradox-label">Break-even E85 Price</div>
+      <div class="paradox-val neutral">₦${breakEven.toFixed(1)}</div>
+      <div class="paradox-desc">E85 must cost below ₦${breakEven.toFixed(1)}/L<br>to match Petrol running cost</div>
+    </div>
+    <div class="paradox-item">
+      <div class="paradox-label">CO₂ Advantage</div>
+      <div class="paradox-val positive">-${(((metrics["Petrol (E20)"].co2pkm - e85.co2pkm)/metrics["Petrol (E20)"].co2pkm)*100).toFixed(1)}%</div>
+      <div class="paradox-desc">E85 emits ${e85.co2pkm.toFixed(3)} kg/km<br>vs Petrol ${metrics["Petrol (E20)"].co2pkm.toFixed(3)} kg/km</div>
+    </div>
+    <div class="paradox-item">
+      <div class="paradox-label">E85 Price vs Petrol Gap</div>
+      <div class="paradox-val neutral">₦${(petrolPrice-e85price).toFixed(0)}/L</div>
+      <div class="paradox-desc">Current gap insufficient to<br>overcome mileage deficit</div>
+    </div>`;
+}
+
+// ── FUEL CARDS ───────────────────────────────────────────────────────────────
+const fuelInfo = {
+  "E85 (Flex-Fuel)": {
+    pros: ["Lowest CO₂/km — greener than all alternatives", "Lower pump price than petrol (₦900 vs ₦1,200/L)"],
+    cons: [`Worst mileage (${e85ml.toFixed(1)} km/L) — running cost erodes pump savings`, "Flex-Fuel vehicles rare in Nigeria — limited availability"],
+    best: "Eco-conscious fleet operators with FFV-compatible vehicles"
+  },
+  "Petrol (E20)": {
+    pros: ["Available at virtually every filling station in Nigeria", "Familiar refuelling — no infrastructure change needed"],
+    cons: ["NNPC price hikes make it increasingly expensive", "Higher CO₂ per km than CNG, E85, and EV"],
+    best: "Everyday Lagos/Abuja commuters who value convenience"
+  },
+  "Diesel": {
+    pros: ["Best mileage for long inter-state road trips", "Lower cost per km on heavy high-mileage use"],
+    cons: ["Highest maintenance cost — especially on older vehicles", "Diesel prices volatile; significant cost spikes post-subsidy removal"],
+    best: "Transporters, logistics companies, Abuja–Lagos highway runs"
+  },
+  "CNG": {
+    pros: ["Lowest fuel cost per km of any combustion option", "Significantly lower CO₂ — aligns with Nigeria's gas monetisation drive"],
+    cons: ["CNG stations very limited outside Lagos and Abuja", "Boot space reduced by CNG cylinder; 8-min refuel adds time"],
+    best: "Lagos BRT buses, commercial taxis, high-frequency city operators"
+  },
+  "Electric (EV)": {
+    pros: ["Lowest maintenance cost — no engine oil, fewer moving parts", "Cheapest energy cost per km despite Nigerian grid challenges"],
+    cons: ["45-min recharge impractical given unstable PHCN grid supply", "Import duties and FX make EVs very expensive to acquire in Nigeria"],
+    best: "Gated estate residents with inverter/solar home charging setup"
+  }
+};
+
+function drawFuelCards() {
+  const c = document.getElementById('fuelCards');
+  c.innerHTML = Object.entries(COLORS).map(([f, col]) => {
+    const m = metrics[f];
+    const info = fuelInfo[f];
+    const isMe = f === FUEL_KEY;
+    const prosHtml = info.pros.map(p => `<li>✅ ${p}</li>`).join('');
+    const consHtml = info.cons.map(p => `<li>❌ ${p}</li>`).join('');
+    return `
+    <div class="fuel-card ${isMe?'highlighted':''}">
+      <div class="fuel-card-header">
+        <div class="fuel-dot" style="background:${col}"></div>
+        <span class="fuel-name" style="color:${col}">${f.replace(' (Flex-Fuel)','').replace(' (EV)','').replace(' (E20)','')}</span>
+        ${isMe ? '<span class="fuel-you">YOUR FUEL</span>' : ''}
+      </div>
+      <div class="fuel-stat">Cost/km: <span>₦${m.cpkm.toFixed(2)}</span></div>
+      <div class="fuel-stat">CO₂/km: <span>${m.co2pkm.toFixed(3)} kg</span></div>
+      <div class="fuel-stat">Maint/km: <span>₦${m.mckm.toFixed(2)}</span></div>
+      <ul class="fuel-list">${prosHtml}${consHtml}</ul>
+      <div class="fuel-best">🚗 Best for: <span>${info.best}</span></div>
+    </div>`;
+  }).join('');
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  drawBar();
+  drawDonut();
+  drawLine();
+  drawGauge();
+  drawAgeTable();
+  drawParadox();
+  drawFuelCards();
+});
+
+window.addEventListener('resize', () => {
+  document.getElementById('barChart').innerHTML='';
+  document.getElementById('lineChart').innerHTML='';
+  drawBar(); drawLine();
+});
+</script>
+</body>
+</html>
