@@ -4,6 +4,8 @@ A multi-stage interactive football experience built with React, powered entirely
 
 Built as **Day 18 of the ABTalks 60-Day Claude AI Mastery Challenge** — extended significantly beyond the original brief in data sourcing, architecture, and profile personalisation.
 
+## Artifact Link:
+https://claude.ai/public/artifacts/a9627eb3-d24f-40f0-8fb7-2694bbe105c6
 ---
 
 ## What It Does
