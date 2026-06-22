@@ -3,7 +3,7 @@
 > **Day 21 of the 60-Day Claude AI Challenge**
 > First deployed web app of the challenge — live on Netlify.
 
-🔗 **Live App:** [footprints-privacy-app.netlify.app](https://footprints-privacy-app.netlify.app)
+🔗 **Live App:** [footprints-privacy-app.netlify.app](https://digital-footprints-privacy-app.netlify.app/)
 
 ---
 
