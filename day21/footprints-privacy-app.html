@@ -1,0 +1,1736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Footprints — Digital Privacy Intelligence</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --bg2: #111118;
+    --bg3: #18181f;
+    --bg4: #1e1e28;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #f0f0f5;
+    --text2: #9090a8;
+    --text3: #5a5a72;
+    --accent: #6c63ff;
+    --accent2: #8b85ff;
+    --red: #ff4f4f;
+    --orange: #ff8c42;
+    --yellow: #ffc947;
+    --green: #3ecf8e;
+    --teal: #00d4aa;
+    --pink: #ff6b9d;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-lg: 16px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ── LANDING ── */
+  #landing {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+    position: relative;
+  }
+
+  .bg-glow {
+    position: fixed;
+    top: -200px; left: 50%;
+    transform: translateX(-50%);
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(108,99,255,0.12) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .logo-mark {
+    width: 60px; height: 60px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, var(--accent), var(--pink));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+    margin: 0 auto 28px;
+    position: relative; z-index: 1;
+  }
+
+  .brand {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    margin-bottom: 16px;
+    position: relative; z-index: 1;
+  }
+
+  h1 {
+    font-size: clamp(32px, 6vw, 56px);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    margin-bottom: 20px;
+    position: relative; z-index: 1;
+  }
+
+  h1 span {
+    background: linear-gradient(135deg, var(--accent2), var(--teal));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .tagline {
+    font-size: 18px;
+    color: var(--text2);
+    max-width: 520px;
+    margin: 0 auto 48px;
+    position: relative; z-index: 1;
+  }
+
+  .start-card {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-lg);
+    padding: 40px;
+    width: 100%;
+    max-width: 560px;
+    text-align: left;
+    position: relative; z-index: 1;
+  }
+
+  .start-card h2 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .start-card p {
+    font-size: 14px;
+    color: var(--text2);
+    margin-bottom: 24px;
+    line-height: 1.6;
+  }
+
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+  }
+
+  input[type="text"] {
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    color: var(--text);
+    font-size: 15px;
+    font-family: inherit;
+    margin-bottom: 16px;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+
+  input[type="text"]:focus { border-color: var(--accent); }
+  input[type="text"]::placeholder { color: var(--text3); }
+
+  .apps-search-wrap { position: relative; margin-bottom: 12px; }
+  .apps-search-wrap input { margin-bottom: 0; }
+
+  .apps-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0; right: 0;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 100;
+    display: none;
+  }
+
+  .apps-dropdown.open { display: block; }
+
+  .dropdown-item {
+    padding: 10px 14px;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background 0.1s;
+  }
+
+  .dropdown-item:hover { background: var(--bg4); }
+
+  .dropdown-item .d-icon {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .dropdown-item .d-name { font-weight: 500; }
+  .dropdown-item .d-company { font-size: 12px; color: var(--text2); }
+
+  .selected-apps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 40px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px;
+    margin-bottom: 20px;
+  }
+
+  .app-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg4);
+    border: 1px solid var(--border2);
+    border-radius: 20px;
+    padding: 4px 10px 4px 8px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .app-chip .chip-icon { font-size: 14px; }
+
+  .app-chip .remove-chip {
+    cursor: pointer;
+    color: var(--text3);
+    font-size: 16px;
+    line-height: 1;
+    margin-left: 2px;
+  }
+
+  .app-chip .remove-chip:hover { color: var(--red); }
+
+  .empty-chips { color: var(--text3); font-size: 13px; align-self: center; }
+
+  .cta-btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--accent), #8b5cf6);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 15px 24px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    font-family: inherit;
+  }
+
+  .cta-btn:hover { opacity: 0.92; }
+  .cta-btn:active { transform: scale(0.99); }
+  .cta-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .stats-row {
+    display: flex;
+    gap: 32px;
+    margin-top: 48px;
+    position: relative; z-index: 1;
+  }
+
+  .stat-item { text-align: center; }
+  .stat-num { font-size: 28px; font-weight: 700; color: var(--accent2); }
+  .stat-label { font-size: 12px; color: var(--text3); }
+
+  /* ── LOADING ── */
+  #loading {
+    min-height: 100vh;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+  }
+
+  .loader-ring {
+    width: 56px; height: 56px;
+    border: 3px solid var(--border2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-steps { text-align: center; }
+  .loading-step { font-size: 14px; color: var(--text2); margin-bottom: 6px; transition: all 0.3s; }
+  .loading-step.active { color: var(--accent2); font-weight: 600; }
+  .loading-step.done { color: var(--green); }
+
+  /* ── REPORT ── */
+  #report { display: none; padding: 0 0 80px; }
+
+  .report-header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 24px 0;
+    margin-bottom: 40px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    backdrop-filter: blur(20px);
+  }
+
+  .report-header-inner {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .report-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .report-logo {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent), var(--pink));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+
+  .report-brand-name { font-size: 15px; font-weight: 700; }
+
+  .header-scores {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+  }
+
+  .header-score-item { text-align: center; }
+  .header-score-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; }
+  .header-score-val { font-size: 20px; font-weight: 700; }
+
+  .back-btn {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    color: var(--text2);
+    border-radius: var(--radius-sm);
+    padding: 8px 16px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+
+  .back-btn:hover { color: var(--text); border-color: var(--accent); }
+
+  .report-body {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  .user-greeting {
+    margin-bottom: 40px;
+  }
+
+  .user-greeting .hello {
+    font-size: 13px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 8px;
+  }
+
+  .user-greeting h2 {
+    font-size: clamp(22px, 4vw, 32px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+  }
+
+  .user-greeting p {
+    font-size: 15px;
+    color: var(--text2);
+  }
+
+  /* disclaimer */
+  .disclaimer {
+    background: rgba(108,99,255,0.08);
+    border: 1px solid rgba(108,99,255,0.2);
+    border-radius: var(--radius-sm);
+    padding: 14px 18px;
+    font-size: 13px;
+    color: var(--text2);
+    margin-bottom: 40px;
+    line-height: 1.6;
+  }
+
+  .disclaimer b { color: var(--text); }
+
+  /* tags */
+  .tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+    letter-spacing: 0.05em;
+    margin-left: 4px;
+    vertical-align: middle;
+  }
+  .tag-fact { background: rgba(62,207,142,0.15); color: var(--green); }
+  .tag-est  { background: rgba(255,140,66,0.15); color: var(--orange); }
+
+  /* sections */
+  .section { margin-bottom: 48px; }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* cards */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+  }
+
+  .card + .card { margin-top: 12px; }
+
+  .card-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .card-sub {
+    font-size: 13px;
+    color: var(--text2);
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+
+  /* metric cards */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .metric-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+  }
+
+  .metric-label { font-size: 12px; color: var(--text2); margin-bottom: 6px; }
+  .metric-val { font-size: 24px; font-weight: 700; line-height: 1; }
+  .metric-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+  /* score */
+  .scores-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .score-block {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+  }
+
+  .score-name { font-size: 13px; color: var(--text2); margin-bottom: 10px; }
+
+  .score-number {
+    font-size: 52px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    margin-bottom: 12px;
+  }
+
+  .score-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-bottom: 14px;
+  }
+
+  .score-bar-bg {
+    height: 4px;
+    background: var(--bg4);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .score-bar-fill { height: 100%; border-radius: 2px; transition: width 1.2s cubic-bezier(0.4,0,0.2,1); }
+
+  .score-context { font-size: 11px; color: var(--text3); margin-top: 8px; }
+
+  /* heatmap */
+  .heatmap-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    gap: 8px;
+  }
+
+  .heat-cell {
+    border-radius: var(--radius-sm);
+    padding: 12px 8px;
+    text-align: center;
+    transition: transform 0.15s;
+    cursor: default;
+  }
+
+  .heat-cell:hover { transform: translateY(-2px); }
+  .heat-cell .h-icon { font-size: 22px; margin-bottom: 6px; }
+  .heat-cell .h-name { font-size: 11px; font-weight: 600; line-height: 1.2; }
+  .heat-cell .h-risk { font-size: 10px; margin-top: 3px; opacity: 0.8; }
+
+  .heat-critical { background: rgba(255,79,79,0.15); border: 1px solid rgba(255,79,79,0.25); color: #ff8080; }
+  .heat-high     { background: rgba(255,140,66,0.15); border: 1px solid rgba(255,140,66,0.25); color: #ffaa70; }
+  .heat-medium   { background: rgba(255,201,71,0.15); border: 1px solid rgba(255,201,71,0.25); color: #ffd070; }
+  .heat-low      { background: rgba(62,207,142,0.15); border: 1px solid rgba(62,207,142,0.25); color: #60e0a0; }
+
+  .heat-legend {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 14px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text2);
+  }
+
+  .legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+
+  /* company ranking */
+  .company-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .company-row:last-child { border-bottom: none; }
+
+  .c-rank { font-size: 13px; color: var(--text3); width: 20px; flex-shrink: 0; }
+
+  .c-logo {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+    font-weight: 700;
+  }
+
+  .c-info { flex: 1; min-width: 0; }
+  .c-name { font-size: 14px; font-weight: 600; }
+  .c-apps { font-size: 12px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .c-bar-wrap { width: 120px; flex-shrink: 0; }
+  .c-bar-bg { height: 4px; background: var(--bg4); border-radius: 2px; overflow: hidden; }
+  .c-bar-fill { height: 100%; border-radius: 2px; }
+  .c-score { font-size: 11px; color: var(--text2); text-align: right; margin-top: 4px; }
+
+  /* matrix */
+  .matrix-scroll { overflow-x: auto; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    min-width: 500px;
+  }
+
+  th {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    padding: 8px 10px;
+    text-align: left;
+    border-bottom: 1px solid var(--border2);
+  }
+
+  td {
+    padding: 9px 10px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: middle;
+  }
+
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
+  .dot-y { background: var(--red); }
+  .dot-m { background: var(--yellow); }
+  .dot-n { background: var(--bg4); border: 1px solid var(--border2); }
+
+  /* radar */
+  .radar-container {
+    position: relative;
+    max-width: 380px;
+    margin: 0 auto;
+  }
+
+  .risk-dims {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .dim-card {
+    background: var(--bg3);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    border: 1px solid var(--border);
+  }
+
+  .dim-name { font-size: 11px; color: var(--text2); margin-bottom: 4px; }
+  .dim-val { font-size: 20px; font-weight: 700; }
+
+  /* digital twin */
+  .twin-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+  }
+
+  .twin-item {
+    background: var(--bg3);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    border: 1px solid var(--border);
+  }
+
+  .twin-label { font-size: 11px; color: var(--text3); margin-bottom: 5px; }
+  .twin-val { font-size: 14px; font-weight: 600; color: var(--text); }
+  .twin-source { font-size: 11px; color: var(--text3); margin-top: 3px; line-height: 1.3; }
+
+  /* wow insights */
+  .wow-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+  }
+
+  .wow-item {
+    background: var(--bg3);
+    border-radius: var(--radius-sm);
+    padding: 18px;
+    border: 1px solid var(--border);
+  }
+
+  .wow-num { font-size: 28px; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 6px; }
+  .wow-desc { font-size: 13px; color: var(--text2); line-height: 1.5; }
+
+  /* assets */
+  .asset-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .asset-row:last-child { border-bottom: none; }
+
+  .asset-icon {
+    width: 36px; height: 36px;
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .asset-info { flex: 1; }
+  .asset-name { font-size: 14px; font-weight: 600; }
+  .asset-desc { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+  .asset-level {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+
+  .level-critical { background: rgba(255,79,79,0.15); color: var(--red); }
+  .level-high     { background: rgba(255,140,66,0.15); color: var(--orange); }
+  .level-moderate { background: rgba(255,201,71,0.15); color: var(--yellow); }
+
+  /* simulator */
+  .sim-action {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    user-select: none;
+  }
+
+  .sim-action:hover { border-color: var(--border2); }
+  .sim-action.active { border-color: var(--green); background: rgba(62,207,142,0.05); }
+
+  .sim-top { display: flex; align-items: center; gap: 10px; }
+
+  .sim-checkbox {
+    width: 18px; height: 18px;
+    border-radius: 4px;
+    border: 1.5px solid var(--border2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+
+  .sim-action.active .sim-checkbox {
+    background: var(--green);
+    border-color: var(--green);
+    color: #0a0a0f;
+  }
+
+  .sim-title { font-size: 14px; font-weight: 500; }
+  .sim-impact { font-size: 12px; color: var(--text2); margin-top: 8px; margin-left: 28px; line-height: 1.5; }
+
+  .sim-result-card {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .sim-before { text-align: center; }
+  .sim-before-label { font-size: 11px; color: var(--text3); margin-bottom: 4px; }
+  .sim-before-val { font-size: 36px; font-weight: 800; color: var(--text2); }
+
+  .sim-arrow { font-size: 24px; color: var(--text3); }
+
+  .sim-after { text-align: center; }
+  .sim-after-label { font-size: 11px; color: var(--text3); margin-bottom: 4px; }
+  .sim-after-val { font-size: 36px; font-weight: 800; color: var(--green); }
+
+  .sim-message { flex: 1; min-width: 150px; font-size: 13px; color: var(--text2); line-height: 1.5; }
+
+  /* verdict */
+  .verdict-card {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+  }
+
+  .verdict-level {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+  }
+
+  .verdict-headline { font-size: 20px; font-weight: 700; margin-bottom: 12px; line-height: 1.3; }
+  .verdict-body { font-size: 14px; color: var(--text2); line-height: 1.7; margin-bottom: 24px; }
+
+  .verdict-steps { display: flex; flex-direction: column; gap: 10px; }
+
+  .verdict-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    background: var(--bg3);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    border: 1px solid var(--border);
+  }
+
+  .v-num {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent2);
+    background: rgba(108,99,255,0.15);
+    border-radius: 4px;
+    padding: 2px 6px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .v-text { font-size: 13px; color: var(--text2); line-height: 1.6; }
+  .v-text b { color: var(--text); }
+
+  /* ── FOOTER ── */
+  .report-footer {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 24px 24px 0;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text3);
+    text-align: center;
+    line-height: 1.7;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 600px) {
+    .scores-grid { grid-template-columns: 1fr; }
+    .start-card { padding: 24px 20px; }
+    .stats-row { gap: 20px; }
+    .header-scores { display: none; }
+    .risk-dims { grid-template-columns: repeat(2,1fr); }
+  }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════ LANDING ════════════════════ -->
+<div id="landing">
+  <div class="bg-glow"></div>
+
+  <div class="logo-mark">👣</div>
+  <div class="brand">Footprints</div>
+
+  <h1>How exposed is<br>your <span>digital life?</span></h1>
+  <p class="tagline">Enter the apps and services you use every day. Get a full intelligence report on your digital privacy — in seconds.</p>
+
+  <div class="start-card">
+    <h2>Start your privacy audit</h2>
+    <p>This tool never connects to real databases. All analysis is based on known, publicly reported data practices. Your name and app list stay on your device — nothing is sent or stored.</p>
+
+    <label for="nameInput">Your name (optional)</label>
+    <input type="text" id="nameInput" placeholder="e.g. Amaka, David, Sarah…" maxlength="40">
+
+    <label>Search and add your apps</label>
+    <div class="apps-search-wrap">
+      <input type="text" id="appSearch" placeholder="Type an app name — e.g. Instagram, Spotify…" autocomplete="off">
+      <div class="apps-dropdown" id="appsDropdown"></div>
+    </div>
+
+    <div class="selected-apps" id="selectedApps">
+      <span class="empty-chips" id="emptyChips">No apps added yet — search above to add</span>
+    </div>
+
+    <label>Or add a custom app not in the list</label>
+    <div style="display:flex;gap:8px;margin-bottom:20px">
+      <input type="text" id="customAppInput" placeholder="e.g. Kuda, Cowrywise, Binance…" style="flex:1;margin-bottom:0">
+      <button onclick="addCustomApp()" style="background:var(--bg4);border:1px solid var(--border2);color:var(--text);border-radius:var(--radius-sm);padding:0 16px;cursor:pointer;font-size:14px;white-space:nowrap;font-family:inherit">+ Add</button>
+    </div>
+
+    <button class="cta-btn" id="analyseBtn" onclick="startAnalysis()" disabled>
+      Analyse my footprint →
+    </button>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-item"><div class="stat-num">150+</div><div class="stat-label">Apps in database</div></div>
+    <div class="stat-item"><div class="stat-num">8</div><div class="stat-label">Risk dimensions</div></div>
+    <div class="stat-item"><div class="stat-num">100%</div><div class="stat-label">Private — nothing stored</div></div>
+  </div>
+</div>
+
+<!-- ════════════════════ LOADING ════════════════════ -->
+<div id="loading">
+  <div class="loader-ring"></div>
+  <div class="loading-steps">
+    <div class="loading-step" id="ls1">Mapping your services…</div>
+    <div class="loading-step" id="ls2">Identifying parent companies…</div>
+    <div class="loading-step" id="ls3">Calculating exposure scores…</div>
+    <div class="loading-step" id="ls4">Building your digital twin profile…</div>
+    <div class="loading-step" id="ls5">Generating your full report…</div>
+  </div>
+</div>
+
+<!-- ════════════════════ REPORT ════════════════════ -->
+<div id="report">
+
+  <div class="report-header">
+    <div class="report-header-inner">
+      <div class="report-brand">
+        <div class="report-logo">👣</div>
+        <span class="report-brand-name">Footprints</span>
+      </div>
+      <div class="header-scores">
+        <div class="header-score-item">
+          <div class="header-score-label">Footprint</div>
+          <div class="header-score-val" id="hFootprint">—</div>
+        </div>
+        <div style="width:1px;height:30px;background:var(--border)"></div>
+        <div class="header-score-item">
+          <div class="header-score-label">Privacy</div>
+          <div class="header-score-val" id="hPrivacy">—</div>
+        </div>
+      </div>
+      <button class="back-btn" onclick="goBack()">← New audit</button>
+    </div>
+  </div>
+
+  <div class="report-body">
+
+    <!-- greeting -->
+    <div class="user-greeting">
+      <div class="hello">Your privacy intelligence report</div>
+      <h2 id="reportHeadline"></h2>
+      <p id="reportSubline"></p>
+    </div>
+
+    <div class="disclaimer">
+      <b>How to read this report:</b> Labels marked <span class="tag tag-fact">FACT</span> are based directly on the apps you entered. Labels marked <span class="tag tag-est">ESTIMATE</span> are reasonable inferences based on publicly known data practices — not certainties. This app never accesses any real database and never stores your data.
+    </div>
+
+    <!-- OVERVIEW -->
+    <div class="section">
+      <div class="section-label">Overview</div>
+      <div class="metrics-grid" id="overviewMetrics"></div>
+    </div>
+
+    <!-- SCORES -->
+    <div class="section">
+      <div class="section-label">Your Scores</div>
+      <div class="scores-grid">
+        <div class="score-block">
+          <div class="score-name">Digital Footprint Score <span class="tag tag-est">ESTIMATE</span></div>
+          <div class="score-number" id="footprintNum">—</div>
+          <div id="footprintBadge"></div>
+          <div class="score-bar-bg"><div class="score-bar-fill" id="footprintBar" style="width:0%"></div></div>
+          <div class="score-context">0 = invisible online &nbsp;·&nbsp; 100 = fully exposed</div>
+        </div>
+        <div class="score-block">
+          <div class="score-name">Privacy Protection Score <span class="tag tag-est">ESTIMATE</span></div>
+          <div class="score-number" id="privacyNum">—</div>
+          <div id="privacyBadge"></div>
+          <div class="score-bar-bg"><div class="score-bar-fill" id="privacyBar" style="width:0%"></div></div>
+          <div class="score-context">0 = no protection &nbsp;·&nbsp; 100 = strongly protected</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HEATMAP -->
+    <div class="section">
+      <div class="section-label">Exposure Heat Map</div>
+      <div class="card">
+        <div class="card-title">Risk level per service</div>
+        <div class="card-sub">Colour shows estimated data exposure intensity based on each app's known data practices. <span class="tag tag-est">ESTIMATE</span></div>
+        <div class="heatmap-grid" id="heatmapGrid"></div>
+        <div class="heat-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:rgba(255,79,79,0.6)"></div>Critical</div>
+          <div class="legend-item"><div class="legend-dot" style="background:rgba(255,140,66,0.6)"></div>High</div>
+          <div class="legend-item"><div class="legend-dot" style="background:rgba(255,201,71,0.6)"></div>Medium</div>
+          <div class="legend-item"><div class="legend-dot" style="background:rgba(62,207,142,0.6)"></div>Low</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMPANY RANKING -->
+    <div class="section">
+      <div class="section-label">Company Exposure Ranking</div>
+      <div class="card">
+        <div class="card-title">Who holds the most of your data</div>
+        <div class="card-sub">Ranked by estimated data volume and sensitivity across the companies that own your apps. <span class="tag tag-fact">FACT</span> + <span class="tag tag-est">ESTIMATE</span></div>
+        <div id="companyRanking"></div>
+      </div>
+    </div>
+
+    <!-- MATRIX -->
+    <div class="section">
+      <div class="section-label">Data Collection Matrix</div>
+      <div class="card">
+        <div class="card-title">What each service likely collects</div>
+        <div class="card-sub">Based on published privacy policies and independent research. <span class="tag tag-est">ESTIMATE</span></div>
+        <div class="matrix-scroll">
+          <table id="matrixTable">
+            <thead>
+              <tr>
+                <th>Service</th>
+                <th>Location</th>
+                <th>Contacts</th>
+                <th>Behaviour</th>
+                <th>Biometrics</th>
+                <th>Financial</th>
+                <th>Device ID</th>
+              </tr>
+            </thead>
+            <tbody id="matrixBody"></tbody>
+          </table>
+        </div>
+        <div style="display:flex;gap:20px;margin-top:14px;flex-wrap:wrap">
+          <div class="legend-item"><div class="legend-dot dot-y"></div>Likely collects</div>
+          <div class="legend-item"><div class="legend-dot dot-m"></div>Possibly collects</div>
+          <div class="legend-item"><div class="legend-dot dot-n"></div>Unlikely / not evident</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RISK RADAR -->
+    <div class="section">
+      <div class="section-label">Risk Radar</div>
+      <div class="card">
+        <div class="card-title">Your risk profile across 6 dimensions</div>
+        <div class="card-sub">Based on your specific mix of services and their known risk profiles. <span class="tag tag-est">ESTIMATE</span></div>
+        <div class="radar-container">
+          <canvas id="radarChart" role="img" aria-label="Radar chart showing risk across 6 privacy dimensions"></canvas>
+        </div>
+        <div class="risk-dims" id="riskDims"></div>
+      </div>
+    </div>
+
+    <!-- DIGITAL TWIN -->
+    <div class="section">
+      <div class="section-label">Digital Twin Profile</div>
+      <div class="card">
+        <div class="card-title">How data brokers likely see you</div>
+        <div class="card-sub">Based on your services, here is the kind of profile that commercial data brokers likely hold about you — assembled without your knowledge. <span class="tag tag-est">ESTIMATE</span></div>
+        <div class="twin-grid" id="twinGrid"></div>
+        <div style="margin-top:16px;background:rgba(255,79,79,0.08);border:1px solid rgba(255,79,79,0.15);border-radius:var(--radius-sm);padding:14px;font-size:13px;color:var(--text2);line-height:1.6">
+          <b style="color:var(--text)">Why this matters:</b> Data brokers sell profiles like this to advertisers, insurance companies, employers, and lenders. You never consented to this profile existing — it was assembled from usage patterns across platforms that shared or sold data about you.
+        </div>
+      </div>
+    </div>
+
+    <!-- WOW INSIGHTS -->
+    <div class="section">
+      <div class="section-label">WOW Insights</div>
+      <div class="card">
+        <div class="card-title">Numbers that put your exposure in perspective</div>
+        <div class="wow-grid" id="wowGrid"></div>
+      </div>
+    </div>
+
+    <!-- MOST VALUABLE DATA ASSETS -->
+    <div class="section">
+      <div class="section-label">Most Valuable Data Assets</div>
+      <div class="card">
+        <div class="card-title">What's worth the most — to advertisers and bad actors</div>
+        <div class="card-sub">Ranked by market value and identity theft utility based on your specific services. <span class="tag tag-est">ESTIMATE</span></div>
+        <div id="assetsSection"></div>
+      </div>
+    </div>
+
+    <!-- SIMULATOR -->
+    <div class="section">
+      <div class="section-label">Privacy Improvement Simulator</div>
+      <div class="card">
+        <div class="card-title">See your score change in real time</div>
+        <div class="card-sub">Tick the actions you are willing to take. Watch your Privacy Score update instantly. These are not real changes — just simulations to show what's possible.</div>
+        <div id="simActions"></div>
+        <div class="sim-result-card">
+          <div class="sim-before">
+            <div class="sim-before-label">Current score</div>
+            <div class="sim-before-val" id="simBefore">—</div>
+          </div>
+          <div class="sim-arrow">→</div>
+          <div class="sim-after">
+            <div class="sim-after-label">Projected score</div>
+            <div class="sim-after-val" id="simAfter">—</div>
+          </div>
+          <div class="sim-message" id="simMessage">Select actions above to see how your score would improve.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FINAL VERDICT -->
+    <div class="section">
+      <div class="section-label">Final Verdict</div>
+      <div class="verdict-card">
+        <div id="verdictLevel"></div>
+        <div class="verdict-headline" id="verdictHeadline"></div>
+        <div class="verdict-body" id="verdictBody"></div>
+        <div class="verdict-steps" id="verdictSteps"></div>
+      </div>
+    </div>
+
+    <div class="report-footer">
+      Footprints is an educational privacy intelligence tool. It does not access, store, or transmit any personal data.<br>
+      All scores and inferences are estimates based on publicly reported data practices. For a real privacy audit, consult a qualified professional.
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  APP DATABASE — 150+ services with privacy data
+// ═══════════════════════════════════════════════
+const APP_DB = [
+  // Social media
+  { name:'Instagram', icon:'📸', company:'Meta', companyScore:88, risk:'critical', collects:{location:true,contacts:true,behaviour:true,biometrics:'maybe',financial:false,device:true} },
+  { name:'Facebook', icon:'👥', company:'Meta', companyScore:88, risk:'critical', collects:{location:true,contacts:true,behaviour:true,biometrics:'maybe',financial:'maybe',device:true} },
+  { name:'WhatsApp', icon:'💬', company:'Meta', companyScore:88, risk:'medium', collects:{location:'maybe',contacts:true,behaviour:true,biometrics:false,financial:false,device:true} },
+  { name:'Messenger', icon:'✉️', company:'Meta', companyScore:88, risk:'high', collects:{location:true,contacts:true,behaviour:true,biometrics:false,financial:false,device:true} },
+  { name:'Threads', icon:'🧵', company:'Meta', companyScore:88, risk:'high', collects:{location:true,contacts:true,behaviour:true,biometrics:false,financial:false,device:true} },
+  { name:'TikTok', icon:'🎵', company:'ByteDance', companyScore:92, risk:'critical', collects:{location:true,contacts:true,behaviour:true,biometrics:true,financial:false,device:true} },
+  { name:'Snapchat', icon:'👻', company:'Snap Inc.', companyScore:65, risk:'high', collects:{location:true,contacts:true,behaviour:true,biometrics:'maybe',financial:false,device:true} },
+  { name:'Twitter/X', icon:'🐦', company:'X Corp.', companyScore:70, risk:'high', collects:{location:true,contacts:false,behaviour:true,biometrics:false,financial:'maybe',device:true} },
+  { name:'LinkedIn', icon:'💼', company:'Microsoft', companyScore:60, risk:'high', collects:{location:'maybe',contacts:true,behaviour:true,biometrics:false,financial:false,device:true} },
+  { name:'Pinterest', icon:'📌', company:'Pinterest', companyScore:55, risk:'medium', collects:{location:'maybe',contacts:false,behaviour:true,biometrics:false,financial:false,device:true} },
+  { name:'Reddit', icon:'🤖', company:'Reddit Inc.', companyScore:50, risk:'medium', collects:{location:false,contacts:false,behaviour:true,biometrics:false,financial:false,device:true} },
+  { name:'Tumblr', icon:'🌀', company:'Automattic', companyScore:42, risk:'low', collects:{location:false,contacts:false,behaviour:true,biometrics:false,financial:false,device:'maybe'} },
+  { name:'BeReal', icon:'📷', company:'BeReal SAS', companyScore:48, risk:'medium', collects:{location:true,contacts:true,behaviour:'maybe',biometrics:false,financial:false,device:true} },
+
+  // Google
+  { name:'Google Search', icon:'🔍', company:'Alphabet (Google)', companyScore:96, risk:'critical', collects:{location:true,contacts:false,behaviour:true,biometrics:false,financial:false,device:true} },
+  { name:'YouTube', icon:'▶️', company:'Alphabet (Google)', companyScore:96, risk:'high', collects:{location:true,contacts:false,behaviour:true,biometrics:false,financial:false,device:true} },
+  { name:'Google Maps', icon:'🗺️', company:'Alphabet (Google)', companyScore:96, risk:'critical', collects:{location:true,contacts:false,behaviour:true,biometrics:false,financial:false,device:true} },
+  { name:'Google Pay', icon:'💳', company:'Alphabet (Google)', companyScore:96, risk:'critical', collects:{location:true,contacts:'maybe',behaviour:true,biometrics:false,financial:true,device:true} },
+  { name:'Google Photos', icon:'🖼️', company:'Alphabet (Google)', companyScore:96, risk:'high', collects:{location:true,contacts:false,behaviour:'maybe',biometrics:true,financial:false,device:true} },
+  { name:'Gmail', icon:'📧', company:'Alphabet (Google)', companyScore:96, risk:'critical', collects:{location:'maybe',contacts:true,behaviour:true,biometrics:false,financial:'maybe',device:true} },
+  { name:'Google Drive', icon:'☁️', company:'Alphabet (Google)', companyScore:96, risk:'high', collects:{location:false,contacts:'maybe',behaviour:true,biometrics:false,financial:'maybe',device:true} },
+  { name:'Google Chrome', icon:'🌐', company:'Alphabet (Google)', companyScore:96, risk:'critical', collects:{location:true,contacts:false,behaviour:true,biometrics:false,financial:'maybe',device:true} },
+  { name:'Google Meet', icon:'🎥', company:'Alphabet (Google)', companyScore:96, risk:'medium', collects:{location:false,contacts:true,behaviour:'maybe',biometrics:false,financial:false,device:true} },
+
+  // Apple
+  { name:'iMessage', icon:'💬', company:'Apple', companyScore:28, risk:'low', collects:{location:false,contacts:true,behaviour:false,biometrics:false,financial:false,device:'maybe'} },
+  { name:'FaceTime', icon:'📹', company:'Apple', companyScore:28, risk:'low', collects:{location:false,contacts:true,behaviour:false,biometrics:false,financial:false,device:'maybe'} },
+  { name:'Apple Maps', icon:'🗺️', company:'Apple', companyScore:28, risk:'low', collects:{location:true,contacts:false,behaviour:'maybe',biometrics:false,financial:false,device:'maybe'} },
+  { name:'App Store', icon:'📦', company:'Apple', companyScore:28, risk:'medium', collects:{location:false,contacts:false,behaviour:true,biometrics:false,financial:true,device:true} },
+  { name:'Apple Pay', icon:'💰', company:'Apple', companyScore:28, risk:'medium', collects:{location:'maybe',contacts:false,behaviour:'maybe',biometrics:true,financial:true,device:'maybe'} },
+  { name:'iCloud', icon:'☁️', company:'Apple', companyScore:30, risk:'medium', collects:{location:true,contacts:true,behaviour:'maybe',biometrics:'maybe',financial:false,device:true} },
+  { name:'Safari', icon:'🧭', company:'Apple', companyScore:28, risk:'low', collects:{location:false,contacts:false,behaviour:'maybe',biometrics:false,financial:false,device:'maybe'} },
+
+  // Microsoft
+  { name:'Microsoft Teams', icon:'🏢', company:'Microsoft', companyScore:55, risk:'medium', collects:{location:false,contacts:true,behaviour:true,biometrics:false,financial:false,device:true} },
+  { name:'Outlook', icon:'📨', company:'Microsoft', companyScore:55, risk:'medium', collects:{location:false,contacts:true,behaviour:true,biometrics:false,financial:'maybe',device:true} },
+  { name:'OneDrive', icon:'☁️', company:'Microsoft', companyScore:55, risk:'medium', collects:{location:false,contacts:false,behaviour:true,biometrics:false,financial:false,device:true} },
+  { name:'Bing', icon:'🔎', company:'Microsoft', companyScore:55, risk:'high', collects:{location:true,contacts:false,behaviour:true,biometrics:false,financial:false,device:true} },
+  { name:'Xbox', icon:'🎮', company:'Microsoft', companyScore:55, risk:'medium', collects:{location:false,contacts:'maybe',behaviour:true,biometrics:false,financial:'maybe',device:true} },
+
+  // Shopping
+  { name:'Amazon', icon:'📦', company:'Amazon', companyScore:78, risk:'high', collects:{location:true,contacts:false,behaviour:true,biometrics:false,financial:true,device:true} },
+  { name:'eBay', icon:'🛒', company:'eBay', companyScore:60, risk:'medium', collects:{location:true,contacts:false,behaviour:true,biometrics:false,financial:true,device:true} },
+  { name:'Alibaba', icon:'🛍️', company:'Alibaba Group', companyScore:80, risk:'high', collects:{location:true,contacts:false,behaviour:true,biometrics:'maybe',financial:true,device:true} },
+  { name:'Shein', icon:'👗', company:'Shein', companyScore:82, risk:'critical', collects:{location:true,contacts:false,behaviour:true,biometrics:false,financial:true,device:true} },
+  { name:'Meesho', icon:'🛍️', company:'Meesho', companyScore:62, risk:'medium', collects:{location:true,contacts:false,behaviour:true,biometrics:false,financial:true,device:true} },
+  { name:'Jumia', icon:'🛒', company:'Jumia', companyScore:58, risk:'medium', collects:{location:true,contacts:false,behaviour:true,biometrics:false,financial:true,device:true} },
+  { name:'Konga', icon:'🛒', company:'Konga', companyScore:55, risk:'medium', collects:{location:true,contacts:false,behaviour:true,biometrics:false,financial:true,device:true} },
+
+  // Finance
+  { name:'PayPal', icon:'💸', company:'PayPal', companyScore:65, risk:'high', collects:{location:true,contacts:'maybe',behaviour:true,biometrics:false,financial:true,device:true} },
+  { name:'Cash App', icon:'💵', company:'Block Inc.', companyScore:68, risk:'high', collects:{location:true,contacts:true,behaviour:true,biometrics:'maybe',financial:true,device:true} },
+  { name:'Venmo', icon:'💴', company:'PayPal', companyScore:65, risk:'high', collects:{location:false,contacts:true,behaviour:true,biometrics:false,financial:true,device:true} },
+  { name:'Revolut', icon:'🏦', company:'Revolut', companyScore:60, risk:'high', collects:{location:true,contacts:false,behaviour:true,biometrics:true,financial:true,device:true} },
+  { name:'Kuda', icon:'🏦', company:'Kuda', companyScore:55, risk:'medium', collects:{location:false,contacts:false,behaviour:true,biometrics:true,financial:true,device:true} },
+  { name:'Opay', icon:'💳', company:'OPay', companyScore:62, risk:'high', collects:{location:true,contacts:'maybe',behaviour:true,biometrics:true,financial:true,device:true} },
+  { name:'PalmPay', icon:'💳', company:'PalmPay', companyScore:60, risk:'high', collects:{location:true,contacts:'maybe',behaviour:true,biometrics:true,financial:true,device:true} },
+  { name:'Paystack', icon:'💳', company:'Stripe/Paystack', companyScore:52, risk:'medium', collects:{location:false,contacts:false,behaviour:'maybe',biometrics:false,financial:true,device:'maybe'} },
+  { name:'Flutterwave', icon:'💳', company:'Flutterwave', companyScore:52, risk:'medium', collects:{location:false,contacts:false,behaviour:'maybe',biometrics:false,financial:true,device:'maybe'} },
+  { name:'Coinbase', icon:'🪙', company:'Coinbase', companyScore:58, risk:'high', collects:{location:true,contacts:false,behaviour:true,biometrics:true,financial:true,device:true} },
+  { name:'Binance', icon:'🪙', company:'Binance', companyScore:72, risk:'high', collects:{location:true,contacts:false,behaviour:true,biometrics:true,financial:true,device:true} },
+
+  // Entertainment / Streaming
+  { name:'Spotify', icon:'🎧', company:'Spotify', companyScore:44, risk:'medium', collects:{location:'maybe',contacts:false,behaviour:true,biometrics:false,financial:false,device:true} },
+  { name:'Netflix', icon:'🎬', company:'Netflix', companyScore:48, risk:'medium', collects:{location:'maybe',contacts:false,behaviour:true,biometrics:false,financial:true,device:true} },
+  { name:'Apple Music', icon:'🎵', company:'Apple', companyScore:28, risk:'low', collects:{location:false,contacts:false,behaviour:true,biometrics:false,financial:false,device:'maybe'} },
+  { name:'Deezer', icon:'🎶', company:'Deezer', companyScore:40, risk:'low', collects:{location:false,contacts:false,behaviour:true,biometrics:false,financial:false,device:'maybe'} },
+  { name:'Amazon Prime', icon:'📺', company:'Amazon', companyScore:78, risk:'high', collects:{location:'maybe',contacts:false,behaviour:true,biometrics:false,financial:true,device:true} },
+  { name:'Disney+', icon:'🏰', company:'Disney', companyScore:52, risk:'medium', collects:{location:false,contacts:false,behaviour:true,biometrics:false,financial:true,device:true} },
+  { name:'HBO Max', icon:'🎭', company:'Warner Bros.', companyScore:50, risk:'medium', collects:{location:false,contacts:false,behaviour:true,biometrics:false,financial:true,device:true} },
+  { name:'Audiomack', icon:'🎵', company:'Audiomack', companyScore:38, risk:'low', collects:{location:false,contacts:false,behaviour:true,biometrics:false,financial:false,device:'maybe'} },
+  { name:'Boomplay', icon:'🎵', company:'Boomplay', companyScore:40, risk:'low', collects:{location:false,contacts:false,behaviour:true,biometrics:false,financial:false,device:'maybe'} },
+
+  // Gaming
+  { name:'Roblox', icon:'🧱', company:'Roblox Corp.', companyScore:55, risk:'medium', collects:{location:false,contacts:false,behaviour:true,biometrics:false,financial:'maybe',device:true} },
+  { name:'PUBG Mobile', icon:'🎮', company:'Krafton/Tencent', companyScore:72, risk:'high', collects:{location:'maybe',contacts:false,behaviour:true,biometrics:false,financial:'maybe',device:true} },
+  { name:'Fortnite', icon:'🎯', company:'Epic Games', companyScore:58, risk:'medium', collects:{location:false,contacts:false,behaviour:true,biometrics:false,financial:'maybe',device:true} },
+  { name:'Call of Duty Mobile', icon:'🔫', company:'Activision/Tencent', companyScore:70, risk:'high', collects:{location:'maybe',contacts:false,behaviour:true,biometrics:false,financial:'maybe',device:true} },
+  { name:'Clash of Clans', icon:'⚔️', company:'Supercell', companyScore:48, risk:'medium', collects:{location:false,contacts:false,behaviour:true,biometrics:false,financial:'maybe',device:true} },
+  { name:'Mobile Legends', icon:'⚔️', company:'Moonton/ByteDance', companyScore:68, risk:'high', collects:{location:'maybe',contacts:false,behaviour:true,biometrics:false,financial:'maybe',device:true} },
+  { name:'Steam', icon:'🎮', company:'Valve', companyScore:50, risk:'medium', collects:{location:false,contacts:false,behaviour:true,biometrics:false,financial:true,device:true} },
+  { name:'PlayStation', icon:'🎮', company:'Sony', companyScore:52, risk:'medium', collects:{location:false,contacts:'maybe',behaviour:true,biometrics:false,financial:true,device:true} },
+  { name:'Candy Crush', icon:'🍬', company:'King/Activision', companyScore:55, risk:'medium', collects:{location:false,contacts:false,behaviour:true,biometrics:false,financial:'maybe',device:true} },
+
+  // Communication
+  { name:'Discord', icon:'🎙️', company:'Discord Inc.', companyScore:50, risk:'medium', collects:{location:false,contacts:false,behaviour:true,biometrics:false,financial:false,device:true} },
+  { name:'Telegram', icon:'✈️', company:'Telegram', companyScore:38, risk:'low', collects:{location:'maybe',contacts:true,behaviour:'maybe',biometrics:false,financial:false,device:true} },
+  { name:'Signal', icon:'🔒', company:'Signal Foundation', companyScore:10, risk:'low', collects:{location:false,contacts:true,behaviour:false,biometrics:false,financial:false,device:false} },
+  { name:'Viber', icon:'📲', company:'Rakuten', companyScore:58, risk:'medium', collects:{location:true,contacts:true,behaviour:true,biometrics:false,financial:false,device:true} },
+  { name:'WeChat', icon:'🟢', company:'Tencent', companyScore:90, risk:'critical', collects:{location:true,contacts:true,behaviour:true,biometrics:'maybe',financial:true,device:true} },
+  { name:'Zoom', icon:'📹', company:'Zoom', companyScore:55, risk:'medium', collects:{location:false,contacts:false,behaviour:true,biometrics:false,financial:false,device:true} },
+  { name:'Skype', icon:'💻', company:'Microsoft', companyScore:55, risk:'medium', collects:{location:false,contacts:true,behaviour:true,biometrics:false,financial:false,device:true} },
+
+  // Productivity
+  { name:'Notion', icon:'📝', company:'Notion Labs', companyScore:35, risk:'low', collects:{location:false,contacts:false,behaviour:true,biometrics:false,financial:false,device:'maybe'} },
+  { name:'Slack', icon:'💬', company:'Salesforce', companyScore:52, risk:'medium', collects:{location:false,contacts:false,behaviour:true,biometrics:false,financial:false,device:true} },
+  { name:'Dropbox', icon:'📁', company:'Dropbox', companyScore:45, risk:'medium', collects:{location:false,contacts:false,behaviour:true,biometrics:false,financial:'maybe',device:true} },
+  { name:'Evernote', icon:'📔', company:'Evernote', companyScore:40, risk:'low', collects:{location:false,contacts:false,behaviour:true,biometrics:false,financial:false,device:'maybe'} },
+  { name:'Trello', icon:'📋', company:'Atlassian', companyScore:40, risk:'low', collects:{location:false,contacts:false,behaviour:true,biometrics:false,financial:false,device:'maybe'} },
+  { name:'Canva', icon:'🎨', company:'Canva', companyScore:42, risk:'low', collects:{location:false,contacts:false,behaviour:true,biometrics:false,financial:'maybe',device:'maybe'} },
+
+  // Ride / Delivery
+  { name:'Uber', icon:'🚗', company:'Uber', companyScore:78, risk:'critical', collects:{location:true,contacts:false,behaviour:true,biometrics:false,financial:true,device:true} },
+  { name:'Bolt', icon:'⚡', company:'Bolt', companyScore:70, risk:'high', collects:{location:true,contacts:false,behaviour:true,biometrics:false,financial:true,device:true} },
+  { name:'InDrive', icon:'🚕', company:'InDrive', companyScore:65, risk:'high', collects:{location:true,contacts:false,behaviour:true,biometrics:false,financial:true,device:true} },
+  { name:'Lyft', icon:'🚙', company:'Lyft', companyScore:70, risk:'high', collects:{location:true,contacts:false,behaviour:true,biometrics:false,financial:true,device:true} },
+  { name:'Glovo', icon:'🛵', company:'Glovo', companyScore:62, risk:'medium', collects:{location:true,contacts:false,behaviour:true,biometrics:false,financial:true,device:true} },
+  { name:'DoorDash', icon:'🍔', company:'DoorDash', companyScore:65, risk:'high', collects:{location:true,contacts:false,behaviour:true,biometrics:false,financial:true,device:true} },
+
+  // Dating / Lifestyle
+  { name:'Tinder', icon:'🔥', company:'Match Group', companyScore:80, risk:'critical', collects:{location:true,contacts:false,behaviour:true,biometrics:'maybe',financial:'maybe',device:true} },
+  { name:'Bumble', icon:'🐝', company:'Bumble', companyScore:72, risk:'high', collects:{location:true,contacts:false,behaviour:true,biometrics:'maybe',financial:'maybe',device:true} },
+  { name:'Hinge', icon:'💞', company:'Match Group', companyScore:80, risk:'high', collects:{location:true,contacts:false,behaviour:true,biometrics:'maybe',financial:'maybe',device:true} },
+
+  // News / Other
+  { name:'BBC News', icon:'📰', company:'BBC', companyScore:30, risk:'low', collects:{location:false,contacts:false,behaviour:true,biometrics:false,financial:false,device:'maybe'} },
+  { name:'CNN', icon:'📺', company:'Warner Bros.', companyScore:50, risk:'medium', collects:{location:'maybe',contacts:false,behaviour:true,biometrics:false,financial:false,device:true} },
+  { name:'Duolingo', icon:'🦉', company:'Duolingo', companyScore:38, risk:'low', collects:{location:false,contacts:false,behaviour:true,biometrics:false,financial:'maybe',device:'maybe'} },
+  { name:'Shazam', icon:'🎵', company:'Apple', companyScore:28, risk:'low', collects:{location:'maybe',contacts:false,behaviour:true,biometrics:false,financial:false,device:true} },
+  { name:'Strava', icon:'🏃', company:'Strava', companyScore:60, risk:'high', collects:{location:true,contacts:false,behaviour:true,biometrics:'maybe',financial:false,device:true} },
+  { name:'Fitbit', icon:'⌚', company:'Alphabet (Google)', companyScore:96, risk:'critical', collects:{location:true,contacts:false,behaviour:true,biometrics:true,financial:false,device:true} },
+  { name:'Calm', icon:'🧘', company:'Calm', companyScore:35, risk:'low', collects:{location:false,contacts:false,behaviour:true,biometrics:false,financial:'maybe',device:'maybe'} },
+  { name:'Headspace', icon:'🧠', company:'Headspace', companyScore:38, risk:'low', collects:{location:false,contacts:false,behaviour:true,biometrics:false,financial:'maybe',device:'maybe'} },
+  { name:'Truecaller', icon:'📞', company:'Truecaller', companyScore:85, risk:'critical', collects:{location:true,contacts:true,behaviour:true,biometrics:false,financial:false,device:true} },
+  { name:'Airbnb', icon:'🏠', company:'Airbnb', companyScore:65, risk:'high', collects:{location:true,contacts:false,behaviour:true,biometrics:'maybe',financial:true,device:true} },
+  { name:'Booking.com', icon:'🏨', company:'Booking Holdings', companyScore:60, risk:'medium', collects:{location:true,contacts:false,behaviour:true,biometrics:false,financial:true,device:true} },
+  { name:'Expedia', icon:'✈️', company:'Expedia', companyScore:58, risk:'medium', collects:{location:true,contacts:false,behaviour:true,biometrics:false,financial:true,device:true} },
+  { name:'Tripadvisor', icon:'🦉', company:'Tripadvisor', companyScore:50, risk:'medium', collects:{location:true,contacts:false,behaviour:true,biometrics:false,financial:'maybe',device:true} },
+  { name:'Yelp', icon:'⭐', company:'Yelp', companyScore:52, risk:'medium', collects:{location:true,contacts:false,behaviour:true,biometrics:false,financial:false,device:true} },
+  { name:'Grammarly', icon:'✍️', company:'Grammarly', companyScore:55, risk:'high', collects:{location:false,contacts:false,behaviour:true,biometrics:false,financial:false,device:true} },
+  { name:'ChatGPT', icon:'🤖', company:'OpenAI', companyScore:45, risk:'medium', collects:{location:false,contacts:false,behaviour:true,biometrics:false,financial:false,device:'maybe'} },
+  { name:'Gemini', icon:'✨', company:'Alphabet (Google)', companyScore:96, risk:'high', collects:{location:false,contacts:false,behaviour:true,biometrics:false,financial:false,device:'maybe'} },
+];
+
+// ═══════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════
+let selectedApps = [];
+let radarChartInstance = null;
+
+// ═══════════════════════════════════════════════
+//  SEARCH
+// ═══════════════════════════════════════════════
+const companyColors = {
+  'Alphabet (Google)': '#4285f4',
+  'Meta': '#0668E1',
+  'ByteDance': '#000000',
+  'Apple': '#888',
+  'Microsoft': '#00A4EF',
+  'Amazon': '#FF9900',
+  'Snap Inc.': '#FFFC00',
+  'Spotify': '#1DB954',
+  'Discord Inc.': '#5865F2',
+  'Tencent': '#07C160',
+  'Truecaller': '#52b043',
+};
+
+function getCompanyColor(company) {
+  return companyColors[company] || '#6c63ff';
+}
+
+document.getElementById('appSearch').addEventListener('input', function() {
+  const q = this.value.trim().toLowerCase();
+  const dd = document.getElementById('appsDropdown');
+  if (q.length < 1) { dd.classList.remove('open'); return; }
+
+  const results = APP_DB.filter(a =>
+    a.name.toLowerCase().includes(q) &&
+    !selectedApps.find(s => s.name === a.name)
+  ).slice(0, 8);
+
+  if (results.length === 0) { dd.classList.remove('open'); return; }
+
+  dd.innerHTML = results.map(a => `
+    <div class="dropdown-item" onclick="addApp('${a.name.replace(/'/g,"\\'")}')">
+      <div class="d-icon" style="background:rgba(255,255,255,0.06)">${a.icon}</div>
+      <div>
+        <div class="d-name">${a.name}</div>
+        <div class="d-company">${a.company}</div>
+      </div>
+    </div>
+  `).join('');
+  dd.classList.add('open');
+});
+
+document.getElementById('appSearch').addEventListener('blur', () => {
+  setTimeout(() => document.getElementById('appsDropdown').classList.remove('open'), 200);
+});
+
+document.getElementById('customAppInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') addCustomApp();
+});
+
+function addApp(name) {
+  const app = APP_DB.find(a => a.name === name);
+  if (!app || selectedApps.find(s => s.name === name)) return;
+  selectedApps.push({...app});
+  document.getElementById('appSearch').value = '';
+  document.getElementById('appsDropdown').classList.remove('open');
+  renderChips();
+}
+
+function addCustomApp() {
+  const input = document.getElementById('customAppInput');
+  const name = input.value.trim();
+  if (!name || selectedApps.find(s => s.name === name)) { input.value = ''; return; }
+  selectedApps.push({
+    name, icon: '📱',
+    company: 'Unknown', companyScore: 55, risk: 'medium',
+    collects: {location:'maybe',contacts:false,behaviour:true,biometrics:false,financial:false,device:true}
+  });
+  input.value = '';
+  renderChips();
+}
+
+function removeApp(name) {
+  selectedApps = selectedApps.filter(a => a.name !== name);
+  renderChips();
+}
+
+function renderChips() {
+  const wrap = document.getElementById('selectedApps');
+  const empty = document.getElementById('emptyChips');
+  if (selectedApps.length === 0) {
+    wrap.innerHTML = '<span class="empty-chips" id="emptyChips">No apps added yet — search above to add</span>';
+    document.getElementById('analyseBtn').disabled = true;
+    return;
+  }
+  wrap.innerHTML = selectedApps.map(a => `
+    <div class="app-chip">
+      <span class="chip-icon">${a.icon}</span>
+      <span>${a.name}</span>
+      <span class="remove-chip" onclick="removeApp('${a.name.replace(/'/g,"\\'")}')">×</span>
+    </div>
+  `).join('');
+  document.getElementById('analyseBtn').disabled = false;
+}
+
+// ═══════════════════════════════════════════════
+//  ANALYSIS ENGINE
+// ═══════════════════════════════════════════════
+function startAnalysis() {
+  document.getElementById('landing').style.display = 'none';
+  document.getElementById('loading').style.display = 'flex';
+
+  const steps = ['ls1','ls2','ls3','ls4','ls5'];
+  let i = 0;
+  const interval = setInterval(() => {
+    if (i > 0) document.getElementById(steps[i-1]).className = 'loading-step done';
+    if (i < steps.length) {
+      document.getElementById(steps[i]).className = 'loading-step active';
+      i++;
+    } else {
+      clearInterval(interval);
+      setTimeout(buildReport, 600);
+    }
+  }, 500);
+}
+
+function buildReport() {
+  const apps = selectedApps;
+  const name = document.getElementById('nameInput').value.trim();
+
+  // ── SCORES ──
+  const riskWeights = { critical: 95, high: 70, medium: 45, low: 20 };
+  const avgRisk = apps.reduce((s,a) => s + riskWeights[a.risk], 0) / apps.length;
+  const countFactor = Math.min(1, apps.length / 15);
+  const footprintScore = Math.round(Math.min(99, avgRisk * 0.65 + countFactor * 35));
+
+  const critCount = apps.filter(a => a.risk === 'critical').length;
+  const highCount = apps.filter(a => a.risk === 'high').length;
+  const privacyScore = Math.round(Math.max(5, 80 - critCount * 12 - highCount * 6 - (apps.length * 1.5)));
+
+  // ── COMPANIES ──
+  const companyMap = {};
+  apps.forEach(a => {
+    if (!companyMap[a.company]) companyMap[a.company] = { apps: [], score: a.companyScore };
+    companyMap[a.company].apps.push(a.name);
+    companyMap[a.company].score = Math.max(companyMap[a.company].score, a.companyScore);
+  });
+  const companies = Object.entries(companyMap)
+    .map(([name, v]) => ({ name, apps: v.apps, score: v.score }))
+    .sort((a,b) => b.score - a.score);
+
+  // ── RISK DIMS ──
+  const hasFinancial = apps.some(a => a.collects.financial === true);
+  const hasLocation = apps.some(a => a.collects.location === true);
+  const hasContacts = apps.some(a => a.collects.contacts === true);
+  const hasBiometrics = apps.some(a => a.collects.biometrics === true);
+  const socialCount = apps.filter(a => ['Instagram','Facebook','TikTok','Snapchat','Twitter/X','Threads','BeReal'].includes(a.name)).length;
+
+  const dims = {
+    'Identity theft': Math.round(Math.min(99, 40 + critCount*10 + highCount*5)),
+    'Financial exposure': Math.round(hasFinancial ? Math.min(99, 55 + critCount*8) : 30),
+    'Location tracking': Math.round(hasLocation ? Math.min(99, 60 + apps.filter(a=>a.collects.location===true).length*6) : 20),
+    'Social engineering': Math.round(Math.min(99, 35 + socialCount*8 + highCount*4)),
+    'Reputation risk': Math.round(Math.min(99, 30 + socialCount*7)),
+    'Data broker exposure': Math.round(Math.min(99, 40 + apps.length*3 + critCount*5)),
+  };
+
+  // ── DIGITAL TWIN ──
+  const hasGaming = apps.some(a => ['Roblox','PUBG Mobile','Fortnite','Call of Duty Mobile','Mobile Legends','Clash of Clans','Steam','PlayStation','Candy Crush','Xbox'].includes(a.name));
+  const hasStreaming = apps.some(a => ['Spotify','Netflix','Apple Music','YouTube','Deezer','Amazon Prime','Disney+','HBO Max','Audiomack','Boomplay'].includes(a.name));
+  const hasShopping = apps.some(a => ['Amazon','eBay','Alibaba','Shein','Meesho','Jumia','Konga'].includes(a.name));
+  const hasRide = apps.some(a => ['Uber','Bolt','InDrive','Lyft'].includes(a.name));
+  const hasCrypto = apps.some(a => ['Coinbase','Binance'].includes(a.name));
+  const hasGoogle = apps.some(a => a.company === 'Alphabet (Google)');
+  const hasMeta = apps.some(a => a.company === 'Meta');
+  const hasApple = apps.some(a => a.company === 'Apple');
+
+  function googleDominance() {
+    const gCount = apps.filter(a => a.company === 'Alphabet (Google)').length;
+    if (gCount >= 4) return 'Google-dominant ecosystem';
+    if (gCount >= 2) return 'Partial Google ecosystem';
+    return 'Diverse ecosystem';
+  }
+
+  const twin = [
+    { label: 'Age range', val: guessAge(apps), source: 'Inferred from social + gaming app mix' },
+    { label: 'Shopping behaviour', val: hasShopping ? 'Online-first shopper' : 'Limited online shopping', source: hasShopping ? 'Based on shopping apps detected' : 'No shopping apps detected' },
+    { label: 'Entertainment profile', val: hasStreaming && hasGaming ? 'Heavy streamer & gamer' : hasStreaming ? 'Active streamer' : hasGaming ? 'Gaming-focused' : 'Minimal entertainment', source: 'Cross-app behavioural inference' },
+    { label: 'Social media presence', val: socialCount >= 3 ? 'Very active' : socialCount >= 1 ? 'Moderately active' : 'Low social presence', source: `${socialCount} social platform${socialCount!==1?'s':''} detected` },
+    { label: 'Tech ecosystem', val: googleDominance(), source: `${apps.filter(a=>a.company==='Alphabet (Google)').length} Google service${apps.filter(a=>a.company==='Alphabet (Google)').length!==1?'s':''}` },
+    { label: 'Payment behaviour', val: hasFinancial ? 'Digital payments user' : 'Cash/offline preferred', source: 'Finance apps detected' },
+    { label: 'Mobility', val: hasRide ? 'Regular ridesharing user' : 'Independent commuter', source: hasRide ? 'Ride-hailing apps present' : 'No ride apps detected' },
+    { label: 'Interest in crypto', val: hasCrypto ? 'Active crypto user' : 'Not enough information provided', source: hasCrypto ? 'Crypto exchange apps present' : '' },
+  ].filter(t => t.val !== 'Not enough information provided');
+
+  // ── WOW INSIGHTS ──
+  const thirdPartyShare = Math.round(apps.filter(a => a.risk === 'critical' || a.risk === 'high').length / apps.length * 100);
+  const dataTypes = new Set();
+  apps.forEach(a => { Object.entries(a.collects).forEach(([k,v]) => { if (v === true) dataTypes.add(k); }); });
+
+  const wows = [
+    { num: companies.length, desc: `companies now hold portions of your personal data — each with separate policies about how long they keep it and who they share it with.` },
+    { num: `~${thirdPartyShare}%`, desc: `of your services are estimated to share or sell your data to third parties including advertisers and data brokers.` },
+    { num: dataTypes.size + '+', desc: `distinct types of personal data are being collected across your ${apps.length} services, from basic identity to behavioural patterns.` },
+    { num: critCount, desc: `of your apps are rated Critical — the highest data collection tier, meaning they collect multiple sensitive data types and share broadly.` },
+  ];
+
+  // ── ASSETS ──
+  const assets = [];
+  if (hasFinancial) assets.push({ icon:'💳', name:'Financial & payment data', desc:'Transaction history and payment methods — the most sensitive category for fraud and identity theft.', level:'Critical', cls:'level-critical' });
+  if (hasLocation) assets.push({ icon:'📍', name:'Location history', desc:`Precise movement data from ${apps.filter(a=>a.collects.location===true).map(a=>a.name).slice(0,3).join(', ')} — can reveal home, workplace, daily patterns.`, level:'Critical', cls:'level-critical' });
+  if (hasBiometrics) assets.push({ icon:'🫆', name:'Biometric data', desc:'Facial geometry, fingerprints, or voice patterns — cannot be changed if compromised. Permanently sensitive.', level:'Critical', cls:'level-critical' });
+  assets.push({ icon:'🔍', name:'Behavioural & intent data', desc:`Your clicks, searches, and watch history reveal desires, health concerns, politics, and beliefs — worth the most to advertisers.`, level:'High', cls:'level-high' });
+  if (hasContacts) assets.push({ icon:'👥', name:'Social graph', desc:'Your contact list and communication patterns reveal professional and personal networks — enabling targeted phishing.', level:'High', cls:'level-high' });
+  if (hasShopping) assets.push({ icon:'🛒', name:'Purchase & browsing history', desc:'What you buy reveals income level, health status, household composition, and lifestyle — sold to insurers and marketers.', level:'High', cls:'level-high' });
+  assets.push({ icon:'🎯', name:'Ad profile & interests', desc:'Accumulated interest profile used to target you across the internet — shared with hundreds of ad networks.', level:'Moderate', cls:'level-moderate' });
+
+  // ── SIMULATOR ACTIONS ──
+  const simActions = [];
+  simActions.push({ title: 'Enable 2FA on all accounts', impact: 12, desc: 'Prevents account takeover even if your password leaks in a breach — the single highest-impact action you can take.' });
+  if (hasLocation) simActions.push({ title: 'Set location to "only while using" for all apps', impact: 10, desc: 'Stops background location collection — reduces your location tracking score significantly.' });
+  if (critCount > 0) simActions.push({ title: `Review data sharing settings in your ${critCount} critical-risk app${critCount>1?'s':''}`, impact: 9, desc: 'Turn off personalised ads, third-party data sharing, and activity tracking in each Critical-rated service.' });
+  simActions.push({ title: 'Use a unique password for every account', impact: 7, desc: 'Prevents credential stuffing — if one service is breached, attackers cannot access your other accounts.' });
+  if (hasGoogle) simActions.push({ title: 'Review Google Activity Controls', impact: 8, desc: 'At myaccount.google.com, turn off Web & App Activity, Location History, and YouTube history to limit what Google retains.' });
+  if (hasMeta) simActions.push({ title: 'Limit Meta\'s off-platform activity tracking', impact: 7, desc: 'In Facebook/Instagram settings, disable "Off-Facebook activity" to stop Meta tracking you on websites outside their platforms.' });
+  simActions.push({ title: 'Switch default search engine to DuckDuckGo', impact: 6, desc: 'Removes search intent data collection — one of the most revealing data types advertisers use to profile you.' });
+  if (hasBiometrics) simActions.push({ title: 'Disable biometric features in non-essential apps', impact: 8, desc: 'Facial recognition and fingerprint data cannot be changed if compromised. Disable where not strictly necessary.' });
+  simActions.push({ title: 'Regularly delete app caches and limit storage permissions', impact: 4, desc: 'Reduces the amount of behavioural data apps can accumulate on your device over time.' });
+
+  // ── VERDICT ──
+  let verdictLevel, verdictColor, verdictHeadline, verdictBody;
+  if (footprintScore <= 30) {
+    verdictLevel = '🟢 Minimal Footprint'; verdictColor = '#3ecf8e';
+    verdictHeadline = 'Your digital footprint is small. You are better protected than most.';
+    verdictBody = `With only ${apps.length} service${apps.length!==1?'s':''} and low-risk choices, your personal data exposure is limited. You have made good digital hygiene decisions. The actions below will help you maintain this protection.`;
+  } else if (footprintScore <= 60) {
+    verdictLevel = '🟡 Moderate Footprint'; verdictColor = '#ffc947';
+    verdictHeadline = `Your digital footprint is moderate. Some exposure exists — but it is manageable.`;
+    verdictBody = `With ${apps.length} services across ${companies.length} companies, a profile of you exists in commercial databases. The ${critCount} critical and ${highCount} high-risk service${(critCount+highCount)!==1?'s':''} are your main concern. Targeted actions below can meaningfully reduce your risk.`;
+  } else if (footprintScore <= 80) {
+    verdictLevel = '🟠 Significant Footprint'; verdictColor = '#ff8c42';
+    verdictHeadline = `Your digital footprint is significant. You are exposed — but this is fixable.`;
+    verdictBody = `${apps.length} services across ${companies.length} companies means a detailed commercial profile of you almost certainly exists. With ${critCount} critical-risk app${critCount!==1?'s':''}, your most sensitive data — ${hasLocation?'location, ':''}${hasBiometrics?'biometrics, ':''}${hasFinancial?'financial data':''}  — is in the hands of platforms with broad data-sharing practices. Take the actions below seriously.`;
+  } else {
+    verdictLevel = '🔴 Extensive Footprint'; verdictColor = '#ff4f4f';
+    verdictHeadline = `Your digital footprint is extensive. Significant action is recommended.`;
+    verdictBody = `${apps.length} services, ${critCount} critical-risk platforms, and ${companies.length} companies collectively hold a comprehensive picture of your identity, behaviour, finances, and movements. This level of exposure means you are likely already profiled by dozens of data brokers. Prioritise the actions below — starting with 2FA and your most data-hungry services.`;
+  }
+
+  const verdictSteps = [
+    { num:'01', text:`<b>Urgent (do today):</b> Enable two-factor authentication on every account, starting with ${hasGoogle?'Google':'your most-used service'} and ${hasMeta?'Meta':'your social media'}. A single compromised account can expose years of data.` },
+    { num:'02', text:`<b>This week:</b> Open the privacy settings of your ${critCount} most-exposed app${critCount!==1?'s':''} and disable personalised ads, third-party data sharing, and any tracking you do not need.` },
+    { num:'03', text:`<b>This month:</b> ${hasLocation?'Set all location permissions to "only while using" — not "always". ':''}Use a different password for each service. A password manager makes this easy and free.` },
+    { num:'04', text:`<b>Long term:</b> Before installing any new app, ask: does it need access to my ${hasLocation?'location, ':''}contacts, camera, or microphone? If it does and doesn't need them to work, do not install it. Your default answer to permission requests should be "No".` },
+  ];
+
+  // ════ BUILD DOM ════
+  const rName = name || 'Your';
+  document.getElementById('reportHeadline').textContent = name ? `${name}, here is your privacy report.` : 'Here is your privacy report.';
+  document.getElementById('reportSubline').textContent = `Based on ${apps.length} service${apps.length!==1?'s':''} across ${companies.length} parent compan${companies.length!==1?'ies':'y'}.`;
+
+  // header scores
+  document.getElementById('hFootprint').textContent = footprintScore;
+  document.getElementById('hFootprint').style.color = footprintScore > 60 ? '#ff8c42' : footprintScore > 30 ? '#ffc947' : '#3ecf8e';
+  document.getElementById('hPrivacy').textContent = privacyScore;
+  document.getElementById('hPrivacy').style.color = privacyScore > 60 ? '#3ecf8e' : privacyScore > 30 ? '#ffc947' : '#ff4f4f';
+
+  // overview
+  document.getElementById('overviewMetrics').innerHTML = [
+    { label:'Services analysed', val:apps.length, sub:'FACT' },
+    { label:'Parent companies', val:companies.length, sub:'FACT' },
+    { label:'Critical-risk apps', val:critCount, sub:'ESTIMATE' },
+    { label:'High-risk apps', val:highCount, sub:'ESTIMATE' },
+  ].map(m => `<div class="metric-card"><div class="metric-label">${m.label}</div><div class="metric-val" style="color:${m.val>=4&&m.label.includes('risk')?'#ff4f4f':m.val>=2&&m.label.includes('risk')?'#ff8c42':'var(--text)'}">${m.val}</div><div class="metric-sub">${m.sub}</div></div>`).join('');
+
+  // footprint score
+  const fColor = footprintScore > 80 ? '#ff4f4f' : footprintScore > 60 ? '#ff8c42' : footprintScore > 30 ? '#ffc947' : '#3ecf8e';
+  const fLabel = footprintScore > 80 ? '🔴 Extensive' : footprintScore > 60 ? '🟠 Significant' : footprintScore > 30 ? '🟡 Moderate' : '🟢 Minimal';
+  document.getElementById('footprintNum').textContent = footprintScore;
+  document.getElementById('footprintNum').style.color = fColor;
+  document.getElementById('footprintBadge').innerHTML = `<div class="score-badge" style="background:${fColor}22;color:${fColor}">${fLabel}</div>`;
+  setTimeout(() => { document.getElementById('footprintBar').style.width = footprintScore + '%'; document.getElementById('footprintBar').style.background = fColor; }, 100);
+
+  // privacy score
+  const pColor = privacyScore > 80 ? '#3ecf8e' : privacyScore > 60 ? '#3ecf8e' : privacyScore > 30 ? '#ffc947' : '#ff4f4f';
+  const pLabel = privacyScore > 80 ? '🟢 Strong' : privacyScore > 60 ? '🟡 Good' : privacyScore > 30 ? '🟠 Fair' : '🔴 Weak';
+  document.getElementById('privacyNum').textContent = privacyScore;
+  document.getElementById('privacyNum').style.color = pColor;
+  document.getElementById('privacyBadge').innerHTML = `<div class="score-badge" style="background:${pColor}22;color:${pColor}">${pLabel}</div>`;
+  setTimeout(() => { document.getElementById('privacyBar').style.width = privacyScore + '%'; document.getElementById('privacyBar').style.background = pColor; }, 200);
+
+  // heatmap
+  document.getElementById('heatmapGrid').innerHTML = apps.map(a => {
+    const cls = { critical:'heat-critical', high:'heat-high', medium:'heat-medium', low:'heat-low' }[a.risk];
+    const riskLabel = a.risk.charAt(0).toUpperCase() + a.risk.slice(1);
+    return `<div class="heat-cell ${cls}"><div class="h-icon">${a.icon}</div><div class="h-name">${a.name}</div><div class="h-risk">${riskLabel}</div></div>`;
+  }).join('');
+
+  // company ranking
+  document.getElementById('companyRanking').innerHTML = companies.map((c, i) => {
+    const color = getCompanyColor(c.name);
+    const barColor = c.score > 80 ? '#ff4f4f' : c.score > 60 ? '#ff8c42' : c.score > 40 ? '#ffc947' : '#3ecf8e';
+    const initial = c.name.substring(0,2).toUpperCase();
+    return `<div class="company-row">
+      <div class="c-rank">${i+1}</div>
+      <div class="c-logo" style="background:${color}22;color:${color}">${initial}</div>
+      <div class="c-info"><div class="c-name">${c.name}</div><div class="c-apps">${c.apps.join(' · ')}</div></div>
+      <div class="c-bar-wrap">
+        <div class="c-bar-bg"><div class="c-bar-fill" style="width:${c.score}%;background:${barColor}"></div></div>
+        <div class="c-score">${c.score} / 100</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // matrix
+  function dot(v) {
+    if (v === true) return '<span class="dot dot-y" title="Likely collects"></span>';
+    if (v === 'maybe') return '<span class="dot dot-m" title="Possibly collects"></span>';
+    return '<span class="dot dot-n" title="Unlikely"></span>';
+  }
+  document.getElementById('matrixBody').innerHTML = apps.map(a => `
+    <tr>
+      <td style="font-weight:500">${a.icon} ${a.name}</td>
+      <td>${dot(a.collects.location)}</td>
+      <td>${dot(a.collects.contacts)}</td>
+      <td>${dot(a.collects.behaviour)}</td>
+      <td>${dot(a.collects.biometrics)}</td>
+      <td>${dot(a.collects.financial)}</td>
+      <td>${dot(a.collects.device)}</td>
+    </tr>`).join('');
+
+  // radar
+  if (radarChartInstance) { radarChartInstance.destroy(); radarChartInstance = null; }
+  const radarCtx = document.getElementById('radarChart').getContext('2d');
+  const dimKeys = Object.keys(dims);
+  const dimVals = Object.values(dims);
+  radarChartInstance = new Chart(radarCtx, {
+    type: 'radar',
+    data: {
+      labels: dimKeys,
+      datasets: [{
+        label: 'Risk level',
+        data: dimVals,
+        backgroundColor: 'rgba(108,99,255,0.15)',
+        borderColor: '#6c63ff',
+        borderWidth: 2,
+        pointBackgroundColor: '#6c63ff',
+        pointRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        r: {
+          min: 0, max: 100,
+          ticks: { stepSize: 25, font: { size: 10 }, color: '#5a5a72', backdropColor: 'transparent' },
+          grid: { color: 'rgba(255,255,255,0.08)' },
+          angleLines: { color: 'rgba(255,255,255,0.08)' },
+          pointLabels: { font: { size: 11 }, color: '#9090a8' }
+        }
+      }
+    }
+  });
+
+  // risk dims
+  document.getElementById('riskDims').innerHTML = Object.entries(dims).map(([k,v]) => {
+    const c = v > 70 ? '#ff4f4f' : v > 50 ? '#ff8c42' : v > 35 ? '#ffc947' : '#3ecf8e';
+    return `<div class="dim-card"><div class="dim-name">${k}</div><div class="dim-val" style="color:${c}">${v}</div></div>`;
+  }).join('');
+
+  // digital twin
+  document.getElementById('twinGrid').innerHTML = twin.map(t => `
+    <div class="twin-item">
+      <div class="twin-label">${t.label}</div>
+      <div class="twin-val">${t.val}</div>
+      <div class="twin-source">${t.source}</div>
+    </div>`).join('');
+
+  // wow
+  document.getElementById('wowGrid').innerHTML = wows.map(w => `
+    <div class="wow-item">
+      <div class="wow-num" style="color:var(--accent2)">${w.num}</div>
+      <div class="wow-desc">${w.desc}</div>
+    </div>`).join('');
+
+  // assets
+  document.getElementById('assetsSection').innerHTML = assets.map(a => `
+    <div class="asset-row">
+      <div class="asset-icon" style="background:rgba(255,255,255,0.06)">${a.icon}</div>
+      <div class="asset-info"><div class="asset-name">${a.name}</div><div class="asset-desc">${a.desc}</div></div>
+      <div class="asset-level ${a.cls}">${a.level}</div>
+    </div>`).join('');
+
+  // simulator
+  let totalGain = 0;
+  document.getElementById('simBefore').textContent = privacyScore;
+  document.getElementById('simAfter').textContent = privacyScore;
+  document.getElementById('simActions').innerHTML = simActions.map((a, i) => `
+    <div class="sim-action" data-impact="${a.impact}" data-idx="${i}" onclick="toggleSim(this, ${privacyScore})">
+      <div class="sim-top">
+        <div class="sim-checkbox">✓</div>
+        <div class="sim-title">${a.title}</div>
+      </div>
+      <div class="sim-impact">+${a.impact} pts — ${a.desc}</div>
+    </div>`).join('');
+
+  // verdict
+  document.getElementById('verdictLevel').innerHTML = `<div class="verdict-level" style="background:${verdictColor}22;color:${verdictColor}">${verdictLevel}</div>`;
+  document.getElementById('verdictHeadline').textContent = verdictHeadline;
+  document.getElementById('verdictBody').textContent = verdictBody.replace(/  +/g,' ').trim();
+  document.getElementById('verdictSteps').innerHTML = verdictSteps.map(s => `
+    <div class="verdict-step">
+      <div class="v-num">${s.num}</div>
+      <div class="v-text">${s.text}</div>
+    </div>`).join('');
+
+  // show report
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('report').style.display = 'block';
+  window.scrollTo(0, 0);
+}
+
+function guessAge(apps) {
+  const hasKids = apps.some(a => ['Roblox'].includes(a.name));
+  const hasYoungAdult = apps.some(a => ['TikTok','PUBG Mobile','Snapchat','BeReal','Discord'].includes(a.name));
+  const hasAdult = apps.some(a => ['LinkedIn','Revolut','Kuda','Airbnb'].includes(a.name));
+  if (hasKids && !hasAdult) return '13–20';
+  if (hasYoungAdult && !hasAdult) return '16–26';
+  if (hasAdult && hasYoungAdult) return '22–34';
+  if (hasAdult) return '25–40';
+  return 'Not enough information provided';
+}
+
+// ═══════════════════════════════════════════════
+//  SIMULATOR TOGGLE
+// ═══════════════════════════════════════════════
+function toggleSim(el, baseScore) {
+  if (!baseScore) baseScore = parseInt(document.getElementById('simBefore').textContent);
+  const impact = parseInt(el.getAttribute('data-impact'));
+  el.classList.toggle('active');
+
+  let gain = 0;
+  document.querySelectorAll('.sim-action.active').forEach(a => { gain += parseInt(a.getAttribute('data-impact')); });
+
+  const newScore = Math.min(100, baseScore + gain);
+  document.getElementById('simAfter').textContent = newScore;
+  if (gain > 0) {
+    document.getElementById('simMessage').textContent = `+${gain} points improvement — your Privacy Score would rise from ${baseScore} to ${newScore}${newScore >= 80 ? ' (Strong!)' : newScore >= 60 ? ' (Good)' : ' (Fair)'}.`;
+  } else {
+    document.getElementById('simMessage').textContent = 'Select actions above to see how your score would improve.';
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════
+function goBack() {
+  document.getElementById('report').style.display = 'none';
+  document.getElementById('landing').style.display = 'flex';
+  // reset loading steps
+  ['ls1','ls2','ls3','ls4','ls5'].forEach(id => { document.getElementById(id).className = 'loading-step'; });
+  window.scrollTo(0, 0);
+}
+</script>
+</body>
+</html>

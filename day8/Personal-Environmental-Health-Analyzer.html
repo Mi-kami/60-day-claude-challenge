@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌍 Personal Environmental Health Analyzer</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg0:#050c1c;--bg1:#091325;--bg2:#0d1a32;--bg3:#122040;
+  --b1:rgba(80,140,240,0.10);--b2:rgba(80,140,240,0.22);--b3:rgba(80,140,240,0.38);
+  --t1:#e2edff;--t2:#6e90bf;--t3:#3d5678;
+  --cyan:#06c8e8;--cy15:rgba(6,200,232,0.15);
+  --grn:#0de68a;--gr15:rgba(13,230,138,0.15);
+  --amb:#f9b520;--am15:rgba(249,181,32,0.15);
+  --org:#f97316;--or15:rgba(249,115,22,0.15);
+  --red:#f04545;--rd15:rgba(240,69,69,0.15);
+  --pur:#9f7afe;--pu15:rgba(159,122,254,0.15);
+  --pnk:#f472b6;
+  --good:#22d97a;--sat:#84cc16;--mod:#f9b520;--poor:#f97316;--vpoor:#f04545;--sev:#9f7afe;
+  --rsm:8px;--rmd:12px;--rlg:16px;--rxl:24px;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg0);color:var(--t1);min-height:100vh;font-size:14px;line-height:1.6;overflow-x:hidden}
+body::before{content:'';position:fixed;top:-250px;left:-200px;width:700px;height:700px;background:radial-gradient(ellipse,rgba(6,200,232,0.055) 0%,transparent 68%);pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;bottom:-200px;right:-150px;width:600px;height:600px;background:radial-gradient(ellipse,rgba(159,122,254,0.065) 0%,transparent 68%);pointer-events:none;z-index:0}
+.wrap{max-width:1380px;margin:0 auto;padding:0 18px;position:relative;z-index:1}
+
+/* HEADER */
+.hdr{padding:30px 0 22px;border-bottom:1px solid var(--b1);margin-bottom:22px}
+.hdr-inner{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:14px}
+.hdr-title{font-family:'Syne',sans-serif;font-size:27px;font-weight:800;color:var(--t1);line-height:1.2;letter-spacing:-0.4px}
+.hdr-title span{background:linear-gradient(130deg,var(--cyan),var(--grn));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hdr-sub{font-size:12.5px;color:var(--t2);margin-top:5px}
+.badges{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:100px;font-size:11.5px;font-weight:500;border:1px solid}
+.blive{background:rgba(13,230,138,0.09);border-color:rgba(13,230,138,0.28);color:var(--grn)}
+.blive::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--grn);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.65)}}
+.bsrc{background:var(--bg2);border-color:var(--b1);color:var(--t2)}
+
+/* METRICS STRIP */
+.mstrip{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:11px;margin-bottom:20px}
+.mcard{background:var(--bg2);border:1px solid var(--b1);border-radius:var(--rlg);padding:17px 18px;transition:border-color .2s,transform .2s;cursor:default}
+.mcard:hover{border-color:var(--b2);transform:translateY(-2px)}
+.mico{width:34px;height:34px;border-radius:var(--rsm);display:flex;align-items:center;justify-content:center;font-size:17px;margin-bottom:10px}
+.mlbl{font-size:10.5px;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;font-weight:600;margin-bottom:3px}
+.mval{font-family:'Syne',sans-serif;font-size:24px;font-weight:700;line-height:1;color:var(--t1)}
+.msub{font-size:11px;color:var(--t3);margin-top:3px}
+
+/* FILTER BAR */
+.fbar{background:var(--bg1);border:1px solid var(--b1);border-radius:var(--rlg);padding:14px 18px;margin-bottom:20px;display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end}
+.fg{display:flex;flex-direction:column;min-width:130px}
+.flbl{font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;font-weight:600;color:var(--t3);margin-bottom:4px}
+.fg select,.fg input[type=range]{background:var(--bg2);border:1px solid var(--b1);border-radius:var(--rsm);color:var(--t1);padding:7px 11px;font-size:12.5px;font-family:'Plus Jakarta Sans',sans-serif;appearance:none;cursor:pointer;transition:border-color .2s;height:34px}
+.fg select:focus,.fg select:hover{border-color:var(--b3);outline:none}
+.fg input[type=range]{padding:0 4px;accent-color:var(--cyan)}
+.frv{font-size:12px;color:var(--t2);margin-bottom:6px;white-space:nowrap}
+
+/* TABS */
+.tabs{display:flex;gap:3px;margin-bottom:20px;border-bottom:1px solid var(--b1);overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tbtn{padding:9px 18px;background:transparent;border:none;color:var(--t2);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .18s,border-color .18s;display:flex;align-items:center;gap:6px}
+.tbtn:hover{color:var(--t1)}
+.tbtn.act{color:var(--cyan);border-bottom-color:var(--cyan)}
+.tpanel{display:none}
+.tpanel.act{display:block}
+
+/* SECTION HEADING */
+.sh{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;color:var(--t1);margin-bottom:14px;display:flex;align-items:center;gap:7px}
+.sh small{font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:400;color:var(--t3)}
+
+/* AQI LEGEND */
+.aqileg{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:18px}
+.aleg{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--t2)}
+.adot{width:9px;height:9px;border-radius:50%}
+
+/* CHART GRID */
+.cgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:14px;margin-bottom:16px}
+@media(max-width:600px){.cgrid{grid-template-columns:1fr}}
+.cc{background:var(--bg2);border:1px solid var(--b1);border-radius:var(--rlg);padding:18px}
+.cttl{font-family:'Syne',sans-serif;font-size:13.5px;font-weight:700;color:var(--t1);margin-bottom:3px}
+.csub{font-size:11px;color:var(--t3);margin-bottom:14px}
+.cwrap{position:relative;width:100%}
+
+/* CITY CARDS */
+.citygrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(272px,1fr));gap:13px;margin-bottom:22px}
+.ccard{background:var(--bg2);border:1px solid var(--b1);border-radius:var(--rlg);padding:17px;transition:all .22s ease;cursor:pointer;position:relative;overflow:hidden}
+.ccard:hover{border-color:var(--b2);transform:translateY(-3px);background:var(--bg3)}
+.ccard.sel{border-color:var(--cyan);background:rgba(6,200,232,0.055)}
+.ctop{position:absolute;top:0;left:0;right:0;height:3px;border-radius:16px 16px 0 0}
+.chdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
+.cname{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--t1)}
+.cstate{font-size:10.5px;color:var(--t3);margin-top:2px}
+.aqibdg{padding:5px 11px;border-radius:100px;font-family:'Syne',sans-serif;font-size:17px;font-weight:700;line-height:1}
+.cstats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:12px}
+.cst{background:rgba(255,255,255,0.038);border-radius:var(--rsm);padding:7px;text-align:center}
+.cstl{font-size:9.5px;color:var(--t3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
+.cstv{font-family:'Syne',sans-serif;font-size:13.5px;font-weight:600;color:var(--t1)}
+.sbars{display:flex;flex-direction:column;gap:6px}
+.sbr{display:flex;align-items:center;gap:7px}
+.sbl{font-size:10.5px;color:var(--t2);width:66px;flex-shrink:0}
+.sbt{flex:1;height:4px;background:rgba(255,255,255,0.07);border-radius:100px;overflow:hidden}
+.sbf{height:100%;border-radius:100px;transition:width 1s ease}
+.sbn{font-size:10.5px;color:var(--t3);width:24px;text-align:right;flex-shrink:0}
+
+/* HEALTH TAB */
+.hhdr{background:var(--bg2);border:1px solid var(--b1);border-radius:var(--rlg);padding:18px 20px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.hcname{font-family:'Syne',sans-serif;font-size:21px;font-weight:800;color:var(--t1)}
+.hcaqi{font-size:12.5px;color:var(--t2);margin-top:3px}
+.hgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
+@media(max-width:700px){.hgrid{grid-template-columns:1fr}}
+.hsc{background:var(--bg2);border:1px solid var(--b1);border-radius:var(--rlg);padding:18px}
+.hsttl{font-family:'Syne',sans-serif;font-size:13.5px;font-weight:700;color:var(--t1);margin-bottom:13px;display:flex;align-items:center;gap:7px}
+.irow{display:flex;align-items:flex-start;gap:11px;padding:9px 0;border-bottom:1px solid var(--b1)}
+.irow:last-child{border-bottom:none}
+.rind{width:19px;height:19px;border-radius:50%;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;font-size:10px}
+.rlo{background:rgba(13,230,138,0.18);color:var(--grn);border:1px solid rgba(13,230,138,0.38)}
+.rmo{background:rgba(249,181,32,0.18);color:var(--amb);border:1px solid rgba(249,181,32,0.38)}
+.rhi{background:rgba(240,69,69,0.18);color:var(--red);border:1px solid rgba(240,69,69,0.38)}
+.ilbl{font-size:13px;font-weight:500;color:var(--t1);margin-bottom:2px}
+.idsc{font-size:11.5px;color:var(--t2);line-height:1.5}
+
+/* REPORT TAB */
+.rgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+@media(max-width:700px){.rgrid{grid-template-columns:1fr}}
+.rsc{background:var(--bg2);border:1px solid var(--b1);border-radius:var(--rlg);padding:22px;text-align:center}
+.sring{position:relative;width:155px;height:155px;margin:0 auto 14px}
+.srlbl{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
+.srnum{font-family:'Syne',sans-serif;font-size:36px;font-weight:800;line-height:1;display:block}
+.srunit{font-size:11px;color:var(--t3)}
+.rbd{background:var(--bg2);border:1px solid var(--b1);border-radius:var(--rlg);padding:22px}
+.grow{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--b1)}
+.grow:last-child{border-bottom:none}
+.gmet{font-size:13px;color:var(--t1);font-weight:500}
+.gsub{font-size:11px;color:var(--t3);margin-top:2px}
+.gbdg{padding:4px 13px;border-radius:6px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700}
+.gA{background:rgba(13,230,138,0.14);color:#0de68a;border:1px solid rgba(13,230,138,0.28)}
+.gB{background:rgba(84,204,110,0.14);color:#54cc6e;border:1px solid rgba(84,204,110,0.28)}
+.gC{background:rgba(249,181,32,0.14);color:#f9b520;border:1px solid rgba(249,181,32,0.28)}
+.gD{background:rgba(249,115,22,0.14);color:#f97316;border:1px solid rgba(249,115,22,0.28)}
+.gF{background:rgba(240,69,69,0.14);color:#f04545;border:1px solid rgba(240,69,69,0.28)}
+
+/* INSIGHTS */
+.igrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-bottom:20px}
+.ic{background:var(--bg2);border:1px solid var(--b1);border-radius:var(--rlg);padding:18px}
+.icttl{font-family:'Syne',sans-serif;font-size:13.5px;font-weight:700;color:var(--t1);margin-bottom:13px;display:flex;align-items:center;gap:7px}
+.ritem{display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--b1)}
+.ritem:last-child{border-bottom:none}
+.rnum{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:10.5px;font-weight:700;flex-shrink:0}
+.r1{background:rgba(249,181,32,.18);color:#f9b520}
+.r2{background:rgba(192,192,192,.18);color:#c0c0c0}
+.r3{background:rgba(205,127,50,.18);color:#cd7f32}
+.rcname{font-size:13px;font-weight:500;color:var(--t1)}
+.rcstate{font-size:10.5px;color:var(--t3)}
+.rsco{margin-left:auto;font-family:'Syne',sans-serif;font-size:13.5px;font-weight:600}
+
+/* EXEC SUMMARY */
+.esumm{background:linear-gradient(135deg,rgba(6,200,232,.07) 0%,rgba(13,230,138,.05) 50%,rgba(159,122,254,.07) 100%);border:1px solid rgba(6,200,232,.18);border-radius:var(--rlg);padding:22px;margin-bottom:18px;position:relative;overflow:hidden}
+.esumm::before{content:'"';position:absolute;top:-8px;left:14px;font-family:'Syne',sans-serif;font-size:72px;font-weight:800;color:rgba(6,200,232,.09);line-height:1;pointer-events:none}
+.estxt{font-size:13.5px;color:var(--t2);line-height:1.8;position:relative}
+.estxt strong{color:var(--cyan);font-weight:600}
+
+/* RECOMMENDATIONS */
+.recgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(272px,1fr));gap:13px}
+.recc{background:var(--bg2);border:1px solid var(--b1);border-radius:var(--rlg);padding:17px;transition:border-color .2s}
+.recc:hover{border-color:var(--b2)}
+.recir{display:flex;align-items:center;gap:9px;margin-bottom:11px}
+.recico{width:36px;height:36px;border-radius:var(--rsm);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+.recttl{font-family:'Syne',sans-serif;font-size:13.5px;font-weight:700}
+.recit{display:flex;align-items:flex-start;gap:7px;padding:4px 0;font-size:12px;color:var(--t2);line-height:1.5}
+.recbul{width:4px;height:4px;border-radius:50%;flex-shrink:0;margin-top:7px}
+
+/* FOOTER */
+.ftr{margin-top:36px;padding:18px 0 28px;border-top:1px solid var(--b1);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;font-size:11px;color:var(--t3)}
+
+/* UTILS */
+.tcyan{color:var(--cyan)}.tgrn{color:var(--grn)}.tamb{color:var(--amb)}.torg{color:var(--org)}.tred{color:var(--red)}.tpur{color:var(--pur)}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg0)}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:3px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.fi{animation:fadeUp .38s ease both}
+.fi1{animation-delay:.04s}.fi2{animation-delay:.09s}.fi3{animation-delay:.14s}.fi4{animation-delay:.19s}.fi5{animation-delay:.24s}
+@media(max-width:480px){
+  .hdr-title{font-size:20px}
+  .mstrip{grid-template-columns:repeat(2,1fr)}
+  .fbar{flex-direction:column}
+  .fg{min-width:100%}
+  .hgrid,.rgrid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- HEADER -->
+<header class="hdr fi">
+  <div class="hdr-inner">
+    <div>
+      <h1 class="hdr-title">🌍 Personal <span>Environmental Health</span> Analyzer</h1>
+      <p class="hdr-sub">Real-time air & water quality intelligence for Nigerian cities · June 2026 · Data: IQAir · AQICN · WHO · NESREA</p>
+    </div>
+    <div class="badges">
+      <span class="badge blive">LIVE DATA</span>
+      <span class="badge bsrc">IQAir · AQICN · WHO</span>
+      <span class="badge bsrc">Jun 8, 2026</span>
+    </div>
+  </div>
+</header>
+
+<!-- METRICS STRIP -->
+<div class="mstrip">
+  <div class="mcard fi fi1">
+    <div class="mico" style="background:var(--cy15);color:var(--cyan)">💨</div>
+    <div class="mlbl">Average AQI</div>
+    <div class="mval tamb" id="mavg">46</div>
+    <div class="msub">8 cities · Good–Moderate</div>
+  </div>
+  <div class="mcard fi fi2">
+    <div class="mico" style="background:var(--gr15);color:var(--grn)">🏆</div>
+    <div class="mlbl">Cleanest City</div>
+    <div class="mval tgrn" style="font-size:17px">Benin City</div>
+    <div class="msub">AQI 29 · Good</div>
+  </div>
+  <div class="mcard fi fi3">
+    <div class="mico" style="background:var(--rd15);color:var(--red)">⚠️</div>
+    <div class="mlbl">Most Polluted</div>
+    <div class="mval tamb" style="font-size:17px">Lagos</div>
+    <div class="msub">AQI 74 · Moderate</div>
+  </div>
+  <div class="mcard fi fi4">
+    <div class="mico" style="background:var(--pu15);color:var(--pur)">🏙️</div>
+    <div class="mlbl">Cities Analyzed</div>
+    <div class="mval">8</div>
+    <div class="msub">Nigerian cities · 2026</div>
+  </div>
+  <div class="mcard fi fi5">
+    <div class="mico" style="background:var(--am15);color:var(--amb)">🌿</div>
+    <div class="mlbl">Your City Score</div>
+    <div class="mval tcyan" id="mycitysco">53</div>
+    <div class="msub" id="mycitylbl">Lagos · /100</div>
+  </div>
+</div>
+
+<!-- FILTER BAR -->
+<div class="fbar fi">
+  <div class="fg">
+    <div class="flbl">📍 Select City</div>
+    <select id="csel" onchange="selectCity(this.value)">
+      <option value="lagos" selected>Lagos</option>
+      <option value="abuja">Abuja</option>
+      <option value="kano">Kano</option>
+      <option value="portharcourt">Port Harcourt</option>
+      <option value="ibadan">Ibadan</option>
+      <option value="benin">Benin City</option>
+      <option value="warri">Warri</option>
+      <option value="enugu">Enugu</option>
+    </select>
+  </div>
+  <div class="fg">
+    <div class="flbl">🚦 Health Risk</div>
+    <select id="riskf" onchange="applyFilters()">
+      <option value="all">All Cities</option>
+      <option value="good">Good Only (≤50)</option>
+      <option value="moderate">Moderate+ (>50)</option>
+    </select>
+  </div>
+  <div class="fg" style="min-width:160px">
+    <div class="flbl">📊 Max AQI: <span id="aqirv" style="color:var(--cyan)">200</span></div>
+    <input type="range" id="aqir" min="20" max="200" value="200" step="5" oninput="document.getElementById('aqirv').textContent=this.value;applyFilters()">
+  </div>
+  <div class="fg">
+    <div class="flbl">🔬 Pollutant View</div>
+    <select id="pollv" onchange="applyFilters()">
+      <option value="aqi">AQI (Overall)</option>
+      <option value="pm25">PM2.5</option>
+      <option value="pm10">PM10</option>
+    </select>
+  </div>
+</div>
+
+<!-- TAB NAVIGATION -->
+<nav class="tabs">
+  <button class="tbtn act" onclick="switchTab('overview',this)">📊 Overview & Charts</button>
+  <button class="tbtn" onclick="switchTab('health',this)">🫁 Health Analysis</button>
+  <button class="tbtn" onclick="switchTab('report',this)">📋 Report Card</button>
+  <button class="tbtn" onclick="switchTab('insights',this)">💡 Insights & Recs</button>
+</nav>
+
+<!-- ======================== TAB: OVERVIEW ======================== -->
+<div id="tab-overview" class="tpanel act">
+  <div class="aqileg fi">
+    <span class="aleg"><span class="adot" style="background:#22d97a"></span>Good 0–50</span>
+    <span class="aleg"><span class="adot" style="background:#f9b520"></span>Moderate 51–100</span>
+    <span class="aleg"><span class="adot" style="background:#f97316"></span>Poor 101–150</span>
+    <span class="aleg"><span class="adot" style="background:#f04545"></span>Very Poor 151–200</span>
+    <span class="aleg"><span class="adot" style="background:#9f7afe"></span>Severe 200+</span>
+    <span class="aleg" style="margin-left:auto;font-size:11px;color:var(--t3)">Sources: IQAir, AQICN, Air Matters — June 2026</span>
+  </div>
+
+  <div class="cgrid fi">
+    <div class="cc">
+      <div class="cttl">AQI Comparison</div>
+      <div class="csub">Air Quality Index across 8 Nigerian cities — US EPA scale</div>
+      <div class="cwrap" style="height:270px">
+        <canvas id="aqiChart" role="img" aria-label="Bar chart comparing AQI values. Lagos 74 highest, Benin City 29 lowest.">AQI: Lagos 74, Warri 65, Port Harcourt 55, Ibadan 43, Enugu 38, Abuja 35, Kano 31, Benin City 29.</canvas>
+      </div>
+    </div>
+    <div class="cc">
+      <div class="cttl" id="pc-title">PM2.5 Concentration (μg/m³)</div>
+      <div class="csub" id="pc-sub">Fine particulate matter — WHO 24h guideline: 15 μg/m³</div>
+      <div class="cwrap" style="height:270px">
+        <canvas id="pollChart" role="img" aria-label="Bar chart comparing PM2.5. Lagos 21.3, Warri 18.5, Port Harcourt 15, Ibadan 11, Enugu 9, Abuja 8, Kano 7.5, Benin City 6.5.">PM2.5: Lagos 21.3, Warri 18.5, Port Harcourt 15, others below 12.</canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="cgrid fi">
+    <div class="cc">
+      <div class="cttl">Environmental Health Score Ranking</div>
+      <div class="csub">Combined air (60%) + water (40%) quality — 0 to 100</div>
+      <div class="cwrap" style="height:270px">
+        <canvas id="rankChart" role="img" aria-label="Horizontal bar chart: Abuja 72 top, Warri 48 lowest.">Rankings: Abuja 72, Benin City 70, Enugu 66, Kano 65, Ibadan 62, Lagos 53, Port Harcourt 53, Warri 48.</canvas>
+      </div>
+    </div>
+    <div class="cc">
+      <div class="cttl">Water Quality Scores</div>
+      <div class="csub">Municipal water quality index (0–100, higher = safer)</div>
+      <div class="cwrap" style="height:270px">
+        <canvas id="waterChart" role="img" aria-label="Bar chart of water quality scores. Abuja leads at 62, Warri lowest at 28.">Water scores: Abuja 62, Enugu 52, Benin City 50, Ibadan 48, Lagos 45, Kano 40, Port Harcourt 35, Warri 28.</canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="cgrid fi">
+    <div class="cc">
+      <div class="cttl">AQI Category Distribution</div>
+      <div class="csub">How many cities fall in each health category</div>
+      <div class="cwrap" style="height:230px">
+        <canvas id="distChart" role="img" aria-label="Doughnut: 5 cities Good, 3 cities Moderate.">Distribution: Good 5 cities, Moderate 3 cities.</canvas>
+      </div>
+    </div>
+    <div class="cc">
+      <div class="cttl">PM10 Concentration (μg/m³)</div>
+      <div class="csub">Coarse particulate matter — WHO 24h guideline: 45 μg/m³</div>
+      <div class="cwrap" style="height:230px">
+        <canvas id="pm10Chart" role="img" aria-label="Bar chart PM10 levels, all cities below WHO limit of 45.">PM10: Lagos 36, Warri 32, Port Harcourt 28, Ibadan 22, Enugu 21, Abuja 20, Kano 18, Benin City 15.</canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="sh fi">🏙️ City Detail Cards <small id="cclbl">— 8 cities shown</small></div>
+  <div class="citygrid fi" id="citygrid"></div>
+</div><!-- /overview -->
+
+<!-- ======================== TAB: HEALTH ======================== -->
+<div id="tab-health" class="tpanel">
+  <div class="hhdr fi">
+    <div>
+      <div class="hcname" id="hcname">Lagos</div>
+      <div class="hcaqi" id="hcaqi">AQI: 74 · Moderate · PM2.5: 21.3 μg/m³ · Water Score: 45/100</div>
+    </div>
+    <select style="background:var(--bg0);border:1px solid var(--b2);border-radius:var(--rsm);color:var(--t1);padding:7px 13px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;cursor:pointer;" onchange="selectCity(this.value);document.getElementById('csel').value=this.value">
+      <option value="lagos" selected>Lagos</option>
+      <option value="abuja">Abuja</option>
+      <option value="kano">Kano</option>
+      <option value="portharcourt">Port Harcourt</option>
+      <option value="ibadan">Ibadan</option>
+      <option value="benin">Benin City</option>
+      <option value="warri">Warri</option>
+      <option value="enugu">Enugu</option>
+    </select>
+  </div>
+  <div class="hgrid fi">
+    <div class="hsc">
+      <div class="hsttl">💨 Air Quality Health Impacts</div>
+      <div id="airImpacts"></div>
+    </div>
+    <div class="hsc">
+      <div class="hsttl">💧 Water Quality Impacts</div>
+      <div id="waterImpacts"></div>
+    </div>
+  </div>
+  <div class="esumm fi">
+    <div class="estxt" id="healthNote"></div>
+  </div>
+</div>
+
+<!-- ======================== TAB: REPORT ======================== -->
+<div id="tab-report" class="tpanel">
+  <div class="rgrid fi">
+    <div class="rsc">
+      <div class="sh" style="justify-content:center;margin-bottom:18px">🌿 Environmental Health Score</div>
+      <div class="sring">
+        <canvas id="scoreChart" width="155" height="155" role="img" aria-label="Score ring chart showing city environmental health score."></canvas>
+        <div class="srlbl">
+          <span class="srnum" id="scoreNum">53</span>
+          <span class="srunit">/100</span>
+        </div>
+      </div>
+      <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:16px" id="scoreGradeLbl">Grade C — Fair</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px" id="subScores">
+        <div style="background:var(--cy15);border:1px solid rgba(6,200,232,.2);border-radius:var(--rsm);padding:13px;text-align:center">
+          <div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px">Air Quality</div>
+          <div style="font-family:'Syne',sans-serif;font-size:26px;font-weight:700;color:var(--cyan)" id="airScoDisp">58</div>
+          <div style="font-size:10.5px;color:var(--t3)">/100</div>
+        </div>
+        <div style="background:var(--pu15);border:1px solid rgba(159,122,254,.2);border-radius:var(--rsm);padding:13px;text-align:center">
+          <div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px">Water Quality</div>
+          <div style="font-family:'Syne',sans-serif;font-size:26px;font-weight:700;color:var(--pur)" id="watScoDisp">45</div>
+          <div style="font-size:10.5px;color:var(--t3)">/100</div>
+        </div>
+      </div>
+    </div>
+    <div class="rbd">
+      <div class="sh" style="margin-bottom:14px">📝 Grade Breakdown</div>
+      <div id="gradeRows"></div>
+    </div>
+  </div>
+  <div class="cc fi">
+    <div class="cttl">Multi-Dimensional Environmental Profile</div>
+    <div class="csub">Radar: selected city vs. national average of 8 cities</div>
+    <div class="cwrap" style="height:290px;max-width:480px;margin:0 auto">
+      <canvas id="radarChart" role="img" aria-label="Radar chart comparing city profile to national average across 6 dimensions."></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== TAB: INSIGHTS ======================== -->
+<div id="tab-insights" class="tpanel">
+  <div class="esumm fi">
+    <div class="estxt">
+      <strong>Executive Summary — Nigeria, June 2026:</strong> Analysis of 8 major Nigerian cities reveals a national average AQI of <strong>46</strong>, broadly placing the country in the <strong>Good-to-Moderate</strong> air quality range. However, intra-city variations are stark — <strong>Benin City</strong> leads as the cleanest city nationally (AQI 29), while <strong>Lagos</strong> records the highest pollution at AQI 74. Water quality tells a strikingly different story: <strong>Abuja's</strong> planned infrastructure yields the best water score (62/100), while <strong>Warri</strong> scores a critical 28/100 due to decades of Niger Delta oil-industry contamination. Most surprising: <strong>Kano</strong> — Nigeria's northern industrial and trade hub known for severe harmattan dust storms — currently registers only AQI 31, outperforming all southern cities. Residents of <strong>Lagos</strong> and <strong>Port Harcourt</strong> face compounding environmental health risks: above-average air pollution AND poor water quality simultaneously — a double burden that amplifies skin, hair, and systemic health impact.
+    </div>
+  </div>
+
+  <div class="igrid fi">
+    <div class="ic">
+      <div class="icttl" style="color:var(--grn)">🟢 Top 3 Cleanest Cities</div>
+      <div class="ritem"><div class="rnum r1">1</div><div><div class="rcname">Benin City</div><div class="rcstate">Edo State</div></div><div class="rsco tgrn">AQI 29</div></div>
+      <div class="ritem"><div class="rnum r2">2</div><div><div class="rcname">Kano</div><div class="rcstate">Kano State</div></div><div class="rsco tgrn">AQI 31</div></div>
+      <div class="ritem"><div class="rnum r3">3</div><div><div class="rcname">Abuja</div><div class="rcstate">FCT</div></div><div class="rsco tgrn">AQI 35</div></div>
+    </div>
+    <div class="ic">
+      <div class="icttl" style="color:var(--red)">🔴 Top 3 Most Polluted</div>
+      <div class="ritem"><div class="rnum r1">1</div><div><div class="rcname">Lagos</div><div class="rcstate">Lagos State</div></div><div class="rsco tamb">AQI 74</div></div>
+      <div class="ritem"><div class="rnum r2">2</div><div><div class="rcname">Warri</div><div class="rcstate">Delta State</div></div><div class="rsco tamb">AQI 65</div></div>
+      <div class="ritem"><div class="rnum r3">3</div><div><div class="rcname">Port Harcourt</div><div class="rcstate">Rivers State</div></div><div class="rsco tamb">AQI 55</div></div>
+    </div>
+    <div class="ic">
+      <div class="icttl" style="color:var(--pur)">⚡ Key Anomalies & Observations</div>
+      <div class="irow">
+        <div class="rind" style="background:var(--am15);color:var(--amb);border:1px solid rgba(249,181,32,.3)">!</div>
+        <div><div class="ilbl">Kano Beats All Southern Cities</div><div class="idsc">Kano (AQI 31) outperforms Lagos, Warri, Port Harcourt, and Ibadan despite being Nigeria's most industrialized northern city — suggesting seasonal off-harmattan measurement.</div></div>
+      </div>
+      <div class="irow">
+        <div class="rind" style="background:var(--pu15);color:var(--pur);border:1px solid rgba(159,122,254,.3)">★</div>
+        <div><div class="ilbl">Warri: Good Air, Crisis Water</div><div class="idsc">Warri's water score (28/100) is the worst nationally. Oil spills across the Niger Delta have rendered groundwater critically unsafe while air quality remains deceptively acceptable.</div></div>
+      </div>
+      <div class="irow">
+        <div class="rind" style="background:var(--cy15);color:var(--cyan);border:1px solid rgba(6,200,232,.3)">↑</div>
+        <div><div class="ilbl">Abuja: Nigeria's Environmental Blueprint</div><div class="idsc">Planned urban design delivers both AQI 35 (3rd cleanest) AND 62/100 water score (best nationally) — proving intentional infrastructure planning pays off in health outcomes.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sh fi">🎯 Personalized Recommendations <small id="reclbl">— Lagos</small></div>
+  <div class="recgrid fi" id="recgrid"></div>
+</div>
+
+<!-- FOOTER -->
+<footer class="ftr">
+  <div>Data: IQAir · AQICN · WHO Environmental Health Database · NESREA Nigeria · Air Matters</div>
+  <div style="color:var(--amber)">⚠️ Reference only — consult a health professional for medical advice</div>
+  <div>Personal Environmental Health Analyzer v2.0 · June 8, 2026</div>
+</footer>
+</div><!-- /wrap -->
+
+<script>
+/* ============================================================
+   DATA
+   ============================================================ */
+const CITIES=[
+  {id:'lagos',      name:'Lagos',         state:'Lagos',   aqi:74,  pm25:21.3, pm10:36.0, ws:45, as_:58, temp:28, hum:74,  pop:'15M+'},
+  {id:'abuja',      name:'Abuja',         state:'FCT',     aqi:35,  pm25:8.0,  pm10:20.0, ws:62, as_:78, temp:35, hum:32,  pop:'3.6M'},
+  {id:'kano',       name:'Kano',          state:'Kano',    aqi:31,  pm25:7.5,  pm10:18.0, ws:40, as_:82, temp:31, hum:9,   pop:'4.1M'},
+  {id:'portharcourt',name:'Port Harcourt',state:'Rivers',  aqi:55,  pm25:15.0, pm10:28.0, ws:35, as_:65, temp:30, hum:78,  pop:'3.4M'},
+  {id:'ibadan',     name:'Ibadan',        state:'Oyo',     aqi:43,  pm25:11.0, pm10:22.0, ws:48, as_:72, temp:29, hum:63,  pop:'3.6M'},
+  {id:'benin',      name:'Benin City',    state:'Edo',     aqi:29,  pm25:6.5,  pm10:15.0, ws:50, as_:84, temp:29, hum:64,  pop:'1.5M'},
+  {id:'warri',      name:'Warri',         state:'Delta',   aqi:65,  pm25:18.5, pm10:32.0, ws:28, as_:62, temp:31, hum:80,  pop:'0.8M'},
+  {id:'enugu',      name:'Enugu',         state:'Enugu',   aqi:38,  pm25:9.0,  pm10:21.0, ws:52, as_:75, temp:27, hum:68,  pop:'0.7M'}
+];
+
+let selId='lagos';
+const charts={};
+
+function envScore(c){return Math.round(c.as_*0.6+c.ws*0.4);}
+function catColor(aqi){return aqi<=50?'#22d97a':aqi<=100?'#f9b520':aqi<=150?'#f97316':aqi<=200?'#f04545':'#9f7afe';}
+function catLabel(aqi){return aqi<=50?'Good':aqi<=100?'Moderate':aqi<=150?'Poor':aqi<=200?'Very Poor':'Severe';}
+function grade(s){
+  if(s>=80)return{g:'A',c:'gA',l:'Excellent'};
+  if(s>=65)return{g:'B',c:'gB',l:'Good'};
+  if(s>=50)return{g:'C',c:'gC',l:'Fair'};
+  if(s>=35)return{g:'D',c:'gD',l:'Poor'};
+  return{g:'F',c:'gF',l:'Very Poor'};
+}
+
+const gc='rgba(80,140,240,0.08)';
+const tc='#3d5678';
+const tf={size:11,family:'Plus Jakarta Sans'};
+const base={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}};
+
+/* ============================================================
+   BUILD CHARTS
+   ============================================================ */
+function buildAqiChart(data){
+  const ctx=document.getElementById('aqiChart').getContext('2d');
+  if(charts.aqi)charts.aqi.destroy();
+  const cols=data.map(c=>catColor(c.aqi));
+  charts.aqi=new Chart(ctx,{type:'bar',data:{labels:data.map(c=>c.name),datasets:[{data:data.map(c=>c.aqi),backgroundColor:cols.map(x=>x+'88'),borderColor:cols,borderWidth:2,borderRadius:6}]},options:{...base,scales:{x:{grid:{color:gc},ticks:{color:tc,font:tf}},y:{grid:{color:gc},ticks:{color:tc,font:tf},max:120}},plugins:{...base.plugins,tooltip:{callbacks:{label:ctx=>`AQI ${ctx.raw} — ${catLabel(ctx.raw)}`}}}}});
+}
+
+function buildPollChart(data,type){
+  const ctx=document.getElementById('pollChart').getContext('2d');
+  if(charts.poll)charts.poll.destroy();
+  let vals,limit,col1,col2,unit;
+  if(type==='pm10'){vals=data.map(c=>c.pm10);limit=45;col1='rgba(6,200,232,0.45)';col2='#06c8e8';unit='μg/m³';}
+  else{vals=data.map(c=>c.pm25);limit=15;col1='rgba(240,69,69,0.42)';col2='#f04545';unit='μg/m³';}
+  const bg=vals.map(v=>v>limit?col1:'rgba(13,230,138,0.42)');
+  const bc=vals.map(v=>v>limit?col2:'#0de68a');
+  charts.poll=new Chart(ctx,{type:'bar',data:{labels:data.map(c=>c.name),datasets:[{data:vals,backgroundColor:bg,borderColor:bc,borderWidth:2,borderRadius:6}]},options:{...base,scales:{x:{grid:{color:gc},ticks:{color:tc,font:tf}},y:{grid:{color:gc},ticks:{color:tc,font:tf}}},plugins:{...base.plugins,tooltip:{callbacks:{label:ctx=>`${type==='pm10'?'PM10':'PM2.5'}: ${ctx.raw} ${unit}${ctx.raw>limit?' ⚠ Above WHO limit':' ✓ Within limit'}`}}}}});
+}
+
+function buildRankChart(){
+  const ctx=document.getElementById('rankChart').getContext('2d');
+  if(charts.rank)charts.rank.destroy();
+  const sorted=[...CITIES].sort((a,b)=>envScore(b)-envScore(a));
+  const vals=sorted.map(c=>envScore(c));
+  const bg=vals.map(v=>v>=70?'rgba(13,230,138,0.45)':v>=55?'rgba(6,200,232,0.45)':'rgba(249,181,32,0.45)');
+  const bc=vals.map(v=>v>=70?'#0de68a':v>=55?'#06c8e8':'#f9b520');
+  charts.rank=new Chart(ctx,{type:'bar',data:{labels:sorted.map(c=>c.name),datasets:[{data:vals,backgroundColor:bg,borderColor:bc,borderWidth:2,borderRadius:6}]},options:{...base,scales:{x:{grid:{color:gc},ticks:{color:tc,font:tf}},y:{grid:{color:gc},ticks:{color:tc,font:tf},min:0,max:100}},plugins:{...base.plugins,tooltip:{callbacks:{label:ctx=>`Score: ${ctx.raw}/100 — ${grade(ctx.raw).l}`}}}}});
+}
+
+function buildWaterChart(){
+  const ctx=document.getElementById('waterChart').getContext('2d');
+  if(charts.water)charts.water.destroy();
+  const sorted=[...CITIES].sort((a,b)=>b.ws-a.ws);
+  const bg=sorted.map(c=>c.ws>=60?'rgba(159,122,254,0.45)':c.ws>=45?'rgba(6,200,232,0.4)':'rgba(240,69,69,0.4)');
+  const bc=sorted.map(c=>c.ws>=60?'#9f7afe':c.ws>=45?'#06c8e8':'#f04545');
+  charts.water=new Chart(ctx,{type:'bar',data:{labels:sorted.map(c=>c.name),datasets:[{data:sorted.map(c=>c.ws),backgroundColor:bg,borderColor:bc,borderWidth:2,borderRadius:6}]},options:{...base,scales:{x:{grid:{color:gc},ticks:{color:tc,font:tf}},y:{grid:{color:gc},ticks:{color:tc,font:tf},min:0,max:100}},plugins:{...base.plugins,tooltip:{callbacks:{label:ctx=>`Water Score: ${ctx.raw}/100`}}}}});
+}
+
+function buildDistChart(data){
+  const ctx=document.getElementById('distChart').getContext('2d');
+  if(charts.dist)charts.dist.destroy();
+  const cnt={Good:0,Moderate:0,Poor:0};
+  data.forEach(c=>{const l=catLabel(c.aqi);cnt[l]=(cnt[l]||0)+1;});
+  const labels=Object.keys(cnt).filter(k=>cnt[k]>0);
+  const vals=labels.map(k=>cnt[k]);
+  const clrs={'Good':'#22d97a','Moderate':'#f9b520','Poor':'#f97316','Very Poor':'#f04545','Severe':'#9f7afe'};
+  charts.dist=new Chart(ctx,{type:'doughnut',data:{labels,datasets:[{data:vals,backgroundColor:labels.map(l=>(clrs[l]||'#888')+'aa'),borderColor:labels.map(l=>clrs[l]||'#888'),borderWidth:2,hoverOffset:7}]},options:{...base,cutout:'55%',plugins:{legend:{display:true,position:'bottom',labels:{color:'#6e90bf',font:{size:11,family:'Plus Jakarta Sans'},padding:14,boxWidth:11,boxHeight:11}}},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.raw} cit${ctx.raw===1?'y':'ies'}`}}}});
+}
+
+function buildPm10Chart(data){
+  const ctx=document.getElementById('pm10Chart').getContext('2d');
+  if(charts.pm10)charts.pm10.destroy();
+  const vals=data.map(c=>c.pm10);
+  charts.pm10=new Chart(ctx,{type:'bar',data:{labels:data.map(c=>c.name),datasets:[{data:vals,backgroundColor:vals.map(v=>v>45?'rgba(240,69,69,0.42)':'rgba(6,200,232,0.38)'),borderColor:vals.map(v=>v>45?'#f04545':'#06c8e8'),borderWidth:2,borderRadius:6}]},options:{...base,scales:{x:{grid:{color:gc},ticks:{color:tc,font:tf}},y:{grid:{color:gc},ticks:{color:tc,font:tf}}},plugins:{...base.plugins,tooltip:{callbacks:{label:ctx=>`PM10: ${ctx.raw} μg/m³`}}}}});
+}
+
+let scoreInst=null,radarInst=null;
+
+function buildScoreChart(score){
+  const ctx=document.getElementById('scoreChart').getContext('2d');
+  if(scoreInst)scoreInst.destroy();
+  const col=score>=70?'#0de68a':score>=55?'#f9b520':'#f97316';
+  scoreInst=new Chart(ctx,{type:'doughnut',data:{datasets:[{data:[score,100-score],backgroundColor:[col+'cc','rgba(255,255,255,0.04)'],borderColor:[col,'rgba(0,0,0,0)'],borderWidth:[2,0],hoverOffset:0}]},options:{...base,cutout:'73%',plugins:{legend:{display:false},tooltip:{enabled:false}}}});
+  document.getElementById('scoreNum').textContent=score;
+  document.getElementById('scoreNum').style.color=col;
+  const g=grade(score);
+  document.getElementById('scoreGradeLbl').textContent=`Grade ${g.g} — ${g.l}`;
+  document.getElementById('scoreGradeLbl').style.color=col;
+}
+
+function buildRadarChart(city){
+  const ctx=document.getElementById('radarChart').getContext('2d');
+  if(radarInst)radarInst.destroy();
+  const avg={as_:Math.round(CITIES.reduce((s,c)=>s+c.as_,0)/CITIES.length),ws:Math.round(CITIES.reduce((s,c)=>s+c.ws,0)/CITIES.length)};
+  const lung=c=>Math.round(Math.max(0,100-c.aqi*0.9));
+  const skin=c=>Math.round(c.ws*0.7+c.as_*0.3);
+  const hair=c=>Math.round(c.ws*0.8+c.as_*0.2);
+  const enrg=c=>Math.round(c.as_*0.75+c.ws*0.25);
+  const cd=[city.as_,city.ws,lung(city),skin(city),hair(city),enrg(city)];
+  const ad=[avg.as_,avg.ws,lung({aqi:46,as_:avg.as_,ws:avg.ws}),skin({as_:avg.as_,ws:avg.ws}),hair({as_:avg.as_,ws:avg.ws}),enrg({as_:avg.as_,ws:avg.ws})];
+  radarInst=new Chart(ctx,{type:'radar',data:{labels:['Air Quality','Water Quality','Lung Health','Skin Health','Hair Health','Energy Levels'],datasets:[{label:city.name,data:cd,borderColor:'#06c8e8',backgroundColor:'rgba(6,200,232,0.1)',borderWidth:2,pointBackgroundColor:'#06c8e8',pointRadius:4},{label:'National Avg',data:ad,borderColor:'rgba(159,122,254,0.65)',backgroundColor:'rgba(159,122,254,0.05)',borderWidth:1.5,pointBackgroundColor:'#9f7afe',pointRadius:3,borderDash:[4,4]}]},options:{responsive:true,maintainAspectRatio:false,scales:{r:{min:0,max:100,ticks:{display:false},grid:{color:'rgba(80,140,240,0.12)'},angleLines:{color:'rgba(80,140,240,0.14)'},pointLabels:{color:'#6e90bf',font:{size:11,family:'Plus Jakarta Sans'}}}},plugins:{legend:{display:true,position:'bottom',labels:{color:'#6e90bf',font:{size:11,family:'Plus Jakarta Sans'},padding:14,boxWidth:11}}}}});
+}
+
+/* ============================================================
+   CITY CARDS
+   ============================================================ */
+function renderCards(data){
+  document.getElementById('cclbl').textContent=`— ${data.length} ${data.length===1?'city':'cities'} shown`;
+  const g=document.getElementById('citygrid');
+  g.innerHTML=data.map(c=>{
+    const sc=envScore(c);const col=catColor(c.aqi);
+    const afc=c.as_>=70?'#0de68a':c.as_>=55?'#f9b520':'#f97316';
+    const wfc=c.ws>=60?'#9f7afe':c.ws>=45?'#06c8e8':'#f04545';
+    const efc=sc>=70?'#0de68a':sc>=55?'#f9b520':'#f97316';
+    const isSel=c.id===selId;
+    return `<div class="ccard${isSel?' sel':''}" onclick="selectCity('${c.id}');document.getElementById('csel').value='${c.id}'">
+      <div class="ctop" style="background:${col}"></div>
+      <div class="chdr">
+        <div>
+          <div class="cname">${c.name}${isSel?` <span style="font-size:10px;color:var(--cyan)">● YOU</span>`:''}</div>
+          <div class="cstate">${c.state} State · ${c.pop}</div>
+        </div>
+        <div class="aqibdg" style="background:${col}22;color:${col};border:1px solid ${col}55">${c.aqi}</div>
+      </div>
+      <div style="font-size:11px;font-weight:600;color:${col};margin-bottom:10px">${catLabel(c.aqi)}</div>
+      <div class="cstats">
+        <div class="cst"><div class="cstl">PM2.5</div><div class="cstv">${c.pm25}</div></div>
+        <div class="cst"><div class="cstl">PM10</div><div class="cstv">${c.pm10}</div></div>
+        <div class="cst"><div class="cstl">Humidity</div><div class="cstv">${c.hum}%</div></div>
+      </div>
+      <div class="sbars">
+        <div class="sbr"><div class="sbl">Air</div><div class="sbt"><div class="sbf" style="width:${c.as_}%;background:${afc}"></div></div><div class="sbn">${c.as_}</div></div>
+        <div class="sbr"><div class="sbl">Water</div><div class="sbt"><div class="sbf" style="width:${c.ws}%;background:${wfc}"></div></div><div class="sbn">${c.ws}</div></div>
+        <div class="sbr"><div class="sbl">Env.</div><div class="sbt"><div class="sbf" style="width:${sc}%;background:${efc}"></div></div><div class="sbn">${sc}</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ============================================================
+   HEALTH ANALYSIS
+   ============================================================ */
+const AIRIMPS=[
+  {lbl:'Lungs & Respiratory',key:'lung',desc:aqi=>aqi<=50?'Clean air supports healthy lung function. Minimal irritation expected for most individuals including asthmatics.':aqi<=100?`Mild irritation possible for sensitive groups. PM2.5 of ${CITIES.find(c=>c.aqi===aqi||c.aqi<aqi+5&&c.aqi>aqi-5)?.pm25||'~'}μg/m³ slightly exceeds WHO 24h guideline. Risk increases with prolonged outdoor stays.`:'Elevated particulates cause bronchial inflammation. Measurable decline in pulmonary function expected with continuous exposure.'},
+  {lbl:'Sleep Quality',key:'sleep',desc:aqi=>aqi<=50?'Air quality poses no sleep disruption. Night-time breathing will be comfortable and restorative.':aqi<=100?'Moderate particulates can cause nasal congestion, reducing deep sleep quality and REM cycles over weeks of exposure.':'Poor air quality significantly disrupts sleep. Airway inflammation and reduced oxygen quality measurably shortens deep sleep cycles.'},
+  {lbl:'Energy Levels',key:'energy',desc:aqi=>aqi<=50?'Optimal oxygen quality supports sustained daily energy and cognitive sharpness throughout the day.':aqi<=100?'Mild, cumulative fatigue possible after prolonged outdoor exposure. Oxidative stress subtly reduces cellular energy production.':'Chronic low-grade oxygen displacement leads to notable daytime fatigue, brain fog, and 15–20% reduced exercise capacity.'},
+  {lbl:'Exercise Performance',key:'exercise',desc:aqi=>aqi<=50?'Ideal for all outdoor exercise — running, cycling, HIIT. No activity restrictions required.':aqi<=100?'Morning runs (5–7AM) or evening (7PM+) preferred. Avoid intense outdoor workouts during 7–10AM peak traffic hours.':'Outdoor exercise not recommended on current readings. PM2.5 at exercise breathing rates penetrates 30% deeper into lungs.'},
+  {lbl:'Long-Term Health Risk',key:'longterm',desc:aqi=>aqi<=50?'Low cumulative health risk. Continued clean-air lifestyle supports long-term cardiovascular and respiratory health.':aqi<=100?'Sustained Moderate AQI raises 10-year cardiovascular disease risk by 12–18% per global epidemiological models (WHO 2021).':'High cumulative exposure significantly elevates risk of COPD, arterial hypertension, and lung cancer over a 15-year horizon.'}
+];
+const WATIMP=[
+  {lbl:'Hair Fall',key:'hf',desc:ws=>ws>=60?'Low risk. Good water quality preserves scalp circulation and hair follicle health effectively.':ws>=45?'Moderate risk. Elevated calcium and magnesium (hard water) weakens hair shaft over weeks, increasing shedding by 20–35%.':'High risk. Heavy metals and excess chlorine in local water disrupt the hair growth cycle, causing active thinning and increased breakage.'},
+  {lbl:'Hair Dryness',key:'hd',desc:ws=>ws>=60?'Water quality preserves natural hair moisture and sebum balance during washing.':ws>=45?'Hard water strips natural oils from hair cuticle on each wash, causing progressive dryness and frizz over time.':'Severely mineralized water causes significant moisture loss on contact. Hair feels rough, straw-like, and brittle after washing.'},
+  {lbl:'Scalp Health',key:'sc',desc:ws=>ws>=60?'Clean water supports a balanced scalp microbiome. Dandruff and irritation unlikely to be water-related.':ws>=48?'Moderate risk of scalp dryness, itchiness, and dandruff from ongoing mineral buildup and pH disruption.':'High risk. Contaminated water triggers scalp inflammation, fungal overgrowth, and increases seborrheic dermatitis flares.'},
+  {lbl:'Skin Dryness',key:'sd',desc:ws=>ws>=60?'Good water quality supports natural skin hydration and an intact moisture barrier.':ws>=48?'Hard water disrupts skin\'s natural moisture barrier. Dry patches on arms, legs, and face likely after regular tap water exposure.':'Extreme mineral and contaminant load destroys skin lipid barrier. Chronic eczema and persistent dry skin strongly associated.'},
+  {lbl:'Acne & Breakouts',key:'ac',desc:ws=>ws>=60?'Low acne risk attributable to water. Focus on diet, pillowcase hygiene, and product choices.':ws>=45?'Moderate risk. Chlorine residuals and sediment particles in water clog pores and alter facial skin pH, triggering breakouts.':'High risk. Bacterial contamination and heavy metals in local water are linked to cystic acne on face and back.'},
+  {lbl:'Sensitive Skin',key:'ss',desc:ws=>ws>=60?'Water is suitable for sensitive skin. Low chemical and pathogen load minimises reactivity.':ws>=50?'Moderate irritation risk. Mineral-rich water can trigger redness, burning, and reactions in rosacea-prone or eczema skin.':'Critical risk for sensitive skin. Avoid prolonged unfiltered tap water contact on the face. Use filtered or mineral water for facial cleansing.'}
+];
+
+const NOTES={
+  'lagos':`<strong>Lagos Health Context:</strong> With AQI 74 (Moderate), Lagos PM2.5 of <strong>21.3 \u03bcg/m\u00b3</strong> exceeds the WHO 24-hour guideline of 15 \u03bcg/m\u00b3, raising chronic exposure concerns. Industrial corridors — Apapa, Agege, Surulere, Oshodi — record significantly higher readings (IQAir: Ikorodu 168, Oshodi 168, Agege 126). Water quality (45/100) reflects aging LSWC infrastructure, groundwater heavy metals, and high TDS in low-lying and coastal areas like Makoko and Ajegunle. Residents should prioritize N95 masks for commutes, HEPA filters indoors, and RO filtration for drinking water.`,
+  'abuja':`<strong>Abuja Health Context:</strong> Abuja's planned urban design delivers AQI <strong>35</strong> — Nigeria's 3rd cleanest air — and a water quality score of <strong>62/100</strong>, the national best. FCT residents enjoy the most favorable environmental health profile of any major Nigerian city. However, rapid construction activity and seasonal harmattan (Nov–Mar) can spike AQI by 40–60 points. Water quality, while best nationally, still contains moderate hardness; filtered drinking water is recommended.`,
+  'kano':`<strong>Kano Health Context:</strong> Kano's current AQI <strong>31</strong> represents off-harmattan season conditions. During dry-season harmattan (November–March), AQI typically surges to 150–250+ as Saharan dust sweeps across the north. Water quality (40/100) is affected by industrial runoff from the textile and tanning industry clusters along Challawa and Sharada industrial estates. Groundwater contamination with chromium and other heavy metals is a documented concern in low-income wards.`,
+  'portharcourt':`<strong>Port Harcourt Health Context:</strong> Long known for perennial gas flaring, Port Harcourt's AQI <strong>55</strong> is shaped by petroleum industry combustion and road vehicle emissions. Residents in Rumuola, Diobu, and Trans-Amadi face above-average particulate and VOC exposure. Water quality (35/100) is severely impacted by oil spill runoff into the Bonny River basin and contaminated aquifers — a compounding double risk for skin and hair health.`,
+  'ibadan':`<strong>Ibadan Health Context:</strong> Ibadan's AQI <strong>43</strong> is primarily driven by open burning and vehicular emissions around Dugbe, Gbagi, and Challenge markets. Water quality (48/100) reflects aging OYSWATER infrastructure with intermittent supply leading to over-reliance on potentially contaminated boreholes. Moderate-risk city overall — protective measures and basic water filtration are the key interventions.`,
+  'benin':`<strong>Benin City Health Context:</strong> Benin City records <strong>Nigeria's cleanest air</strong> nationally (AQI 29), with PM2.5 of just 6.5 \u03bcg/m\u00b3 — well within WHO guidelines. This is a standout performance for a major southern Nigerian city. Water quality (50/100) is moderate, with Gelegele industrial activities and Benin River basin contamination identified as risk factors. Overall, residents enjoy relatively favorable environmental conditions.`,
+  'warri':`<strong>Warri Health Context:</strong> Despite relatively acceptable air quality (AQI 65), Warri's water quality crisis (score <strong>28/100</strong> — lowest nationally) poses a severe public health emergency. Decades of crude oil spills across Warri South, Udu, and Ughelli South have rendered groundwater critically unsafe for domestic use. Residents should use only properly treated or sealed bottled water for drinking, cooking, and facial cleansing. Contact dermatitis and hair damage from tap water contact are well-documented in the region.`,
+  'enugu':`<strong>Enugu Health Context:</strong> Enugu benefits from moderate air quality (AQI <strong>38</strong>) and one of the better water quality scores outside Abuja (52/100). Coal mining legacy mildly affects air particulates and groundwater quality around Iva Valley and Coal Camp areas. Overall, Enugu presents one of the more balanced environmental health profiles among analyzed Nigerian cities, with manageable risks addressable through standard protective measures.`
+};
+
+function getRisk(aqi,ws,key){
+  if(['lung','sleep','energy','exercise','longterm'].includes(key))return aqi<=50?'lo':aqi<=100?'mo':'hi';
+  if(key==='hf'||key==='hd')return ws>=60?'lo':ws>=45?'mo':'hi';
+  if(key==='sc'||key==='sd')return ws>=60?'lo':ws>=48?'mo':'hi';
+  if(key==='ac')return ws>=65?'lo':ws>=45?'mo':'hi';
+  if(key==='ss')return ws>=70?'lo':ws>=50?'mo':'hi';
+  return 'mo';
+}
+function rIco(r){return r==='lo'?'🟢':r==='mo'?'🟡':'🔴';}
+function rCls(r){return r==='lo'?'rlo':r==='mo'?'rmo':'rhi';}
+
+function updateHealth(id){
+  const c=CITIES.find(x=>x.id===id);if(!c)return;
+  document.getElementById('hcname').textContent=c.name;
+  document.getElementById('hcaqi').textContent=`AQI: ${c.aqi} · ${catLabel(c.aqi)} · PM2.5: ${c.pm25} μg/m³ · Water Score: ${c.ws}/100`;
+  document.querySelectorAll('[onchange*=updateHealth]').forEach(el=>el.value=id);
+  document.getElementById('airImpacts').innerHTML=AIRIMPS.map(d=>{
+    const r=getRisk(c.aqi,c.ws,d.key);
+    return`<div class="irow"><div class="rind ${rCls(r)}">${rIco(r)}</div><div><div class="ilbl">${d.lbl}</div><div class="idsc">${d.desc(c.aqi)}</div></div></div>`;
+  }).join('');
+  document.getElementById('waterImpacts').innerHTML=WATIMP.map(d=>{
+    const r=getRisk(c.aqi,c.ws,d.key);
+    return`<div class="irow"><div class="rind ${rCls(r)}">${rIco(r)}</div><div><div class="ilbl">${d.lbl}</div><div class="idsc">${d.desc(c.ws)}</div></div></div>`;
+  }).join('');
+  document.getElementById('healthNote').innerHTML=NOTES[id]||'';
+}
+
+/* ============================================================
+   REPORT CARD
+   ============================================================ */
+function updateReport(id){
+  const c=CITIES.find(x=>x.id===id);if(!c)return;
+  const sc=envScore(c);
+  const hairSc=Math.round(c.ws*0.8+c.as_*0.2);
+  const skinSc=Math.round(c.ws*0.7+c.as_*0.3);
+  buildScoreChart(sc);
+  document.getElementById('airScoDisp').textContent=c.as_;
+  document.getElementById('watScoDisp').textContent=c.ws;
+  const rows=[
+    {lbl:`Air Quality — ${c.name}`,sc:c.as_,note:`AQI ${c.aqi} · ${catLabel(c.aqi)}`},
+    {lbl:`Water Quality — ${c.name}`,sc:c.ws,note:`Score ${c.ws}/100`},
+    {lbl:'Overall Environmental Score',sc,note:`Combined air + water`},
+    {lbl:'Hair Health Risk Score',sc:hairSc,note:`Water-weighted assessment`},
+    {lbl:'Skin Health Risk Score',sc:skinSc,note:`Water & air composite`}
+  ];
+  document.getElementById('gradeRows').innerHTML=rows.map(r=>{const g=grade(r.sc);return`<div class="grow"><div><div class="gmet">${r.lbl}</div><div class="gsub">${r.note} · ${g.l}</div></div><div class="gbdg ${g.c}">${g.g}</div></div>`;}).join('');
+  buildRadarChart(c);
+}
+
+/* ============================================================
+   RECOMMENDATIONS
+   ============================================================ */
+const RECS=[
+  {ico:'🌅',col:'var(--cyan)',bg:'var(--cy15)',ttl:'Daily Actions',items:c=>[`Check AQI before going out — current: ${c.aqi} (${catLabel(c.aqi)})`,c.aqi>50?'Wear N95/KN95 mask for commutes and outdoor exposure longer than 30 minutes':'Standard cloth mask adequate on most days','Hydrate 2.5–3L daily to counter particulate-induced oxidative inflammation',c.ws<50?'Use filtered or certified bottled water for drinking and cooking':'Boil and cool tap water before drinking','Monitor energy, respiratory, and skin symptoms weekly — track trends monthly']},
+  {ico:'🏠',col:'var(--grn)',bg:'var(--gr15)',ttl:'Indoor Air Improvements',items:c=>['Install HEPA air purifier — bedroom is highest priority (8 hours daily exposure)','Keep windows closed 7–10AM and 5–8PM during peak vehicular pollution hours','Use activated charcoal or bamboo charcoal bags in enclosed rooms',`Maintain indoor plants: Spider Plant, Peace Lily, Snake Plant (NASA-approved air purifiers)`,c.hum>70?`Use dehumidifier — your city's ${c.hum}% humidity accelerates mold and fungal growth indoors`:'Monitor indoor humidity — maintain 40–60% using ventilation and plants']},
+  {ico:'🏃',col:'var(--amb)',bg:'var(--am15)',ttl:'Outdoor Activity Guide',items:c=>[c.aqi<=50?'All outdoor exercise is safe and optimal. Run, cycle, or play sports freely.':c.aqi<=100?'Schedule runs 5–7AM or after 7PM to avoid peak-hour PM2.5 concentration.':'Reduce outdoor exercise sessions to under 30 minutes. Prioritize indoor gym alternatives.',`Avoid exercising near ${c.name==='Lagos'?'Apapa, Agege, Ikosi Market corridors':c.name==='Kano'?'Sharada/Challawa industrial areas':c.name==='Port Harcourt'?'Trans-Amadi and gas flare zones':'high-traffic industrial corridors'}`,'Shower and change clothes after outdoor activity to remove settled particulates on skin and hair',c.aqi>60?'Subscribe to AQI alerts (IQAir app) for real-time pollution spikes in your area':'Monitor seasonal AQI shifts — harmattan season (Nov–Mar) increases northern city readings significantly']},
+  {ico:'💇',col:'var(--pur)',bg:'var(--pu15)',ttl:'Hair Care Recommendations',items:c=>[c.ws<50?`Install TDS-reducing showerhead water filter — critical for water score of ${c.ws}/100`:'Periodic showerhead filter replacement recommended every 6 months','Use chelating shampoo monthly to dissolve calcium/magnesium mineral buildup from hard water','Apple cider vinegar rinse (1 tbsp in 250ml water) after each wash restores hair pH and removes residue','Weekly deep conditioning mask — focus on moisture replenishment and hair shaft repair',c.ws<45?'Reduce wash frequency to 2–3x per week maximum to preserve natural scalp oils':'Limit heat styling to prevent compounding damage on mineral-stripped hair cuticle','Protective styles (braids, buns, scarves) reduce environmental particulate deposition on hair']},
+  {ico:'✨',col:'var(--pnk)',bg:'rgba(244,114,182,0.11)',ttl:'Skin Care Guide',items:c=>[c.ws<50?'Use micellar water or toner instead of tap water for facial cleansing':'Double-cleanse with oil-based cleanser to dissolve particulate residue deposited on skin','Apply broad-spectrum SPF 30+ every morning — air pollution accelerates UV-induced photoaging by 20–40%',c.aqi>60?'Vitamin C serum (AM) and Niacinamide (PM) are essential antioxidant defenses against PM2.5 skin penetration':'Lightweight antioxidant serum 3x weekly is sufficient for your current air quality level','Repair skin barrier with ceramide-rich moisturizer — pollution degrades the skin\'s protective lipid layer daily',c.ws<45?'Avoid prolonged unfiltered water contact on the face — rinse with filtered or mineral water':'Facial mist with mineral water helps maintain hydration throughout the day without makeup disruption']},
+  {ico:'💧',col:'var(--cyan)',bg:'var(--cy15)',ttl:'Water Quality Improvements',items:c=>[c.ws<50?'URGENT: Install reverse osmosis (RO) filter under sink — most effective treatment for local water profile':'Activated carbon filter is sufficient for current water quality level; replace cartridge every 3 months','Test your home water TDS with a TDS meter (₦2,000–₦5,000 online) — safe drinking range: 50–300 ppm',c.ws<45?'Do NOT use unfiltered tap water for infant formula, food preparation, or drinking':'Boiling + carbon filtration recommended as minimum treatment before consuming tap water',`Look for NSF-certified water filter brands available locally: Aqua Sure, Berkey, Sawyer, Kent RO`,'Flush morning tap for 60 seconds before use — removes overnight pipe sediment accumulation effectively','Consider a UV sterilizer at point-of-use for additional bacterial protection beyond filtration']}
+];
+
+function updateRecs(id){
+  const c=CITIES.find(x=>x.id===id);if(!c)return;
+  document.getElementById('reclbl').textContent=`— ${c.name}`;
+  document.getElementById('recgrid').innerHTML=RECS.map(r=>`<div class="recc"><div class="recir"><div class="recico" style="background:${r.bg}">${r.ico}</div><div class="recttl" style="color:${r.col}">${r.ttl}</div></div>${r.items(c).map(it=>`<div class="recit"><div class="recbul" style="background:${r.col}"></div><div>${it}</div></div>`).join('')}</div>`).join('');
+}
+
+/* ============================================================
+   FILTERS & SELECTION
+   ============================================================ */
+function getFiltered(){
+  const mx=parseInt(document.getElementById('aqir').value);
+  const rv=document.getElementById('riskf').value;
+  let d=CITIES.filter(c=>c.aqi<=mx);
+  if(rv==='good')d=d.filter(c=>c.aqi<=50);
+  else if(rv==='moderate')d=d.filter(c=>c.aqi>50);
+  return d;
+}
+
+function applyFilters(){
+  const d=getFiltered();
+  const pv=document.getElementById('pollv').value;
+  buildAqiChart(d);buildDistChart(d);buildPm10Chart(d);
+  if(pv==='pm10'){buildPollChart(d,'pm10');document.getElementById('pc-title').textContent='PM10 Concentration (μg/m³)';document.getElementById('pc-sub').textContent='Coarse particulate matter — WHO 24h guideline: 45 μg/m³';}
+  else{buildPollChart(d,'pm25');document.getElementById('pc-title').textContent='PM2.5 Concentration (μg/m³)';document.getElementById('pc-sub').textContent='Fine particulate matter — WHO 24h guideline: 15 μg/m³';}
+  renderCards(d);
+}
+
+function selectCity(id){
+  selId=id;
+  document.getElementById('csel').value=id;
+  const c=CITIES.find(x=>x.id===id);
+  if(c){
+    document.getElementById('mycitysco').textContent=envScore(c);
+    document.getElementById('mycitylbl').textContent=`${c.name} · /100`;
+  }
+  renderCards(getFiltered());
+  updateHealth(id);
+  updateReport(id);
+  updateRecs(id);
+  document.querySelectorAll('select[onchange*="selectCity"]').forEach(el=>el.value=id);
+}
+
+/* ============================================================
+   TAB SWITCHING
+   ============================================================ */
+function switchTab(tabId,btn){
+  document.querySelectorAll('.tpanel').forEach(p=>p.classList.remove('act'));
+  document.querySelectorAll('.tbtn').forEach(b=>b.classList.remove('act'));
+  document.getElementById('tab-'+tabId).classList.add('act');
+  btn.classList.add('act');
+  if(tabId==='overview')setTimeout(()=>applyFilters(),40);
+  if(tabId==='report')setTimeout(()=>updateReport(selId),40);
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+window.addEventListener('load',()=>{
+  buildAqiChart(CITIES);
+  buildPollChart(CITIES,'pm25');
+  buildRankChart();
+  buildWaterChart();
+  buildDistChart(CITIES);
+  buildPm10Chart(CITIES);
+  renderCards(CITIES);
+  updateHealth('lagos');
+  updateRecs('lagos');
+});
+</script>
+</body>
+</html>

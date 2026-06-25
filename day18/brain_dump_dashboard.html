@@ -1,0 +1,541 @@
+<style>
+  :root{
+    --font-display:'Segoe UI','Helvetica Neue',Arial,sans-serif;
+    --font-body:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+    --bg:#0B1120;
+    --surface:#141B2D;
+    --surface-2:#1B2540;
+    --surface-3:#202B4A;
+    --border:#263150;
+    --text:#E8ECF4;
+    --text-dim:#94A3B8;
+    --teal:#2DD4BF;
+    --amber:#FBBF24;
+    --rose:#FB7185;
+    --violet:#A78BFA;
+    --green:#34D399;
+    --radius:14px;
+  }
+
+  *{box-sizing:border-box;}
+  body,html{margin:0;padding:0;}
+
+  .dashboard{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font-body);
+    line-height:1.55;
+    padding:0 0 60px 0;
+    min-height:100vh;
+  }
+
+  .dashboard *{font-family:inherit;}
+
+  .dash-header{
+    position:sticky;
+    top:0;
+    z-index:50;
+    background:rgba(11,17,32,0.92);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--border);
+    padding:18px 28px;
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+  }
+
+  .dash-title-block h1{
+    font-family:var(--font-display);
+    font-size:22px;
+    font-weight:700;
+    margin:0;
+    letter-spacing:-0.01em;
+  }
+  .dash-title-block p{
+    margin:2px 0 0 0;
+    font-size:13px;
+    color:var(--text-dim);
+  }
+
+  .dash-nav{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .dash-nav button{
+    color:var(--text-dim);
+    text-decoration:none;
+    font-size:13px;
+    font-weight:500;
+    padding:7px 12px;
+    border-radius:999px;
+    border:1px solid var(--border);
+    background:transparent;
+    transition:all .15s ease;
+    white-space:nowrap;
+    cursor:pointer;
+    font-family:inherit;
+  }
+  .dash-nav button:hover{
+    color:var(--text);
+    border-color:var(--teal);
+    background:rgba(45,212,191,0.08);
+  }
+
+  .container{
+    max-width:1080px;
+    margin:0 auto;
+    padding:28px 24px 0;
+  }
+
+  .stat-row{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:14px;
+    margin-bottom:30px;
+  }
+  .stat-card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:16px 18px;
+  }
+  .stat-card .num{
+    font-family:var(--font-display);
+    font-size:28px;
+    font-weight:700;
+  }
+  .stat-card .label{
+    font-size:12px;
+    color:var(--text-dim);
+    margin-top:2px;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+  }
+  .stat-card.c-action .num{color:var(--teal);}
+  .stat-card.c-question .num{color:var(--violet);}
+  .stat-card.c-risk .num{color:var(--rose);}
+  .stat-card.c-conflict .num{color:var(--amber);}
+
+  section.block{
+    margin-bottom:36px;
+    scroll-margin-top:90px;
+  }
+
+  .section-head{
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+    margin-bottom:14px;
+  }
+  .section-head .idx{
+    font-family:var(--font-display);
+    color:var(--text-dim);
+    font-size:13px;
+  }
+  .section-head h2{
+    font-family:var(--font-display);
+    font-size:19px;
+    font-weight:600;
+    margin:0;
+  }
+
+  .card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:20px 22px;
+  }
+
+  .summary-card p{margin:0;color:var(--text);font-size:15px;}
+
+  /* Load strip - signature element: 5 parallel commitments running at once */
+  .load-strip{
+    margin-top:18px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .load-row{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:10px 14px;
+  }
+  .load-dot{
+    width:9px;height:9px;border-radius:50%;
+    background:var(--teal);
+    flex-shrink:0;
+  }
+  .load-row:nth-child(2) .load-dot{background:var(--violet);}
+  .load-row:nth-child(3) .load-dot{background:var(--amber);}
+  .load-row:nth-child(4) .load-dot{background:var(--green);}
+  .load-row:nth-child(5) .load-dot{background:var(--rose);}
+  .load-row span{font-size:14px;}
+  .load-strip-label{
+    font-size:12px;
+    color:var(--text-dim);
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    margin-top:22px;
+    margin-bottom:0;
+  }
+
+  .takeaway-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:14px;
+  }
+  .takeaway-card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-left:3px solid var(--teal);
+    border-radius:10px;
+    padding:14px 16px;
+    font-size:14px;
+  }
+
+  table.action-table{
+    width:100%;
+    border-collapse:collapse;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    overflow:hidden;
+  }
+  table.action-table thead th{
+    text-align:left;
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    color:var(--text-dim);
+    background:var(--surface-2);
+    padding:12px 16px;
+    border-bottom:1px solid var(--border);
+  }
+  table.action-table tbody td{
+    padding:14px 16px;
+    border-bottom:1px solid var(--border);
+    font-size:14px;
+    vertical-align:top;
+  }
+  table.action-table tbody tr:last-child td{border-bottom:none;}
+  table.action-table tbody tr:hover{background:rgba(45,212,191,0.04);}
+  .task-cell{font-weight:500;}
+  .muted{color:var(--text-dim);}
+
+  .badge{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    font-size:12px;
+    font-weight:600;
+    padding:4px 10px;
+    border-radius:999px;
+    white-space:nowrap;
+  }
+  .badge-high{background:rgba(251,113,133,0.12);color:var(--rose);}
+  .badge-medium{background:rgba(251,191,36,0.12);color:var(--amber);}
+  .badge-low{background:rgba(52,211,153,0.12);color:var(--green);}
+  .badge-pending{background:rgba(148,163,184,0.12);color:var(--text-dim);}
+  .badge-question{background:rgba(167,139,250,0.12);color:var(--violet);}
+  .badge-conflict{background:rgba(251,191,36,0.12);color:var(--amber);}
+  .badge-completed{background:rgba(52,211,153,0.12);color:var(--green);}
+  .badge-blocked{background:rgba(251,113,133,0.12);color:var(--rose);}
+
+  .stack{display:flex;flex-direction:column;gap:12px;}
+
+  .item-card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:14px 16px;
+    font-size:14px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .item-card .item-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+  }
+
+  .risk-card{border-left:3px solid var(--rose);}
+  .question-card{border-left:3px solid var(--violet);}
+  .conflict-card{border-left:3px solid var(--amber);}
+
+  details.notes-block{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:4px 22px;
+  }
+  details.notes-block summary{
+    cursor:pointer;
+    padding:16px 0;
+    font-weight:600;
+    font-size:14px;
+    list-style:none;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  details.notes-block summary::-webkit-details-marker{display:none;}
+  details.notes-block summary::after{
+    content:'+';
+    font-size:18px;
+    color:var(--text-dim);
+    transition:transform .2s ease;
+  }
+  details.notes-block[open] summary::after{
+    content:'\2212';
+  }
+  .notes-content{
+    padding:0 0 18px 0;
+    font-size:14px;
+    color:var(--text);
+  }
+  .notes-content p{margin:0 0 12px 0;}
+  .notes-content p:last-child{margin-bottom:0;}
+
+  .source-tag{
+    display:inline-block;
+    font-size:11px;
+    color:var(--text-dim);
+    border:1px solid var(--border);
+    padding:3px 9px;
+    border-radius:999px;
+    margin-top:8px;
+  }
+
+  @media (max-width:720px){
+    .stat-row{grid-template-columns:repeat(2,1fr);}
+    .takeaway-grid{grid-template-columns:1fr;}
+    .dash-header{padding:14px 16px;}
+    .container{padding:20px 14px 0;}
+    table.action-table{display:block;overflow-x:auto;white-space:nowrap;}
+  }
+</style>
+
+<div class="dashboard">
+
+  <div class="dash-header">
+    <div class="dash-title-block">
+      <h1>Brain Dump Dashboard</h1>
+      <p>Voice brainstorm &middot; Skill test run</p>
+    </div>
+    <div class="dash-nav">
+      <button class="nav-btn" data-target="summary">Summary</button>
+      <button class="nav-btn" data-target="takeaways">Takeaways</button>
+      <button class="nav-btn" data-target="actions">Action Items</button>
+      <button class="nav-btn" data-target="questions">Open Questions</button>
+      <button class="nav-btn" data-target="risks">Risks / Blockers</button>
+      <button class="nav-btn" data-target="conflicts">Conflicts</button>
+      <button class="nav-btn" data-target="notes">Additional Notes</button>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <div class="stat-row">
+      <div class="stat-card c-action">
+        <div class="num">9</div>
+        <div class="label">Action Items</div>
+      </div>
+      <div class="stat-card c-question">
+        <div class="num">3</div>
+        <div class="label">Open Questions</div>
+      </div>
+      <div class="stat-card c-risk">
+        <div class="num">5</div>
+        <div class="label">Risks / Blockers</div>
+      </div>
+      <div class="stat-card c-conflict">
+        <div class="num">0</div>
+        <div class="label">Conflicts</div>
+      </div>
+    </div>
+
+    <section class="block" id="summary">
+      <div class="section-head"><span class="idx">01</span><h2>Summary</h2></div>
+      <div class="card summary-card">
+        <p>Debs is juggling the Crypto AI Intelligence System (in progress since April, currently at phase 3 of 6), the AWS AI Practitioner course, and a Machine Learning Engineering course on DataCamp, alongside ongoing LinkedIn posting/engagement and job applications with cold emailing. She describes feeling overloaded and unusually drained, and is looking for a way to balance everything since fixed schedules don't work for her. She is also reaching out to active builders on LinkedIn for possible collaboration, plans to ask a data scientist to mentor her only after finishing and publishing the Crypto AI Intelligence System, and is considering switching that project's documentation from a write-up to a screen-recorded video series. The note was recorded in mid-June.</p>
+
+        <p class="load-strip-label">Commitments running in parallel (as stated)</p>
+        <div class="load-strip">
+          <div class="load-row"><span class="load-dot"></span><span>Crypto AI Intelligence System</span></div>
+          <div class="load-row"><span class="load-dot"></span><span>AWS AI Practitioner course</span></div>
+          <div class="load-row"><span class="load-dot"></span><span>Machine Learning Engineering course (DataCamp)</span></div>
+          <div class="load-row"><span class="load-dot"></span><span>LinkedIn posting &amp; engagement</span></div>
+          <div class="load-row"><span class="load-dot"></span><span>Job applications &amp; cold emailing</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" id="takeaways">
+      <div class="section-head"><span class="idx">02</span><h2>Key Takeaways</h2></div>
+      <div class="takeaway-grid">
+        <div class="takeaway-card">Five things are active at once: the Crypto AI Intelligence System, the AWS course, the DataCamp course, LinkedIn, and the job search.</div>
+        <div class="takeaway-card">The Crypto AI Intelligence System has been worked on since April and is currently at phase 3 of 6. Motivation has dropped &mdash; attributed to feeling overloaded with limited time/bandwidth to give it.</div>
+        <div class="takeaway-card">Feeling unusually drained lately, described as "very unlike me."</div>
+        <div class="takeaway-card">Fixed schedules don't work for her ("bad habit of not following schedules") &mdash; she's looking for a different way to find balance.</div>
+        <div class="takeaway-card">Actively reaching out to people on LinkedIn who are building things, to explore collaboration or being on each other's radar.</div>
+        <div class="takeaway-card">Plans to ask a data scientist to mentor her &mdash; but only after the Crypto AI Intelligence System is finished and published.</div>
+        <div class="takeaway-card">Considering a video series (screen recording + small face-cam overlay) for the Crypto AI Intelligence System instead of a written series.</div>
+        <div class="takeaway-card">Note was recorded in mid-June, adding to the sense of time pressure.</div>
+      </div>
+    </section>
+
+    <section class="block" id="actions">
+      <div class="section-head"><span class="idx">03</span><h2>Action Items</h2></div>
+      <table class="action-table">
+        <thead>
+          <tr><th>Task</th><th>Owner</th><th>Deadline</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="task-cell">Continue Crypto AI Intelligence System (currently phase 3 of 6)</td>
+            <td class="muted">Not specified</td>
+            <td class="muted">Not specified</td>
+            <td><span class="badge badge-pending">⏳ Pending</span></td>
+          </tr>
+          <tr>
+            <td class="task-cell">Continue AWS AI Practitioner course</td>
+            <td class="muted">Not specified</td>
+            <td class="muted">Not specified</td>
+            <td><span class="badge badge-pending">⏳ Pending</span></td>
+          </tr>
+          <tr>
+            <td class="task-cell">Continue Machine Learning Engineering course on DataCamp</td>
+            <td class="muted">Not specified</td>
+            <td class="muted">Not specified</td>
+            <td><span class="badge badge-pending">⏳ Pending</span></td>
+          </tr>
+          <tr>
+            <td class="task-cell">Find a way to balance the Crypto AI System, both courses, LinkedIn, and the job search (without relying on a fixed schedule)</td>
+            <td class="muted">Not specified</td>
+            <td class="muted">Not specified</td>
+            <td><span class="badge badge-high">🔴 High Priority</span></td>
+          </tr>
+          <tr>
+            <td class="task-cell">Keep up with LinkedIn posting and engagement (before and after posting)</td>
+            <td class="muted">Not specified</td>
+            <td class="muted">Not specified</td>
+            <td><span class="badge badge-pending">⏳ Pending</span></td>
+          </tr>
+          <tr>
+            <td class="task-cell">Keep up with job applications and cold emailing</td>
+            <td class="muted">Not specified</td>
+            <td class="muted">Not specified</td>
+            <td><span class="badge badge-pending">⏳ Pending</span></td>
+          </tr>
+          <tr>
+            <td class="task-cell">Reach out to people on LinkedIn who are actively building, to explore collaboration or mutual support</td>
+            <td class="muted">Not specified</td>
+            <td class="muted">Not specified</td>
+            <td><span class="badge badge-pending">⏳ Pending</span></td>
+          </tr>
+          <tr>
+            <td class="task-cell">Ask an intelligent/brilliant data scientist to mentor her</td>
+            <td class="muted">Not specified</td>
+            <td class="muted">Not specified</td>
+            <td><span class="badge badge-blocked">⏳ Blocked &mdash; waiting on Crypto AI System completion</span></td>
+          </tr>
+          <tr>
+            <td class="task-cell">Decide on and produce a video series for the Crypto AI Intelligence System (screen recording with face-cam overlay)</td>
+            <td class="muted">Not specified</td>
+            <td class="muted">Not specified</td>
+            <td><span class="badge badge-question">❓ Open Question</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="block" id="questions">
+      <div class="section-head"><span class="idx">04</span><h2>Open Questions</h2></div>
+      <div class="stack">
+        <div class="item-card question-card">
+          <div class="item-top"><span>What alternative method (other than a fixed schedule) could help balance the Crypto AI Intelligence System, the AWS course, the DataCamp course, LinkedIn, and the job search?</span><span class="badge badge-question">❓</span></div>
+        </div>
+        <div class="item-card question-card">
+          <div class="item-top"><span>How long should each video in the planned Crypto AI Intelligence System video series be?</span><span class="badge badge-question">❓</span></div>
+        </div>
+        <div class="item-card question-card">
+          <div class="item-top"><span>Is a video series actually the smart choice for documenting the Crypto AI Intelligence System, given it might end up lengthy and the outcome is uncertain?</span><span class="badge badge-question">❓</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" id="risks">
+      <div class="section-head"><span class="idx">05</span><h2>Risks / Blockers</h2></div>
+      <div class="stack">
+        <div class="item-card risk-card">
+          <div class="item-top"><span>Feeling unusually drained / low energy lately, described as "very unlike me."</span><span class="badge badge-high">🔴</span></div>
+        </div>
+        <div class="item-card risk-card">
+          <div class="item-top"><span>Self-described overload &mdash; taking on more than there is time or bandwidth for, directly linked to dropped motivation on the Crypto AI Intelligence System.</span><span class="badge badge-high">🔴</span></div>
+        </div>
+        <div class="item-card risk-card">
+          <div class="item-top"><span>Tendency to not follow schedules, which removes the standard fix for finding balance.</span><span class="badge badge-medium">🟠</span></div>
+        </div>
+        <div class="item-card risk-card">
+          <div class="item-top"><span>Mentorship ask is self-blocked &mdash; waiting until the Crypto AI Intelligence System is finished and published before approaching the data scientist.</span><span class="badge badge-medium">🟠</span></div>
+        </div>
+        <div class="item-card risk-card">
+          <div class="item-top"><span>Timing pressure &mdash; it's already mid-June with a lot still outstanding across the project, courses, content, and job search.</span><span class="badge badge-medium">🟠</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" id="conflicts">
+      <div class="section-head"><span class="idx">06</span><h2>Conflicts</h2></div>
+      <div class="stack">
+        <div class="item-card" style="border-left:3px solid var(--green);">
+          <div class="item-top"><span>No conflicts identified. (Earlier ambiguity about the Crypto AI Intelligence System's status was clarified: it is at phase 3 of 6.)</span><span class="badge badge-completed">✅ Resolved</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" id="notes">
+      <div class="section-head"><span class="idx">07</span><h2>Additional Notes</h2></div>
+      <details class="notes-block" open>
+        <summary>Video series format &amp; reasoning</summary>
+        <div class="notes-content">
+          <p>Preferred format described for the Crypto AI Intelligence System series: a screen-recorded walkthrough of the process, narrated throughout, with her face shown in a small circular overlay in the corner of the screen (similar to reaction-cam style videos) &mdash; instead of a written write-up.</p>
+          <p>Stated reasons for preferring video over write-up: it would feel more interactive, would put her "out there" more, and would let people see that she's sure of what she did based on how she explains it.</p>
+          <p>She does not yet know how long the videos should be, and is unsure whether the video format is the smart choice, since the videos might end up being lengthy.</p>
+        </div>
+      </details>
+      <br/>
+      <details class="notes-block">
+        <summary>Context on this note</summary>
+        <div class="notes-content">
+          <p>This brain dump was explicitly dictated as a test of the brain-dump-action-planner skill, intended to be run across multiple note formats to check how the skill performs without being retaught its instructions.</p>
+          <span class="source-tag">Source: voice brain dump, dictated mid-June</span>
+        </div>
+      </details>
+    </section>
+
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('.nav-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var target = document.getElementById(btn.getAttribute('data-target'));
+      if(target){
+        var header = document.querySelector('.dash-header');
+        var headerH = header ? header.offsetHeight : 0;
+        var top = target.getBoundingClientRect().top + window.pageYOffset - headerH - 12;
+        window.scrollTo({top: top, behavior: 'smooth'});
+      }
+    });
+  });
+</script>
