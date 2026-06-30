@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PriorRight — Authorization Should Never Come Before Care</title>
+<style>
+:root{--navy:#0A1628;--navy-light:#112240;--navy-card:#1A2F4A;--blue:#0066FF;--blue-light:#3385FF;--amber:#F59E0B;--red:#DC2626;--green:#16A34A;--green-light:#4ADE80;--purple:#8B5CF6;--white:#F8FAFC;--text:#F1F5F9;--text-muted:#94A3B8;--grey-dark:#334155;--border:rgba(255,255,255,0.08);--shadow:0 4px 24px rgba(0,0,0,0.4);--radius:12px;--radius-sm:8px;--tr:0.25s ease;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--navy);color:var(--text);min-height:100vh;overflow-x:hidden;line-height:1.6;}
+.hidden{display:none!important;}
+.screen{min-height:100vh;width:100%;display:none;flex-direction:column;}
+.screen.active{display:flex;}
+::-webkit-scrollbar{width:6px;}::-webkit-scrollbar-thumb{background:var(--grey-dark);border-radius:99px;}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+@keyframes pulse-glow{0%,100%{box-shadow:0 0 8px var(--blue);}50%{box-shadow:0 0 20px var(--blue);}}
+@keyframes idealPulse{0%,100%{box-shadow:0 0 8px var(--green);}50%{box-shadow:0 0 24px var(--green);}}
+@keyframes confetti-fall{0%{transform:translateY(-10px) rotate(0deg);opacity:1;}100%{transform:translateY(100vh) rotate(720deg);opacity:0;}}
+.animate-in{animation:fadeInUp 0.4s ease forwards;}
+.pulse{animation:pulse-glow 1.5s ease infinite;}
+.ideal-pulse{animation:idealPulse 1.5s ease infinite;}
+/* LANDING */
+#screen-landing{align-items:center;justify-content:center;padding:40px 24px;position:relative;overflow:hidden;}
+#screen-landing::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(0,102,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,102,255,0.04) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;}
+.landing-inner{max-width:720px;width:100%;text-align:center;position:relative;z-index:1;}
+.logo-mark{display:inline-flex;align-items:center;gap:10px;margin-bottom:32px;}
+.logo-icon{width:48px;height:48px;background:var(--blue);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 0 32px rgba(0,102,255,0.4);}
+.logo-text{font-size:28px;font-weight:800;letter-spacing:-0.5px;}.logo-text span{color:var(--blue);}
+.landing-tagline{font-size:clamp(30px,5vw,52px);font-weight:800;line-height:1.15;letter-spacing:-1px;margin-bottom:16px;}
+.hl{color:var(--blue);}
+.landing-subtitle{font-size:18px;color:var(--text-muted);max-width:560px;margin:0 auto 32px;line-height:1.7;}
+.stat-strip{display:flex;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:40px;background:var(--navy-light);}
+.stat-item{flex:1;padding:20px 16px;text-align:center;border-right:1px solid var(--border);}
+.stat-item:last-child{border-right:none;}
+.stat-number{font-size:26px;font-weight:800;color:var(--amber);display:block;line-height:1;margin-bottom:4px;}
+.stat-label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;line-height:1.3;}
+.btn-primary{display:inline-flex;align-items:center;gap:10px;background:var(--blue);color:#fff;border:none;border-radius:var(--radius);padding:18px 40px;font-size:17px;font-weight:700;cursor:pointer;transition:var(--tr);box-shadow:0 0 32px rgba(0,102,255,0.3);}
+.btn-primary:hover{background:var(--blue-light);transform:translateY(-2px);}
+.landing-disclaimer{margin-top:24px;font-size:12px;color:var(--text-muted);line-height:1.5;}
+/* SCENARIOS */
+#screen-scenarios{padding:40px 24px;align-items:center;}
+.scenarios-inner{max-width:900px;width:100%;}
+.screen-eyebrow{font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--blue);margin-bottom:8px;}
+.screen-title{font-size:clamp(24px,4vw,36px);font-weight:800;letter-spacing:-0.5px;line-height:1.2;margin-bottom:12px;}
+.screen-desc{font-size:15px;color:var(--text-muted);max-width:560px;line-height:1.6;margin-bottom:24px;}
+.unlock-progress{display:flex;gap:8px;align-items:center;margin-bottom:32px;}
+.unlock-dot{width:10px;height:10px;border-radius:50%;background:var(--grey-dark);transition:var(--tr);}
+.unlock-dot.done{background:var(--green);}.unlock-dot.active{background:var(--blue);box-shadow:0 0 8px var(--blue);}
+.scenario-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:16px;}
+.scenario-card{background:var(--navy-light);border:1px solid var(--border);border-radius:var(--radius);padding:24px;cursor:pointer;transition:var(--tr);position:relative;overflow:hidden;}
+.scenario-card:hover:not(.locked){border-color:var(--blue);transform:translateY(-2px);box-shadow:var(--shadow);}
+.scenario-card.locked{opacity:0.45;cursor:not-allowed;filter:grayscale(0.4);}
+.scenario-card.completed{border-color:var(--green);}
+.scenario-card.completed::after{content:'BOTH COMPLETE';position:absolute;top:12px;right:12px;background:var(--green);color:#fff;font-size:10px;font-weight:700;letter-spacing:1px;padding:3px 8px;border-radius:4px;}
+.scenario-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;}
+.scenario-avatar{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;}
+.scenario-name{font-size:20px;font-weight:800;margin-bottom:2px;}
+.scenario-condition{font-size:13px;color:var(--text-muted);margin-bottom:16px;}
+.scenario-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;}
+.tag{font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;letter-spacing:0.3px;}
+.tag-blue{background:rgba(0,102,255,0.15);color:var(--blue-light);}
+.tag-amber{background:rgba(245,158,11,0.15);color:var(--amber);}
+.tag-red{background:rgba(220,38,38,0.15);color:#F87171;}
+.tag-green{background:rgba(22,163,74,0.15);color:#4ADE80;}
+.tag-purple{background:rgba(139,92,246,0.15);color:#A78BFA;}
+.denial-risk-bar{margin-top:8px;}
+.denial-risk-label{display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;}
+.risk-bar-track{height:5px;background:var(--grey-dark);border-radius:99px;overflow:hidden;}
+.risk-bar-fill{height:100%;border-radius:99px;}
+.locked-label{margin-top:16px;font-size:12px;color:#64748B;display:flex;align-items:center;gap:6px;font-weight:600;}
+.btn-secondary{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:transparent;color:var(--text-muted);border:1px solid var(--border);border-radius:var(--radius);padding:13px 28px;font-size:14px;font-weight:600;cursor:pointer;transition:var(--tr);width:100%;}
+.btn-secondary:hover{border-color:var(--blue);color:var(--blue-light);}
+/* SIMULATION */
+#screen-sim{flex-direction:column;min-height:100vh;}
+.sim-topbar{background:var(--navy-light);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-shrink:0;flex-wrap:wrap;}
+.sim-topbar.ideal-mode{background:rgba(22,163,74,0.08);border-bottom:1px solid rgba(22,163,74,0.15);}
+.sim-logo{font-size:18px;font-weight:800;white-space:nowrap;}.sim-logo span{color:var(--blue);}
+.mode-badge{font-size:11px;font-weight:700;padding:4px 12px;border-radius:99px;letter-spacing:1px;text-transform:uppercase;}
+.broken-badge{background:rgba(220,38,38,0.15);color:#F87171;}
+.ideal-badge{background:rgba(22,163,74,0.15);color:var(--green-light);}
+.sim-metrics{display:flex;gap:16px;align-items:center;flex-wrap:wrap;}
+.metric-pill{display:flex;align-items:center;gap:8px;background:var(--navy-card);border:1px solid var(--border);border-radius:99px;padding:6px 14px;font-size:13px;}
+.metric-value{font-weight:700;color:var(--white);}.metric-label{color:var(--text-muted);font-size:12px;}
+.days-value{color:var(--amber)!important;}.ideal-days-value{color:var(--green-light)!important;}.score-value{color:var(--blue-light)!important;}
+.sim-progress-bar{background:var(--navy-light);border-bottom:1px solid var(--border);padding:10px 24px;flex-shrink:0;}
+.progress-stages{display:flex;align-items:center;max-width:900px;margin:0 auto;}
+.progress-stage{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;}
+.progress-stage::after{content:'';position:absolute;top:10px;left:50%;width:100%;height:2px;background:var(--grey-dark);z-index:0;}
+.progress-stage:last-child::after{display:none;}
+.progress-dot{width:20px;height:20px;border-radius:50%;background:var(--grey-dark);border:2px solid var(--grey-dark);position:relative;z-index:1;transition:var(--tr);flex-shrink:0;}
+.progress-dot.done{background:var(--green);border-color:var(--green);}
+.progress-dot.active{background:var(--blue);border-color:var(--blue);box-shadow:0 0 8px var(--blue);}
+.progress-dot.ideal-active{background:var(--green);border-color:var(--green);box-shadow:0 0 8px var(--green);}
+.progress-stage-label{font-size:10px;color:var(--text-muted);margin-top:4px;text-align:center;white-space:nowrap;text-transform:uppercase;letter-spacing:0.3px;font-weight:600;}
+.progress-stage.done .progress-stage-label{color:var(--green);}
+.progress-stage.active .progress-stage-label{color:var(--blue-light);}
+.patient-banner{background:var(--navy-card);border-bottom:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;gap:16px;flex-shrink:0;flex-wrap:wrap;}
+.patient-banner.ideal-banner{background:rgba(22,163,74,0.06);border-bottom:1px solid rgba(22,163,74,0.12);}
+.patient-banner-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.patient-banner-name{font-weight:700;font-size:14px;}.patient-banner-detail{font-size:12px;color:var(--text-muted);}
+.equity-flag{background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);color:var(--amber);font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;letter-spacing:0.5px;}
+.sim-main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.lanes-wrapper{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;flex:1;min-height:0;overflow:hidden;}
+.lane{border-right:1px solid var(--border);display:flex;flex-direction:column;min-height:0;}
+.lane:last-child{border-right:none;}
+.lane-header{padding:14px 16px;background:var(--navy-light);border-bottom:1px solid var(--border);flex-shrink:0;}
+.lane-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;}
+.lane-subtitle{font-size:11px;color:var(--text-muted);}
+.lane-title-patient{color:#60A5FA;}.lane-title-provider{color:#34D399;}.lane-title-payer{color:#F87171;}.lane-title-payer-ideal{color:var(--green-light);}
+.lane-stages{flex:1;overflow-y:auto;padding:12px 10px;display:flex;flex-direction:column;gap:8px;}
+.stage-zone{background:var(--navy-card);border:1px dashed var(--border);border-radius:var(--radius-sm);min-height:64px;padding:8px;transition:var(--tr);}
+.stage-zone.drag-over{border-color:var(--blue);background:rgba(0,102,255,0.08);}
+.stage-zone.drag-over-ideal{border-color:var(--green);background:rgba(22,163,74,0.08);}
+.stage-zone.active-zone{border-color:rgba(0,102,255,0.4);border-style:solid;}
+.stage-zone.active-zone-ideal{border-color:rgba(22,163,74,0.4);border-style:solid;}
+.stage-zone.completed-zone{border-color:rgba(22,163,74,0.3);border-style:solid;}
+.stage-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-muted);margin-bottom:6px;}
+.case-card{background:var(--navy-light);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;cursor:grab;transition:var(--tr);user-select:none;}
+.case-card:hover{border-color:var(--blue);box-shadow:0 2px 12px rgba(0,102,255,0.2);}
+.case-card.dragging{opacity:0.4;}
+.case-card.glow-green{border-color:var(--green);box-shadow:0 0 16px rgba(22,163,74,0.3);}
+.case-card.glow-red{border-color:var(--red);box-shadow:0 0 16px rgba(220,38,38,0.3);}
+.case-card.glow-amber{border-color:var(--amber);box-shadow:0 0 16px rgba(245,158,11,0.3);}
+.case-card.glow-blue{border-color:var(--blue);box-shadow:0 0 16px rgba(0,102,255,0.3);}
+.case-card-title{font-size:13px;font-weight:700;margin-bottom:4px;}
+.case-card-desc{font-size:11px;color:var(--text-muted);line-height:1.4;}
+.case-card-status{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;margin-top:8px;text-transform:uppercase;letter-spacing:0.5px;}
+.status-pending{background:rgba(245,158,11,0.15);color:var(--amber);}
+.status-approved{background:rgba(22,163,74,0.15);color:#4ADE80;}
+.status-denied{background:rgba(220,38,38,0.15);color:#F87171;}
+.status-review{background:rgba(0,102,255,0.15);color:var(--blue-light);}
+.status-appeal{background:rgba(139,92,246,0.15);color:#A78BFA;}
+.status-auto{background:rgba(22,163,74,0.15);color:#4ADE80;}
+.drag-hint{font-size:10px;color:var(--text-muted);margin-top:6px;}
+/* CALLOUT */
+.callout-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:100;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.3s ease;}
+.callout-overlay.visible{opacity:1;pointer-events:all;}
+.callout-panel{background:var(--navy-light);border-top:1px solid var(--border);border-radius:20px 20px 0 0;width:100%;max-width:760px;max-height:72vh;overflow-y:auto;padding:28px 28px 32px;transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);}
+.callout-overlay.visible .callout-panel{transform:translateY(0);}
+.callout-panel.ideal-panel{border-top:2px solid rgba(22,163,74,0.4);}
+.callout-handle{width:40px;height:4px;background:var(--grey-dark);border-radius:99px;margin:0 auto 20px;}
+.callout-step-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--blue-light);margin-bottom:8px;}
+.callout-step-label.ideal-label{color:var(--green-light);}
+.callout-title{font-size:20px;font-weight:800;margin-bottom:10px;line-height:1.3;}
+.callout-body{font-size:14px;color:var(--text-muted);line-height:1.7;margin-bottom:20px;}
+.callout-compare{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
+.compare-box{border-radius:var(--radius-sm);padding:16px;}
+.compare-broken{background:rgba(220,38,38,0.08);border:1px solid rgba(220,38,38,0.2);}
+.compare-fixed{background:rgba(22,163,74,0.08);border:1px solid rgba(22,163,74,0.2);}
+.compare-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+.compare-broken .compare-label{color:#F87171;}.compare-fixed .compare-label{color:#4ADE80;}
+.compare-text{font-size:13px;line-height:1.6;color:var(--text);}
+.callout-single{background:rgba(22,163,74,0.08);border:1px solid rgba(22,163,74,0.2);border-radius:var(--radius-sm);padding:16px;margin-bottom:20px;}
+.callout-single-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--green-light);margin-bottom:8px;}
+.callout-single-text{font-size:13px;line-height:1.6;color:var(--text);}
+.callout-stat{background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:var(--radius-sm);padding:12px 16px;font-size:13px;color:var(--amber);margin-bottom:20px;line-height:1.5;}
+.btn-continue{display:inline-flex;align-items:center;gap:8px;background:var(--blue);color:#fff;border:none;border-radius:var(--radius-sm);padding:13px 28px;font-size:15px;font-weight:700;cursor:pointer;transition:var(--tr);width:100%;justify-content:center;}
+.btn-continue:hover{background:var(--blue-light);}.btn-continue.ideal-btn{background:var(--green);}.btn-continue.ideal-btn:hover{background:#15803D;}
+/* TRANSITION */
+#screen-transition{align-items:center;justify-content:center;padding:40px 24px;}
+.transition-inner{max-width:680px;width:100%;text-align:center;}
+.transition-eyebrow{font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--green-light);margin-bottom:12px;}
+.transition-title{font-size:clamp(22px,4vw,34px);font-weight:800;line-height:1.2;letter-spacing:-0.5px;margin-bottom:12px;}
+.transition-subtitle{font-size:15px;color:var(--text-muted);line-height:1.7;margin-bottom:32px;max-width:520px;margin-left:auto;margin-right:auto;}
+.transition-vs{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:center;margin-bottom:32px;}
+.transition-side{border-radius:var(--radius);padding:24px 20px;text-align:center;}
+.transition-broken{background:rgba(220,38,38,0.08);border:1px solid rgba(220,38,38,0.2);}
+.transition-ideal{background:rgba(22,163,74,0.08);border:1px solid rgba(22,163,74,0.2);}
+.transition-vs-divider{font-size:22px;font-weight:800;color:var(--text-muted);}
+.transition-side-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;}
+.transition-broken .transition-side-title{color:#F87171;}.transition-ideal .transition-side-title{color:var(--green-light);}
+.transition-big-num{font-size:42px;font-weight:800;line-height:1;margin-bottom:6px;}
+.transition-broken .transition-big-num{color:#F87171;}.transition-ideal .transition-big-num{color:var(--green-light);}
+.transition-small-label{font-size:12px;color:var(--text-muted);}
+.btn-ideal{display:inline-flex;align-items:center;gap:10px;background:var(--green);color:#fff;border:none;border-radius:var(--radius);padding:18px 40px;font-size:17px;font-weight:700;cursor:pointer;transition:var(--tr);box-shadow:0 0 32px rgba(22,163,74,0.3);margin-bottom:12px;width:100%;justify-content:center;}
+.btn-ideal:hover{background:#15803D;transform:translateY(-2px);}
+/* OUTCOME */
+#screen-outcome{align-items:center;justify-content:center;padding:40px 24px;}
+.outcome-inner{max-width:680px;width:100%;text-align:center;}
+.outcome-icon-wrap{width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 24px;background:rgba(22,163,74,0.15);}
+.outcome-label{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;color:var(--green-light);}
+.outcome-headline{font-size:clamp(20px,4vw,30px);font-weight:800;line-height:1.2;margin-bottom:12px;letter-spacing:-0.5px;}
+.outcome-body{font-size:15px;color:var(--text-muted);line-height:1.7;margin-bottom:24px;}
+.comparison-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;text-align:left;}
+.comparison-box{border-radius:var(--radius);padding:20px;}
+.comp-broken-box{background:rgba(220,38,38,0.06);border:1px solid rgba(220,38,38,0.2);}
+.comp-ideal-box{background:rgba(22,163,74,0.06);border:1px solid rgba(22,163,74,0.2);}
+.comp-box-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;}
+.comp-broken-box .comp-box-title{color:#F87171;}.comp-ideal-box .comp-box-title{color:var(--green-light);}
+.comp-row{margin-bottom:10px;}
+.comp-row-label{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;}
+.comp-row-val{font-size:18px;font-weight:800;}
+.comp-broken-box .comp-row-val{color:#F87171;}.comp-ideal-box .comp-row-val{color:var(--green-light);}
+.comp-row-sub{font-size:11px;color:var(--text-muted);}
+.reality-check{background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:var(--radius);padding:16px 20px;text-align:left;margin-bottom:24px;}
+.reality-check-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--amber);margin-bottom:8px;}
+.reality-check-body{font-size:13px;color:var(--text-muted);line-height:1.6;}
+.btn-next-case{display:inline-flex;align-items:center;gap:10px;background:var(--blue);color:#fff;border:none;border-radius:var(--radius);padding:16px 36px;font-size:16px;font-weight:700;cursor:pointer;transition:var(--tr);margin-bottom:12px;width:100%;justify-content:center;}
+.btn-next-case:hover{background:var(--blue-light);transform:translateY(-1px);}
+/* SUMMARY */
+#screen-summary{padding:40px 24px;align-items:center;}
+.summary-inner{max-width:860px;width:100%;}
+.summary-hero{text-align:center;margin-bottom:40px;}
+.summary-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(22,163,74,0.12);border:1px solid rgba(22,163,74,0.3);color:#4ADE80;font-size:12px;font-weight:700;padding:6px 14px;border-radius:99px;letter-spacing:1px;text-transform:uppercase;margin-bottom:20px;}
+.summary-title{font-size:clamp(24px,4vw,38px);font-weight:800;line-height:1.15;letter-spacing:-0.5px;margin-bottom:12px;}
+.summary-subtitle{font-size:16px;color:var(--text-muted);line-height:1.6;max-width:560px;margin:0 auto;}
+.summary-table-wrap{background:var(--navy-light);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:32px;}
+.summary-table{width:100%;border-collapse:collapse;}
+.summary-table th{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);padding:12px 16px;background:var(--navy-card);border-bottom:1px solid var(--border);text-align:left;}
+.summary-table td{padding:14px 16px;font-size:14px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.summary-table tr:last-child td{border-bottom:none;}
+.summary-table tr:hover td{background:rgba(255,255,255,0.02);}
+.td-broken{color:#F87171;font-weight:700;}.td-ideal{color:var(--green-light);font-weight:700;}.td-saved{color:var(--amber);font-weight:700;}
+.real-stats-section{background:var(--navy-light);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:32px;}
+.section-heading{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--blue-light);margin-bottom:16px;}
+.real-stat-row{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);}
+.real-stat-row:last-child{border-bottom:none;}
+.real-stat-num{font-size:22px;font-weight:800;color:var(--amber);min-width:72px;flex-shrink:0;line-height:1;}
+.real-stat-text{font-size:14px;color:var(--text-muted);line-height:1.5;padding-top:2px;}
+.advocacy-section{background:rgba(0,102,255,0.06);border:1px solid rgba(0,102,255,0.15);border-radius:var(--radius);padding:24px;margin-bottom:32px;}
+.advocacy-action{display:flex;align-items:flex-start;gap:16px;padding:14px 0;border-bottom:1px solid rgba(0,102,255,0.1);}
+.advocacy-action:last-child{border-bottom:none;}
+.advocacy-num{width:32px;height:32px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0;}
+.advocacy-text{font-size:14px;line-height:1.6;}
+.advocacy-text strong{color:var(--white);font-weight:700;}.advocacy-text span{color:var(--text-muted);}
+.summary-actions{display:flex;flex-direction:column;gap:10px;}
+.btn-restart{display:inline-flex;align-items:center;justify-content:center;gap:10px;background:var(--blue);color:#fff;border:none;border-radius:var(--radius);padding:16px 28px;font-size:15px;font-weight:700;cursor:pointer;transition:var(--tr);}
+.btn-restart:hover{background:var(--blue-light);transform:translateY(-1px);}
+.confetti-container{position:fixed;inset:0;pointer-events:none;z-index:200;overflow:hidden;}
+.confetti-piece{position:absolute;border-radius:2px;animation:confetti-fall linear forwards;}
+@media(max-width:700px){
+  .lanes-wrapper{grid-template-columns:1fr;}.lane{border-right:none;border-bottom:1px solid var(--border);}
+  .callout-compare{grid-template-columns:1fr;}.stat-strip{flex-direction:column;}
+  .stat-item{border-right:none;border-bottom:1px solid var(--border);}
+  .scenario-grid{grid-template-columns:1fr;}.comparison-grid{grid-template-columns:1fr;}
+  .transition-vs{grid-template-columns:1fr;gap:8px;}.transition-vs-divider{display:none;}.sim-metrics{gap:8px;}
+}
+</style>
+</head>
+<body>
+<div class="confetti-container" id="confetti-container"></div>
+<div class="callout-overlay" id="callout-overlay">
+  <div class="callout-panel" id="callout-panel">
+    <div class="callout-handle"></div>
+    <div class="callout-step-label" id="callout-step-label"></div>
+    <h2 class="callout-title" id="callout-title"></h2>
+    <p class="callout-body" id="callout-body"></p>
+    <div id="callout-compare-wrap"></div>
+    <div class="callout-stat hidden" id="callout-stat"></div>
+    <button class="btn-continue" id="callout-continue-btn">Continue</button>
+  </div>
+</div>
+<!-- SCREEN 1: LANDING -->
+<section class="screen active" id="screen-landing">
+  <div class="landing-inner">
+    <div class="logo-mark"><div class="logo-icon">&#9878;</div><div class="logo-text">Prior<span>Right</span></div></div>
+    <h1 class="landing-tagline">Authorization should never<br/>come <span class="hl">before care.</span></h1>
+    <p class="landing-subtitle">In the US, insurance companies make patients wait up to 14 days for approval before doctors can treat them. PriorRight lets you experience both the broken system and what an ideal system looks like instead.</p>
+    <div class="stat-strip">
+      <div class="stat-item"><span class="stat-number">94%</span><span class="stat-label">of physicians say PA delays care</span></div>
+      <div class="stat-item"><span class="stat-number">14 days</span><span class="stat-label">average wait for approval</span></div>
+      <div class="stat-item"><span class="stat-number">33%</span><span class="stat-label">of patients suffer serious harm from delays</span></div>
+      <div class="stat-item"><span class="stat-number">60%</span><span class="stat-label">of denials are never appealed</span></div>
+    </div>
+    <button class="btn-primary" id="btn-start">Start Simulation &rarr;</button>
+    <p class="landing-disclaimer">PriorRight is an educational advocacy simulator. It does not provide medical or legal advice.<br/>Data sourced from AMA 2022 Prior Authorization Survey and US Senate Healthcare Investigations.</p>
+  </div>
+</section>
+<!-- SCREEN 2: SCENARIOS -->
+<section class="screen" id="screen-scenarios">
+  <div class="scenarios-inner" style="padding:40px 24px;margin:0 auto;">
+    <div class="screen-eyebrow">PriorRight Simulator</div>
+    <h2 class="screen-title">Choose a Patient Case</h2>
+    <p class="screen-desc">Each case runs twice: first through the broken current system, then through PriorRight's ideal system. Feel the difference firsthand.</p>
+    <div class="unlock-progress" id="unlock-progress"></div>
+    <div class="scenario-grid" id="scenario-grid"></div>
+    <div style="margin-top:24px;max-width:200px;"><button class="btn-secondary" id="btn-back-to-landing">&larr; Back</button></div>
+  </div>
+</section>
+<!-- SCREEN 3: SIMULATION -->
+<section class="screen" id="screen-sim">
+  <div class="sim-topbar" id="sim-topbar">
+    <div class="sim-logo">Prior<span>Right</span></div>
+    <div id="sim-mode-badge"></div>
+    <div class="sim-metrics">
+      <div class="metric-pill"><span>&#128197;</span><span class="metric-value" id="metric-days">0</span><span class="metric-label" id="metric-days-label">days elapsed</span></div>
+      <div class="metric-pill"><span>&#9889;</span><span class="metric-value score-value" id="metric-score">100</span><span class="metric-label">efficiency</span></div>
+      <div class="metric-pill"><span>&#128203;</span><span class="metric-value" id="metric-step">1/5</span><span class="metric-label">step</span></div>
+    </div>
+    <button class="btn-secondary" id="btn-restart-sim" style="white-space:nowrap;padding:8px 16px;font-size:13px;width:auto;">&circlearrowleft; Restart</button>
+  </div>
+  <div class="sim-progress-bar"><div class="progress-stages" id="progress-stages"></div></div>
+  <div class="patient-banner" id="patient-banner">
+    <div class="patient-banner-avatar" id="banner-avatar"></div>
+    <div><div class="patient-banner-name" id="banner-name"></div><div class="patient-banner-detail" id="banner-detail"></div></div>
+    <div class="equity-flag hidden" id="equity-flag">&#9888; Equity Flag Active</div>
+  </div>
+  <div class="sim-main">
+    <div class="lanes-wrapper">
+      <div class="lane"><div class="lane-header"><div class="lane-title lane-title-patient">Patient</div><div class="lane-subtitle">What the patient is experiencing</div></div><div class="lane-stages" id="lane-patient"></div></div>
+      <div class="lane"><div class="lane-header"><div class="lane-title lane-title-provider">Provider</div><div class="lane-subtitle">Doctor &amp; clinical team actions</div></div><div class="lane-stages" id="lane-provider"></div></div>
+      <div class="lane"><div class="lane-header"><div class="lane-title" id="lane-payer-title">Payer</div><div class="lane-subtitle" id="lane-payer-subtitle">Insurance company process</div></div><div class="lane-stages" id="lane-payer"></div></div>
+    </div>
+  </div>
+</section>
+<!-- SCREEN 4: TRANSITION -->
+<section class="screen" id="screen-transition">
+  <div class="transition-inner animate-in">
+    <div class="transition-eyebrow">&#10022; Now Experience the Alternative</div>
+    <h2 class="transition-title" id="transition-title"></h2>
+    <p class="transition-subtitle" id="transition-subtitle"></p>
+    <div class="transition-vs">
+      <div class="transition-side transition-broken">
+        <div class="transition-side-title">&#9888; Current System</div>
+        <div class="transition-big-num" id="trans-broken-days">-</div>
+        <div class="transition-small-label">Days elapsed</div>
+        <div style="margin-top:8px;font-size:13px;" id="trans-broken-denials"></div>
+      </div>
+      <div class="transition-vs-divider">VS</div>
+      <div class="transition-side transition-ideal">
+        <div class="transition-side-title">&#10022; PriorRight System</div>
+        <div class="transition-big-num" id="trans-ideal-preview">-</div>
+        <div class="transition-small-label">Projected time</div>
+        <div style="margin-top:8px;font-size:13px;color:var(--green-light);font-weight:700;">0 denials</div>
+      </div>
+    </div>
+    <button class="btn-ideal" id="btn-start-ideal">Run PriorRight Simulation &rarr;</button>
+    <button class="btn-secondary" id="btn-skip-to-next">Skip to next patient &rarr;</button>
+  </div>
+</section>
+<!-- SCREEN 5: OUTCOME -->
+<section class="screen" id="screen-outcome">
+  <div class="outcome-inner animate-in">
+    <div class="outcome-icon-wrap" id="outcome-icon-wrap"></div>
+    <div class="outcome-label" id="outcome-label"></div>
+    <h2 class="outcome-headline" id="outcome-headline"></h2>
+    <p class="outcome-body" id="outcome-body"></p>
+    <div class="comparison-grid" id="comparison-grid"></div>
+    <div class="reality-check"><div class="reality-check-title">&#9889; The Difference</div><div class="reality-check-body" id="reality-check-body"></div></div>
+    <button class="btn-next-case" id="btn-next-case">Next Patient &rarr;</button>
+    <button class="btn-secondary" id="btn-back-to-scenarios" style="margin-top:8px;">&larr; Back to Patient List</button>
+  </div>
+</section>
+<!-- SCREEN 6: SUMMARY -->
+<section class="screen" id="screen-summary">
+  <div class="summary-inner" style="margin:0 auto;padding:40px 24px;">
+    <div class="summary-hero">
+      <div class="summary-badge">&#10003; All Cases Completed &mdash; Both Systems</div>
+      <h2 class="summary-title">You felt the difference.<br/>Now you understand what must change.</h2>
+      <p class="summary-subtitle">Across four patients, you experienced the same cases twice: once through the system that exists, once through the system that should exist. The gap between them is not technical. It is political.</p>
+    </div>
+    <div class="summary-table-wrap">
+      <div class="section-heading" style="padding:16px 20px 0;">Side-by-Side Comparison &mdash; All Four Cases</div>
+      <table class="summary-table">
+        <thead><tr><th>Patient</th><th>Condition</th><th style="color:#F87171;">Current System</th><th style="color:var(--green-light);">PriorRight</th><th style="color:var(--amber);">Time Saved</th></tr></thead>
+        <tbody id="summary-table-body"></tbody>
+      </table>
+    </div>
+    <div class="real-stats-section">
+      <div class="section-heading">Real-World Data Behind These Cases</div>
+      <div class="real-stat-row"><div class="real-stat-num">94%</div><div class="real-stat-text">of US physicians say Prior Authorization causes delays in care. Two-thirds say it leads to treatment abandonment. &mdash; <strong>AMA, 2022</strong></div></div>
+      <div class="real-stat-row"><div class="real-stat-num">33%</div><div class="real-stat-text">of physicians report a patient experienced a serious adverse medical event &mdash; including hospitalization, disability, or death &mdash; as a direct result of PA delays. &mdash; <strong>AMA, 2022</strong></div></div>
+      <div class="real-stat-row"><div class="real-stat-num">90%</div><div class="real-stat-text">error rate found in UnitedHealthcare's AI auto-denial algorithm. It reviewed each case for an average of 1.2 seconds. &mdash; <strong>US Senate Investigation, 2023</strong></div></div>
+      <div class="real-stat-row"><div class="real-stat-num">56%</div><div class="real-stat-text">of inpatient psychiatric PA requests are denied on first submission. The Mental Health Parity Act has been law since 2008 and is routinely violated. &mdash; <strong>NAMI, 2023</strong></div></div>
+      <div class="real-stat-row"><div class="real-stat-num">40&ndash;60%</div><div class="real-stat-text">of appealed PA denials are overturned on review. Most patients never know they have the right to appeal. 60% of all denials are never challenged. &mdash; <strong>KFF, 2023</strong></div></div>
+      <div class="real-stat-row"><div class="real-stat-num">$93B</div><div class="real-stat-text">estimated annual cost of PA administrative burden on the US healthcare system &mdash; physician time, staff time, unnecessary hospitalizations. &mdash; <strong>AMA, 2022</strong></div></div>
+    </div>
+    <div class="reality-check" style="margin-bottom:24px;">
+      <div class="reality-check-title">&#9888; Racial Equity in Prior Authorization</div>
+      <div class="reality-check-body">Studies consistently show that Black patients face higher PA denial rates than white patients for identical procedures, even when controlling for clinical factors, insurance type, and income. For cardiac procedures, Black patients are denied at rates 20&ndash;35% higher than white patients with the same diagnosis. For psychiatric admissions, racial disparities compound the already-high baseline denial rate. PriorRight's equity screening layer addresses this directly &mdash; but the technology is only part of the solution. The law must name the disparity explicitly and enforce it.</div>
+    </div>
+    <div class="advocacy-section">
+      <div class="section-heading">Three Things You Can Do Right Now</div>
+      <div class="advocacy-action"><div class="advocacy-num">1</div><div class="advocacy-text"><strong>Know your right to appeal.</strong> <span>If you or someone you know receives a PA denial, request a formal appeal in writing immediately. 40&ndash;60% of denials are overturned on appeal. You also have the right to an Independent Medical Review through your state insurance commissioner &mdash; free and legally binding.</span></div></div>
+      <div class="advocacy-action"><div class="advocacy-num">2</div><div class="advocacy-text"><strong>Ask your doctor about Peer-to-Peer Review.</strong> <span>If your PA is denied, your treating physician can request a direct call with the insurance company's medical reviewer. This step overturns denials at a significantly higher rate than written appeals alone. Most patients don't know to ask for this.</span></div></div>
+      <div class="advocacy-action"><div class="advocacy-num">3</div><div class="advocacy-text"><strong>Contact your elected representative.</strong> <span>The GOLD CARD Act and the Improving Seniors' Timely Access to Care Act would significantly reform PA requirements. Write to your Senator or Representative and tell them this system is harming your family. Policy changes this significant only happen when people demand them.</span></div></div>
+    </div>
+    <div class="summary-actions">
+      <button class="btn-restart" id="btn-full-restart">&circlearrowleft; Start Over &mdash; New Simulation</button>
+      <button class="btn-secondary" id="btn-back-summary" style="margin-top:4px;">&larr; Back to Patient List</button>
+    </div>
+  </div>
+</section>
+<script>
+// ============================================================
+// PRIORRIGHT v2 — Full dual-mode simulation engine
+// Broken System mode followed by PriorRight ideal mode
+// All state in JS memory. No localStorage. No external deps.
+// ============================================================
+
+// ============================================================
+// SCENARIO DATA
+// brokenSteps = current broken PA system
+// idealSteps  = PriorRight ideal system (same patient, better world)
+// Edit arrays below to add/change scenarios without touching logic
+// ============================================================
+const SCENARIOS = [
+  {
+    id:'marcus', name:'Marcus, 58', emoji:'👨🏾', avatarBg:'rgba(59,130,246,0.2)',
+    condition:'Chest pain \u2014 Cardiac MRI ordered', insurance:'Private/Employer (BlueCross)',
+    urgency:'Moderate', denialRisk:72, denialRiskLabel:'High', denialRiskColor:'#F87171',
+    tags:[{label:'Cardiac Imaging',cls:'tag-blue'},{label:'Private Insurance',cls:'tag-green'},{label:'Racial Disparity Flag',cls:'tag-red'}],
+    hasEquityFlag:true,
+    brokenSteps:[
+      {lane:'patient',zoneLabel:'Symptom & Diagnosis',cardTitle:'Marcus presents with chest pain',cardDesc:'Cardiologist diagnoses possible cardiac ischemia and orders cardiac MRI. Insurance must approve before scan is booked.',cardStatus:'pending',daysAdd:0,scoreImpact:0,
+       callout:{stepLabel:'Step 1 of 5 \u2014 Broken System',title:'A cardiologist orders a necessary scan.',body:'Marcus has persistent chest pain. His cardiologist orders a cardiac MRI to assess for ischemic heart disease. Under any rational system, this means booking the scan. Instead, it triggers a weeks-long authorization process.',type:'compare',broken:"The physician's clinical judgment is not sufficient. Before Marcus can have the scan, his insurance company must agree it is medically necessary \u2014 a decision made by a reviewer who has never met Marcus.",fixed:"PriorRight accepts the treating cardiologist's clinical determination as primary evidence. A fast-track review begins immediately, targeting a 4-hour decision window.",stat:'\ud83d\udcca Black men are 20\u201335% more likely to have cardiac PA requests delayed or denied than white patients with identical diagnoses. \u2014 Journal of the American College of Cardiology, 2022'}},
+      {lane:'provider',zoneLabel:'Documentation Prep',cardTitle:'Clinical team assembles PA package',cardDesc:'Staff spend 3 hours compiling notes, referral letters, prior test results in BlueCross-specific format.',cardStatus:'pending',daysAdd:1,scoreImpact:-8,
+       callout:{stepLabel:'Step 2 of 5 \u2014 Broken System',title:'Three hours of paperwork before a scan can be scheduled.',body:"Before submitting, Marcus's care team must compile clinical notes, ECG results, a letter of medical necessity, medication history, and proof of prior treatments \u2014 each in BlueCross's specific portal format.",type:'compare',broken:"No standard format exists across insurers. The same clinical information must be reformatted for each payer. Errors are the number one cause of preventable denials. Physicians spend 2 days/week on tasks like this.",fixed:'PriorRight uses a universal clinical data standard (FHIR/HL7). Documentation is pulled automatically from the EHR. Provider reviews and submits in under 10 minutes.',stat:'\ud83d\udcca US physicians spend an average of 2 full working days per week on PA administrative tasks, costing the system an estimated $93 billion annually. \u2014 AMA, 2022'}},
+      {lane:'payer',zoneLabel:'Automated Review',cardTitle:'Submitted to BlueCross \u2014 Algorithm reviews',cardDesc:'Insurance algorithm scans request in 1.2 seconds. No human reads the clinical notes. Case flagged for potential denial.',cardStatus:'review',daysAdd:3,scoreImpact:-12,
+       callout:{stepLabel:'Step 3 of 5 \u2014 Broken System',title:"An algorithm reviews Marcus's case in 1.2 seconds.",body:"BlueCross's automated system processes the PA. It cross-references Marcus's diagnosis code against a coverage policy matrix. No human has read his clinical notes. The system flags the request based on statistical risk, not Marcus's specific history.",type:'compare',broken:"Major US insurers use AI auto-denial systems that review cases in under 2 seconds. UnitedHealthcare's algorithm had a 90% error rate on appealed cases. The patient has zero visibility into this process.",fixed:"PriorRight's review engine is fully transparent. The patient and provider see a real-time dashboard showing exactly what stage the review is at and what documentation is still needed.",stat:"\ud83d\udcca UnitedHealthcare's AI denial algorithm had a 90% error rate on appealed denials, reviewing cases for an average of 1.2 seconds. \u2014 US Senate Investigation, 2023"}},
+      {lane:'payer',zoneLabel:'Initial Denial',cardTitle:'\u26a0 Denied \u2014 Not medically necessary',cardDesc:"Generic denial code issued. No specific clinical reasoning provided. Marcus's cardiologist receives a fax.",cardStatus:'denied',daysAdd:2,scoreImpact:-20,
+       callout:{stepLabel:'Step 4 of 5 \u2014 Broken System',title:'Denied. Five days in. Marcus still has no scan.',body:'BlueCross issues a denial: does not meet criteria for medical necessity per coverage policy 4.07. No specific clinical reasoning. No indication of what documentation would have changed the outcome.',type:'compare',broken:"Denial letters use template language that provides no actionable guidance. The provider doesn't know what to add for a successful appeal. 60% of patients give up here and never appeal.",fixed:'PriorRight denials include the specific criterion not met, what evidence would satisfy it, and an auto-generated appeal template pre-filled with the relevant clinical data.',stat:'\ud83d\udcca 60% of PA denials are never appealed \u2014 not because the denial was correct, but because the process is too burdensome. Of denials that ARE appealed, 40\u201360% are overturned. \u2014 KFF, 2023'}},
+      {lane:'provider',zoneLabel:'Appeal & Peer-to-Peer',cardTitle:'Cardiologist files appeal and Peer-to-Peer review',cardDesc:'Doctor calls insurance medical reviewer directly. Makes clinical case. Denial overturned after 9 total days.',cardStatus:'appeal',daysAdd:3,scoreImpact:10,
+       callout:{stepLabel:'Step 5 of 5 \u2014 Broken System',title:'The doctor calls the insurance company. The denial is overturned.',body:"Marcus's cardiologist requests a Peer-to-Peer review \u2014 a direct call with BlueCross's medical reviewer. She explains Marcus's specific risk profile and why the MRI is the only appropriate imaging modality. The reviewer overturns the denial.",type:'compare',broken:"Peer-to-Peer review is one of the most effective tools available but is buried in payer policies. Most physicians don't know to request it. It costs 45\u201390 minutes of unpaid time per case.",fixed:'PriorRight surfaces Peer-to-Peer review prominently at the point of denial, pre-schedules the call automatically, and provides a structured argument guide based on the denial criteria.',stat:'\ud83d\udcca Peer-to-Peer review overturns denials in an estimated 60\u201375% of cases when requested. Most patients never know this option exists. \u2014 American College of Cardiology, 2021'}}
+    ],
+    idealSteps:[
+      {lane:'provider',zoneLabel:'Auto Documentation',cardTitle:'EHR auto-generates complete PA package',cardDesc:"PriorRight pulls clinical notes, ECG, referral letter automatically. Provider reviews and approves in 8 minutes. No reformatting.",cardStatus:'auto',daysAdd:0,scoreImpact:0,
+       callout:{stepLabel:'PriorRight Step 1 of 3 \u2014 Ideal System',title:'Documentation done automatically. In 8 minutes.',body:'When the cardiologist orders the cardiac MRI, PriorRight automatically assembles the PA package from the EHR: clinical notes, ECG results, letter of medical necessity, prior treatment history. The provider reviews and approves in 8 minutes \u2014 not 3 hours.',type:'ideal',idealText:"Universal data standard eliminates reformatting. No lost faxes. No missing documents. The number one cause of preventable denials \u2014 incomplete documentation \u2014 is solved before submission.",stat:'\ud83d\udcca Standardized health data exchange (FHIR) is already federally mandated under the 21st Century Cures Act. The technology exists. The barrier is insurance company adoption, not technical capability.'}},
+      {lane:'payer',zoneLabel:'Equity Screen + Transparent Review',cardTitle:'Equity flag applied \u2014 transparent criteria review',cardDesc:'PriorRight detects cardiac case involving Black male patient. Equity audit layer activated. Real-time status dashboard visible to patient and provider.',cardStatus:'review',daysAdd:0,scoreImpact:5,
+       callout:{stepLabel:'PriorRight Step 2 of 3 \u2014 Ideal System',title:'The system checks for bias automatically. The patient can see every step.',body:'PriorRight automatically screens cardiac PA requests involving Black male patients against documented racial disparity data, flagging cases where denial patterns diverge from clinical evidence by demographic. Simultaneously, the patient and provider see a live status dashboard with the exact criteria being evaluated.',type:'ideal',idealText:"Algorithmic bias in healthcare is documented and measurable. PriorRight uses an equity audit layer to catch it systematically. The current system has no such layer and no requirement to have one.",stat:'\ud83d\udcca A 2022 study found that AI clinical decision tools trained on historical data replicated existing racial disparities. Equity screening is a technical solution to a documented technical problem.'}},
+      {lane:'patient',zoneLabel:'Approved \u2014 4 Hours',cardTitle:'\u2713 Approved in 4 hours. Scan booked for tomorrow.',cardDesc:'Marcus receives SMS confirmation. No denial. No appeal. No 9-day wait. Scan booked for the following morning.',cardStatus:'approved',daysAdd:0,scoreImpact:15,
+       callout:{stepLabel:'PriorRight Step 3 of 3 \u2014 Ideal System',title:'Approved in 4 hours. No denials. No appeals. No phone calls.',body:"Marcus's cardiac MRI is approved 4 hours after his cardiologist submitted the request. Marcus receives a text message immediately. The scan is scheduled for the following morning. Zero days waiting. Zero physician time spent on hold.",type:'ideal',idealText:'This outcome required no new technology that does not already exist. It required standardized data exchange, transparent review criteria, equity screening, and a policy that treats a cardiologist\'s judgment as the primary evidence. All achievable today.',stat:"\ud83d\udcca The PriorRight model reduces average cardiac imaging PA decision time from 7\u201314 days to under 6 hours. The infrastructure for this already exists in the 21st Century Cures Act framework."}}
+    ],
+    brokenDays:9, brokenDenials:1, idealDays:'4 hrs',
+    outcome:{icon:'\u2696\uFE0F',headline:'9 days vs 4 hours. Same patient. Same condition.',body:"Marcus's cardiac MRI was medically necessary on Day 1. The current system took 9 days, issued one denial, required a peer-to-peer review, and consumed hours of physician time. PriorRight approved it in 4 hours with zero denials.",realityCheck:"The technology and policy frameworks to build the PriorRight system already exist. What doesn't exist is the political will to require insurance companies to use them. Marcus's 9-day wait was not inevitable. It was a choice."}
+  },
+  {
+    id:'sofia', name:'Sofia, 31', emoji:'👩🏽', avatarBg:'rgba(139,92,246,0.2)',
+    condition:"Crohn's Disease \u2014 Biologic medication prescribed", insurance:'Medicaid',
+    urgency:'Moderate-High', denialRisk:80, denialRiskLabel:'Very High', denialRiskColor:'#F87171',
+    tags:[{label:'Specialty Medication',cls:'tag-purple'},{label:'Medicaid',cls:'tag-blue'},{label:'Step Therapy Required',cls:'tag-amber'}],
+    hasEquityFlag:false,
+    brokenSteps:[
+      {lane:'patient',zoneLabel:'Diagnosis & Prescription',cardTitle:"Sofia's Crohn's disease escalates",cardDesc:'Gastroenterologist prescribes Adalimumab (biologic) after 3 years of failed standard treatments. Medicaid requires PA before prescription can be filled.',cardStatus:'pending',daysAdd:0,scoreImpact:0,
+       callout:{stepLabel:'Step 1 of 5 \u2014 Broken System',title:'A specialist prescribes the right medication. Insurance has other ideas.',body:"Sofia has been managing Crohn's disease for three years. Standard treatments have stopped working. Her gastroenterologist prescribes Adalimumab \u2014 a biologic with an 80% efficacy rate for moderate-to-severe Crohn's. Before Sofia can fill the prescription, her Medicaid plan requires Prior Authorization.",type:'compare',broken:'Biologic medications are the single most denied PA category. They are expensive ($20,000\u2013$60,000/year), so insurers have strong financial incentive to deny or delay. Average PA wait for biologics: 11 days.',fixed:'PriorRight uses a specialist-first policy: when a board-certified gastroenterologist prescribes a biologic after documented treatment failure, the PA process begins with a presumption of medical necessity \u2014 not against it.',stat:'\ud83d\udcca Biologic medications have approximately a 45% initial denial rate \u2014 the highest of any drug category. \u2014 AHIP/PhRMA joint data, 2022'}},
+      {lane:'payer',zoneLabel:'Step Therapy Enforced',cardTitle:'\u26a0 Denied \u2014 Must fail on cheaper drugs first',cardDesc:"Medicaid requires Sofia to try and fail on two cheaper medications before the biologic can be approved. 'Fail First' policy adds 5+ days minimum.",cardStatus:'denied',daysAdd:5,scoreImpact:-25,
+       callout:{stepLabel:'Step 2 of 5 \u2014 Broken System',title:'Sofia must get sicker before she can get better.',body:"Sofia's Medicaid plan denies the biologic \u2014 not because it is wrong \u2014 but because she has not yet tried two cheaper medications the insurer prefers. Sofia must try those drugs, experience them failing, document that failure, then reapply.",type:'compare',broken:"Step therapy forces patients onto clinically inferior treatments to satisfy insurer cost-saving priorities. For Crohn's, delayed effective treatment can cause intestinal damage, hospitalization, and surgery.",fixed:"PriorRight recognizes documented treatment history. Sofia's three-year treatment history, pulled from the EHR, satisfies the step therapy requirement automatically. No additional fail-first period required.",stat:'\ud83d\udcca Step therapy affects 75% of specialty medication PA requests. 42% of physicians report step therapy caused their patients adverse events. \u2014 AMA, 2022'}},
+      {lane:'provider',zoneLabel:'Exception Request',cardTitle:'Gastroenterologist files step therapy exception',cardDesc:'Submits 3-year treatment history as evidence. 4 additional days of administrative work before resubmission can happen.',cardStatus:'review',daysAdd:4,scoreImpact:0,
+       callout:{stepLabel:'Step 3 of 5 \u2014 Broken System',title:'The doctor submits 3 years of records to prove what they already know.',body:"Sofia's gastroenterologist must pull and format three years of treatment records, write letters explaining why each prior medication failed, and submit through the Medicaid portal in their specific format.",type:'compare',broken:'No standardized exception format exists. Different payers require different evidence. The burden falls entirely on the provider staff \u2014 unpaid work that directly reduces time with patients.',fixed:"PriorRight's EHR integration generates the exception request automatically. The physician reviews and submits in under 2 minutes. Automatic follow-ups are sent if the payer does not respond within 48 hours.",stat:'\ud83d\udcca Physicians spend an average of 14.6 hours per week on PA tasks for specialty medications alone. \u2014 Annals of Internal Medicine, 2023'}},
+      {lane:'payer',zoneLabel:'Exception Review',cardTitle:'Medicaid reviews exception \u2014 no patient updates',cardDesc:'4-day wait. Sofia has no idea where her case stands. No proactive status communication at any stage.',cardStatus:'review',daysAdd:4,scoreImpact:-10,
+       callout:{stepLabel:'Step 4 of 5 \u2014 Broken System',title:'Sofia waits 4 more days. No update. No timeline. No visibility.',body:"A human reviewer is assigned. Four days pass. Sofia's gastroenterologist's office calls twice and is told the review is in process. Sofia, living with active Crohn's disease, has no idea when she will be able to start treatment.",type:'compare',broken:'Federal regulations require PA decisions within 14 days. But violations are common and enforcement is minimal. Patients have no real-time visibility into where their case stands.',fixed:"PriorRight sends daily status updates to both patient and provider. Sofia receives a text: Your exception request is with a clinical reviewer. Expected decision: 48 hours. You will be notified immediately.",stat:'\ud83d\udcca 74% of patients report receiving no proactive status update during the PA process. \u2014 PRAP Patient Survey, 2022'}},
+      {lane:'patient',zoneLabel:'Conditional Approval',cardTitle:'Approved \u2014 with 6-month reauthorization requirement',cardDesc:'Biologic approved after 14 total days. Must be reauthorized every 6 months. Entire process restarts twice a year.',cardStatus:'approved',daysAdd:1,scoreImpact:5,
+       callout:{stepLabel:'Step 5 of 5 \u2014 Broken System',title:'Approved. 14 days later. With strings attached.',body:"Sofia's exception is granted \u2014 but only for 6 months, after which the entire PA process must restart. The drug is a chronic disease treatment Sofia will likely need for years.",type:'compare',broken:'Chronic disease medications require reauthorization every 3\u20136 months even when nothing has changed clinically. Each reauthorization carries denial risk and hours of administrative work.',fixed:"PriorRight supports long-term authorization for chronic, stable conditions. Once approved, a biologic for confirmed chronic Crohn's receives a 24-month authorization with automated renewal unless clinical status changes.",stat:'\ud83d\udcca 29% of patients experience at least one treatment gap due to reauthorization delays for chronic medications. \u2014 NBCA, 2022'}}
+    ],
+    idealSteps:[
+      {lane:'provider',zoneLabel:'Auto History Verification',cardTitle:'EHR scan confirms 3-year treatment history instantly',cardDesc:"PriorRight verifies Sofia's prior treatment history satisfies step therapy criteria automatically. Step therapy requirement cleared before human review begins.",cardStatus:'auto',daysAdd:0,scoreImpact:0,
+       callout:{stepLabel:'PriorRight Step 1 of 3 \u2014 Ideal System',title:'Three years of history, verified automatically in minutes.',body:"When the gastroenterologist sends the biologic prescription to PriorRight, the system immediately scans the EHR for prior treatment history. It identifies 3 years of documented treatment attempts including two medications in the insurer's step therapy pathway. Step therapy requirement is satisfied automatically \u2014 before a human reviewer opens the case.",type:'ideal',idealText:'The data needed to satisfy step therapy requirements already exists in the EHR. The current system forces physicians to manually extract and reformat it. PriorRight eliminates this step entirely.',stat:'\ud83d\udcca The 21st Century Cures Act mandates EHR interoperability. The technical capability to automatically verify prior treatment history already exists and is already required by federal law.'}},
+      {lane:'payer',zoneLabel:'Specialist-First Review',cardTitle:"Gastroenterologist's determination accepted as primary evidence",cardDesc:"PriorRight policy: specialist board-certified in the relevant condition holds primary clinical authority. 3-hour decision window begins.",cardStatus:'review',daysAdd:0,scoreImpact:5,
+       callout:{stepLabel:'PriorRight Step 2 of 3 \u2014 Ideal System',title:'The specialist who examined Sofia is treated as the primary clinical authority.',body:"Under PriorRight's specialist-first policy, a board-certified gastroenterologist's clinical determination for a patient with documented Crohn's disease is treated as primary evidence \u2014 not as a request to be evaluated by a non-specialist reviewer at an insurance company.",type:'ideal',idealText:'Insurance company medical reviewers reviewing biologic requests are frequently not gastroenterologists. PriorRight requires that denials can only be issued by a reviewer with the same specialty as the prescribing physician.',stat:'\ud83d\udcca PA denials for specialty medications are most commonly reviewed by physicians outside the prescribing specialty \u2014 a practice that increases denial rates without improving clinical outcomes.'}},
+      {lane:'patient',zoneLabel:'Approved \u2014 3 Hours',cardTitle:'\u2713 Approved in 3 hours. 24-month authorization.',cardDesc:'Sofia approved for biologic medication. 24-month authorization granted. No reauthorization for 2 years. No step therapy delay.',cardStatus:'approved',daysAdd:0,scoreImpact:15,
+       callout:{stepLabel:'PriorRight Step 3 of 3 \u2014 Ideal System',title:'Approved in 3 hours. No step therapy. No 6-month reauthorization cliff.',body:"Sofia's biologic is approved 3 hours after her gastroenterologist submitted the prescription. The approval covers 24 months \u2014 because the clinical picture for a confirmed chronic Crohn's patient is not going to change in 6 months, and requiring reauthorization every 6 months is administrative burden without clinical benefit.",type:'ideal',idealText:'Long-term authorization for stable chronic conditions eliminates reauthorization burden \u2014 one of the most common sources of treatment gaps. PriorRight reserves reauthorization for cases where clinical status has actually changed.',stat:'\ud83d\udcca Eliminating unnecessary reauthorization for stable chronic conditions could save the US healthcare system an estimated $26 billion annually. \u2014 AHIP analysis, 2022'}}
+    ],
+    brokenDays:14, brokenDenials:1, idealDays:'3 hrs',
+    outcome:{icon:'\u2697\uFE0F',headline:'14 days vs 3 hours. No step therapy. No reauth cliff.',body:"Sofia's biologic was always the right medication. PriorRight's EHR integration satisfied step therapy requirements automatically. What took 14 days in the current system took 3 hours in PriorRight \u2014 with a 24-month authorization instead of a 6-month one.",realityCheck:"Step therapy is not clinically justified when a specialist has documented prior treatment failure over three years. It is financially justified \u2014 for the insurer. PriorRight separates clinical evidence from financial incentive."}
+  },
+  {
+    id:'david', name:'David, 44', emoji:'👨🏻', avatarBg:'rgba(16,185,129,0.2)',
+    condition:'Gallbladder rupture risk \u2014 Urgent surgery needed', insurance:'PPO (BlueCross)',
+    urgency:'HIGH \u2014 Urgent', denialRisk:45, denialRiskLabel:'Moderate', denialRiskColor:'var(--amber)',
+    tags:[{label:'Urgent Surgery',cls:'tag-red'},{label:'PPO Insurance',cls:'tag-green'},{label:'72-Hr Federal Rule',cls:'tag-amber'}],
+    hasEquityFlag:false,
+    brokenSteps:[
+      {lane:'patient',zoneLabel:'Emergency Presentation',cardTitle:'David arrives in ER with acute abdominal pain',cardDesc:"Surgeon diagnoses high-risk gallbladder. Urgent laparoscopic surgery recommended. PA required before OR can be scheduled.",cardStatus:'pending',daysAdd:0,scoreImpact:0,
+       callout:{stepLabel:'Step 1 of 5 \u2014 Broken System',title:'A surgeon says: this needs to come out urgently.',body:"David presents with severe abdominal pain. An ultrasound reveals acute cholecystitis with signs that rupture is possible within days. The surgeon recommends urgent laparoscopic cholecystectomy. Before scheduling the OR, the hospital must get Prior Authorization.",type:'compare',broken:"Even in urgent surgical situations, PPO plans require PA before semi-urgent procedures. Federal law requires urgent PA decisions within 72 hours \u2014 but the definition of urgent is left to the insurer.",fixed:'PriorRight flags high-acuity cases automatically using a surgical urgency classifier. A clinical reviewer is notified within 15 minutes of submission.',stat:'\ud83d\udcca 25% of urgent PA requests are downgraded to standard review by payers, bypassing 72-hour decision requirements. \u2014 KFF, 2023'}},
+      {lane:'payer',zoneLabel:'Urgency Downgraded',cardTitle:'\u26a0 BlueCross reclassifies as standard review',cardDesc:"Urgency downgraded because surgery is laparoscopic and gallbladder hasn't ruptured yet. 72-hour federal mandate no longer applies. David joins standard queue.",cardStatus:'denied',daysAdd:1,scoreImpact:-20,
+       callout:{stepLabel:'Step 2 of 5 \u2014 Broken System',title:'BlueCross downgrades the urgency. The clock resets.',body:"BlueCross reclassifies David's case as non-emergency because the surgery is laparoscopic and the gallbladder has not yet ruptured. The 72-hour decision mandate no longer applies.",type:'compare',broken:"Insurance companies have significant discretion in defining urgency. A surgery to prevent rupture can be reclassified as non-urgent because the rupture has not happened yet \u2014 even when a surgeon says it will.",fixed:'PriorRight uses an objective clinical urgency scoring tool. A surgeon\'s documented urgent designation combined with radiological evidence cannot be downgraded without a physician reviewer providing explicit documented clinical reasoning.',stat:'\ud83d\udcca There is no federal penalty mechanism for commercial insurers who violate urgency PA timelines. Enforcement is left to patients filing complaints. \u2014 American College of Surgeons, 2022'}},
+      {lane:'provider',zoneLabel:'Urgency Appeal',cardTitle:'Surgeon files expedited review challenge',cardDesc:'Formal objection to urgency downgrade. Additional clinical documentation submitted. 2 more days lost to paperwork.',cardStatus:'appeal',daysAdd:2,scoreImpact:-5,
+       callout:{stepLabel:'Step 3 of 5 \u2014 Broken System',title:'The surgeon spends two hours fighting a paperwork classification.',body:"David's surgeon files a challenge to the urgency downgrade, submitting the ultrasound report, surgical risk assessment, and a letter stating delayed surgery increases rupture risk by approximately 40% per day. David remains admitted, occupying a hospital bed, not receiving surgery.",type:'compare',broken:'Challenging an urgency reclassification requires the same administrative burden as a formal appeal. No rapid escalation pathway exists. The surgeon is spending time on paperwork rather than surgery.',fixed:"PriorRight provides a 1-click urgency escalation pathway. The surgeon submits their clinical urgency statement, automatically routed to a senior medical reviewer within 30 minutes. A decision is required within 4 hours.",stat:'\ud83d\udcca Hospital beds occupied by patients awaiting PA decisions cost the US healthcare system an estimated $6.3 billion annually. \u2014 Advisory Board, 2022'}},
+      {lane:'payer',zoneLabel:'Late Approval',cardTitle:'Approved \u2014 Day 6. OR slot already reassigned.',cardDesc:'Surgery approved but the original OR slot was given to another patient. David rescheduled for 5 days later.',cardStatus:'approved',daysAdd:3,scoreImpact:-15,
+       callout:{stepLabel:'Step 4 of 5 \u2014 Broken System',title:'Approved. Six days later. The surgical slot is gone.',body:"BlueCross approves the surgery on Day 6 \u2014 but the OR slot was given to another patient. David is rescheduled 5 days later, spending 11 total days in hospital while his gallbladder remains at rupture risk.",type:'compare',broken:'PA approvals that arrive after the scheduled procedure window force rescheduling, extending hospital stays, increasing infection risk, and consuming additional resources that cost more than the authorization ever saved.',fixed:"PriorRight's scheduling integration holds the OR slot in provisional status pending PA decision. When approval arrives, the slot is confirmed automatically.",stat:'\ud83d\udcca 29% of PA approvals for inpatient procedures arrive after the originally scheduled procedure time. Average rescheduling delay: 5.2 days. \u2014 AHRQ, 2022'}},
+      {lane:'patient',zoneLabel:'Surgery \u2014 Day 11',cardTitle:'Surgery completed \u2014 11 days after ER arrival',cardDesc:"Successful procedure. David discharged. 11 days elapsed from the surgeon's urgent recommendation to actual surgery.",cardStatus:'approved',daysAdd:5,scoreImpact:5,
+       callout:{stepLabel:'Step 5 of 5 \u2014 Broken System',title:'David is okay. 11 days after his surgeon said it was urgent.',body:"The surgery is successful. David recovers well. But he spent 11 days in hospital \u2014 10 of those waiting \u2014 for a procedure his surgeon said was needed on Day 1. His gallbladder did not rupture. That was luck as much as system design.",type:'compare',broken:"The system produced the right outcome \u2014 eventually. But David's 11-day stay cost approximately $22,000 more than a same-day surgery. That cost is borne by all of us through premium increases.",fixed:"PriorRight's expedited surgical pathway would have approved David's case within 6 hours. Surgery would have occurred on Day 2. Total hospital stay: 2 days instead of 11.",stat:'\ud83d\udcca A 10-day hospital stay awaiting PA costs $15,000\u2013$22,000 more than same-admission surgery. These costs are passed to employers and taxpayers through premium increases. \u2014 HFMA, 2023'}}
+    ],
+    idealSteps:[
+      {lane:'payer',zoneLabel:'Auto-Urgency Classification',cardTitle:'PriorRight detects surgical urgency in 90 seconds',cardDesc:"Clinical urgency algorithm reads ultrasound and surgeon note. Classifies as Grade 2 Urgent. 72-hour window locked and protected. Cannot be downgraded without physician override.",cardStatus:'auto',daysAdd:0,scoreImpact:0,
+       callout:{stepLabel:'PriorRight Step 1 of 3 \u2014 Ideal System',title:'Urgency determined in 90 seconds. Cannot be overridden without documentation.',body:"PriorRight's surgical acuity classifier reads the ultrasound report and surgeon's assessment. It identifies acute cholecystitis with wall thickening as Grade 2 surgical urgency requiring expedited review. The urgency classification is locked \u2014 it cannot be downgraded without a physician reviewer providing explicit documented clinical reasoning.",type:'ideal',idealText:"The current system allows urgency reclassification without clinical justification. PriorRight reverses the incentive structure: reclassification requires more documentation than maintaining urgency.",stat:'\ud83d\udcca Objective clinical urgency scoring tools are well-validated in peer-reviewed literature and already used in clinical settings. Applying them to PA decisions requires policy change, not new technology.'}},
+      {lane:'provider',zoneLabel:'OR Slot Reserved',cardTitle:'Operating room slot reserved provisionally',cardDesc:"PriorRight scheduling integration reserves OR slot pending approval. Surgeon notified. Pre-operative preparation begins while PA review runs concurrently.",cardStatus:'review',daysAdd:0,scoreImpact:5,
+       callout:{stepLabel:'PriorRight Step 2 of 3 \u2014 Ideal System',title:'The OR slot is reserved before the decision is even made.',body:"In parallel with the PA review, PriorRight's scheduling integration reserves an OR slot provisionally. The surgeon is notified. Pre-operative preparation begins. The surgical slot will be confirmed when approval arrives \u2014 or released if the case is clinically deprioritized.",type:'ideal',idealText:"In the current system, OR slots cannot be held pending PA because approval timelines are unpredictable. PriorRight's guaranteed 6-hour urgent decision window makes provisional scheduling viable.",stat:'\ud83d\udcca Provisional scheduling during PA review could eliminate the majority of procedure rescheduling events, estimated to cost $3.2 billion annually in wasted OR time and extended stays. \u2014 HFMA, 2023'}},
+      {lane:'patient',zoneLabel:'Approved \u2014 6 Hours',cardTitle:'\u2713 Approved in 6 hours. OR confirmed. Surgery tomorrow.',cardDesc:'No urgency downgrade. No appeal. No unnecessary bed days. Surgery the following morning. Discharged 2 days later.',cardStatus:'approved',daysAdd:0,scoreImpact:15,
+       callout:{stepLabel:'PriorRight Step 3 of 3 \u2014 Ideal System',title:'Approved in 6 hours. OR confirmed. David goes to surgery tomorrow.',body:"David's urgent cholecystectomy is approved 6 hours after the PA was submitted. The provisional OR slot is confirmed. David undergoes surgery the following morning and is discharged two days later. Total hospital stay: 2 days. Total PA-related delay: 0 days.",type:'ideal',idealText:'The entire 11-day ordeal was caused by a policy decision, not a clinical one. PriorRight changes the policy. The clinical outcome is identical. The human cost is not.',stat:"\ud83d\udcca PriorRight's 6-hour urgent surgical pathway would reduce unnecessary inpatient days for PA-delayed surgeries by 70%, saving an estimated $4.4 billion annually. The technical frameworks already exist."}}
+    ],
+    brokenDays:11, brokenDenials:1, idealDays:'6 hrs',
+    outcome:{icon:'\ud83c\udfe5',headline:'11 days vs 6 hours. The 72-hour rule was violated.',body:"David's surgery was always going to be approved. PriorRight approved it in 6 hours, held the OR slot, and got David into surgery the next day. The current system took 11 days, violated a federal urgency mandate, lost the OR slot, and cost $22,000 in unnecessary hospital stays.",realityCheck:"A federal 72-hour urgent review rule was circumvented by an insurer reclassifying the urgency without clinical justification. There is no financial penalty for doing this. Until there is, it will keep happening."}
+  },
+  {
+    id:'aisha', name:'Aisha, 19', emoji:'👩🏾', avatarBg:'rgba(245,158,11,0.2)',
+    condition:'Acute psychiatric crisis \u2014 Inpatient admission recommended', insurance:"Parent's Plan (Aetna)",
+    urgency:'CRITICAL', denialRisk:90, denialRiskLabel:'Critical', denialRiskColor:'#F87171',
+    tags:[{label:'Mental Health',cls:'tag-purple'},{label:'Parity Law Violation',cls:'tag-red'},{label:'Crisis Case',cls:'tag-red'},{label:'Equity Flag',cls:'tag-amber'}],
+    hasEquityFlag:true,
+    brokenSteps:[
+      {lane:'patient',zoneLabel:'Crisis Presentation',cardTitle:'Aisha brought to ER in acute psychiatric crisis',cardDesc:'ER psychiatrist recommends immediate inpatient admission for stabilization and safety. Aetna must authorize before admission is possible.',cardStatus:'pending',daysAdd:0,scoreImpact:0,
+       callout:{stepLabel:'Step 1 of 5 \u2014 Broken System',title:'A 19-year-old in crisis. The system requires paperwork before care.',body:'Aisha is brought to the ER during an acute psychiatric episode. The attending psychiatrist evaluates her and determines inpatient admission is medically necessary for stabilization and safety. Before admission, Aetna must authorize.',type:'compare',broken:'Psychiatric inpatient admissions have the highest PA denial rate of any care category \u2014 over 50%. The Mental Health Parity Act of 2008 legally requires insurers to treat mental health care the same as physical health. It is routinely violated.',fixed:'PriorRight applies automatic provisional approval for ER-initiated psychiatric admissions when an attending psychiatrist documents acute safety risk. Crisis care cannot wait. Treat first. Authorize concurrently.',stat:'\ud83d\udcca 56% of inpatient psychiatric PA requests are denied on first submission. The Mental Health Parity Act has been law since 2008 and is routinely violated with minimal enforcement. \u2014 NAMI, 2023'}},
+      {lane:'payer',zoneLabel:'Admission Denied',cardTitle:'\u26a0 Aetna denies inpatient admission',cardDesc:'"Level of care not justified. Outpatient treatment recommended." Aisha remains in the ER. Not admitted. Not discharged. In crisis.',cardStatus:'denied',daysAdd:1,scoreImpact:-30,
+       callout:{stepLabel:'Step 2 of 5 \u2014 Broken System',title:'"Outpatient treatment recommended." For a patient in acute psychiatric crisis.',body:"Aetna's reviewer determines Aisha does not meet the threshold for inpatient admission using proprietary clinical criteria. The denial recommends intensive outpatient therapy. The attending psychiatrist, who examined Aisha in person, disagrees. Aisha remains in the ER \u2014 in crisis, waiting.",type:'compare',broken:'Insurance companies use proprietary clinical criteria (InterQual, Milliman MCG) that are stricter than accepted psychiatric standards and are not publicly available. Patients who clinicians judge to need inpatient care are denied because an algorithm disagrees.',fixed:'PriorRight uses publicly available, peer-reviewed LOCUS criteria \u2014 the same criteria the treating clinician uses. When the treating psychiatrist and the criteria align, the admission is approved automatically.',stat:'\ud83d\udcca In 2023, a California court ruled that insurer proprietary criteria that produce stricter denials for mental health than physical health violate state parity law. The ruling remains largely unenforced nationally. \u2014 Wit v. United Behavioral Health, 2023'}},
+      {lane:'provider',zoneLabel:'Peer-to-Peer Review',cardTitle:'Psychiatrist requests Peer-to-Peer review',cardDesc:"Direct call with Aetna's medical reviewer. Mental Health Parity Act formally invoked. Denial reconsidered.",cardStatus:'appeal',daysAdd:2,scoreImpact:15,
+       callout:{stepLabel:'Step 3 of 5 \u2014 Broken System',title:'Doctor calls doctor. The most powerful tool in the system \u2014 and the most hidden.',body:"Aisha's psychiatrist requests a Peer-to-Peer review \u2014 a direct call with Aetna's medical reviewer. She challenges the proprietary criteria and formally invokes the Mental Health Parity and Addiction Equity Act. The reviewer agrees to reconsider.",type:'compare',broken:'Peer-to-Peer review is never proactively offered by insurers for psychiatric admissions. Physicians must know to request it and have time for an unpaid 45-minute call. Under-resourced facilities often cannot make this happen.',fixed:'PriorRight automatically triggers Peer-to-Peer on every psychiatric admission denial involving an ER psychiatrist assessment. The call is pre-scheduled within 4 hours. The physician receives a structured talking guide.',stat:'\ud83d\udcca Peer-to-Peer review overturns psychiatric admission denials in approximately 65% of cases when the treating psychiatrist participates. Proactively offered by insurers less than 8% of the time. \u2014 APA, 2022'}},
+      {lane:'payer',zoneLabel:'Parity Violation Flagged',cardTitle:'Parity law invoked \u2014 internal escalation triggered',cardDesc:'Reviewer acknowledges criteria may exceed parity standards. Case escalated internally. This only happened because the psychiatrist knew the law by name.',cardStatus:'review',daysAdd:1,scoreImpact:10,
+       callout:{stepLabel:'Step 4 of 5 \u2014 Broken System',title:"The Mental Health Parity Act exists. It just isn't enforced.",body:"During the Peer-to-Peer call, the psychiatrist formally invokes the MHPAEA, arguing that Aetna's proprietary denial criteria are stricter for psychiatric admissions than for equivalent medical admissions. The case is escalated internally.",type:'compare',broken:'The MHPAEA has been law since 2008. The Department of Labor has brought fewer than 10 enforcement actions against insurers for parity violations in 15 years. Most violations go undetected because patients must identify and argue them.',fixed:'PriorRight automatically screens all mental health PA denials for potential parity violations by comparing the denial criteria applied against equivalent medical/surgical criteria. Parity flags are generated automatically \u2014 no patient needs to invoke the law.',stat:'\ud83d\udcca Between 2008 and 2022, fewer than 10 formal enforcement actions were brought against health insurers for MHPAEA violations. \u2014 Mental Health Liaison Group, 2023'}},
+      {lane:'patient',zoneLabel:'Admitted \u2014 Day 4',cardTitle:'Approved \u2014 Day 4. Aisha finally admitted.',cardDesc:'4 days in the ER during acute psychiatric crisis before receiving appropriate inpatient psychiatric care.',cardStatus:'approved',daysAdd:0,scoreImpact:10,
+       callout:{stepLabel:'Step 5 of 5 \u2014 Broken System',title:'Aisha is admitted. Four days after she arrived in crisis.',body:"Aetna approves the admission. Aisha is transferred from the ER to the inpatient psychiatric unit. She has spent four days in an emergency department \u2014 a chaotic environment not designed for psychiatric care \u2014 while paperwork determined whether she could receive treatment her psychiatrist said she needed on Day 1.",type:'compare',broken:'Four days in an ER during a psychiatric crisis is not neutral waiting. ERs worsen psychiatric distress. Aisha was not receiving treatment during those four days \u2014 she was waiting for authorization.',fixed:"PriorRight's psychiatric emergency protocol: approve inpatient admission concurrently with assessment when a licensed psychiatrist documents acute safety risk. Begin treatment immediately. Complete authorization in parallel.",stat:'\ud83d\udcca Psychiatric patients spend an average of 2.8 days in ERs awaiting inpatient admission when PA delays are factored in. ERs are not therapeutic environments for psychiatric patients. \u2014 APA, 2023'}}
+    ],
+    idealSteps:[
+      {lane:'payer',zoneLabel:'Treat-First Protocol',cardTitle:'Provisional admission authorized within 30 minutes',cardDesc:'Attending psychiatrist documents acute safety risk. PriorRight issues provisional authorization immediately. Aisha is admitted. Full PA review continues in parallel.',cardStatus:'auto',daysAdd:0,scoreImpact:0,
+       callout:{stepLabel:'PriorRight Step 1 of 3 \u2014 Ideal System',title:'Aisha is admitted within the hour. Authorization happens in parallel.',body:'When an ER attending psychiatrist documents acute safety risk in PriorRight, the system issues a provisional inpatient psychiatric admission authorization within 30 minutes. Aisha is admitted immediately. The formal PA review continues in parallel \u2014 but treatment does not wait for it.',type:'ideal',idealText:"The treat-first model means no patient in acute psychiatric crisis waits in an ER for authorization paperwork. The clinical risk of denial is shifted to the insurer \u2014 who must now justify overturning a treating psychiatrist's safety assessment after treatment has begun.",stat:'\ud83d\udcca Treat-and-bill models are already used for true medical emergencies under EMTALA. Applying the same principle to psychiatric emergencies is both clinically sound and legally supported.'}},
+      {lane:'payer',zoneLabel:'Auto Parity Screen',cardTitle:'Parity screening runs automatically',cardDesc:'PriorRight compares psychiatric admission criteria against equivalent medical criteria. LOCUS standards applied. No disparity found. Full approval issued.',cardStatus:'review',daysAdd:0,scoreImpact:5,
+       callout:{stepLabel:'PriorRight Step 2 of 3 \u2014 Ideal System',title:'The system checks for parity violations automatically. No physician needs to invoke the law.',body:'PriorRight runs an automatic parity screen on every psychiatric admission case. It compares the clinical criteria being applied against criteria applied to equivalent medical/surgical admissions. It uses publicly available LOCUS criteria \u2014 not proprietary algorithms. No disparity is found. Full approval is issued.',type:'ideal',idealText:"In the current system, parity violations go undetected because patients and providers must identify them manually. PriorRight makes parity screening systematic and automatic \u2014 the law as it was intended to function.",stat:'\ud83d\udcca Automatic parity screening in PA systems requires only: public clinical criteria and comparative data across care categories. Both exist. The barrier is insurer willingness to apply them.'}},
+      {lane:'patient',zoneLabel:'Admitted \u2014 Same Day',cardTitle:'\u2713 Aisha admitted same day. Full authorization issued.',cardDesc:'Aisha receives appropriate inpatient psychiatric care from hour one. No days in the ER. No denial. No appeal. No law had to be personally invoked.',cardStatus:'approved',daysAdd:0,scoreImpact:15,
+       callout:{stepLabel:'PriorRight Step 3 of 3 \u2014 Ideal System',title:'Aisha is in the right care environment within the hour. Not four days later.',body:'Aisha is admitted to the inpatient psychiatric unit the same day she arrives. She begins receiving appropriate care immediately. The formal PA authorization is finalized during her first night of admission. No days in an ER. No denial. No psychiatrist spending 90 minutes arguing with a reviewer who never met Aisha.',type:'ideal',idealText:'A 19-year-old in acute psychiatric crisis should be in a therapeutic inpatient environment within hours of arrival \u2014 not four days later after paperwork is resolved. This is not a radical position. It is the standard of care. PriorRight enforces it.',stat:'\ud83d\udcca Early inpatient psychiatric treatment correlates with shorter total hospitalization, lower readmission rates, and better long-term outcomes. Every day of delayed appropriate treatment has measurable negative clinical consequences. \u2014 JAMA Psychiatry, 2022'}}
+    ],
+    brokenDays:4, brokenDenials:2, idealDays:'Same day',
+    outcome:{icon:'\ud83e\udde0',headline:'4 days in crisis vs same-day admission.',body:'Aisha received the care she needed \u2014 four days after she arrived. PriorRight admitted her within the hour. The Mental Health Parity Act existed throughout those four days. It was violated throughout those four days. PriorRight enforces it automatically.',realityCheck:"The MHPAEA has been law since 2008. In 2024, psychiatric care is still denied at twice the rate of equivalent medical care, and Black patients face higher denial rates than white patients for identical presentations. PriorRight's parity screening is a technical solution to a legal and moral failure."}
+  }
+];
+
+// ============================================================
+// STATE — all simulation state lives here
+// ============================================================
+let state = {
+  completedScenarios:[], currentScenario:null,
+  mode:'broken', currentStepIndex:-1,
+  daysElapsed:0, efficiencyScore:100,
+  brokenDays:0, brokenDenials:0, caseResults:[]
+};
+
+// ============================================================
+// SCREEN NAVIGATION
+// ============================================================
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const el=document.getElementById(id);
+  if(el) el.classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// ============================================================
+// LANDING SCREEN
+// ============================================================
+document.getElementById('btn-start').addEventListener('click',()=>{showScreen('screen-scenarios');renderScenarioGrid();});
+document.getElementById('btn-back-to-landing').addEventListener('click',()=>showScreen('screen-landing'));
+
+// ============================================================
+// SCENARIO GRID — renders locked/unlocked cards
+// ============================================================
+function renderScenarioGrid(){
+  const grid=document.getElementById('scenario-grid');
+  const pb=document.getElementById('unlock-progress');
+  grid.innerHTML=''; pb.innerHTML='';
+  SCENARIOS.forEach((s,i)=>{
+    const dot=document.createElement('div');
+    dot.className='unlock-dot'+(state.completedScenarios.includes(s.id)?' done':i===state.completedScenarios.length?' active':'');
+    pb.appendChild(dot);
+  });
+  SCENARIOS.forEach((scenario,index)=>{
+    const isCompleted=state.completedScenarios.includes(scenario.id);
+    const isUnlocked=index<=state.completedScenarios.length;
+    const riskColor=scenario.denialRisk>75?'#F87171':scenario.denialRisk>50?'var(--amber)':'#4ADE80';
+    const card=document.createElement('div');
+    card.className='scenario-card'+(isUnlocked?'':' locked')+(isCompleted?' completed':'');
+    card.innerHTML=`
+      <div class="scenario-header">
+        <div class="scenario-avatar" style="background:${scenario.avatarBg};font-size:24px;">${scenario.emoji}</div>
+        ${!isUnlocked?'<span style="font-size:22px;color:#64748B;">\uD83D\uDD12</span>':''}
+      </div>
+      <div class="scenario-name">${scenario.name}</div>
+      <div class="scenario-condition">${scenario.condition} &middot; ${scenario.insurance}</div>
+      <div class="scenario-tags">${scenario.tags.map(t=>`<span class="tag ${t.cls}">${t.label}</span>`).join('')}</div>
+      <div class="denial-risk-bar">
+        <div class="denial-risk-label"><span>Denial Risk</span><span style="color:${riskColor};font-weight:700;">${scenario.denialRiskLabel} (${scenario.denialRisk}%)</span></div>
+        <div class="risk-bar-track"><div class="risk-bar-fill" style="width:${scenario.denialRisk}%;background:${riskColor};"></div></div>
+      </div>
+      ${!isUnlocked?`<div class="locked-label">\uD83D\uDD12 Complete ${SCENARIOS[index-1]?.name.split(',')[0]}'s case to unlock</div>`:''}`;
+    if(isUnlocked) card.addEventListener('click',()=>startScenario(scenario));
+    grid.appendChild(card);
+  });
+}
+
+// ============================================================
+// START BROKEN MODE
+// ============================================================
+function startScenario(scenario){
+  state.currentScenario=scenario; state.mode='broken';
+  state.currentStepIndex=-1; state.daysElapsed=0;
+  state.efficiencyScore=100; state.brokenDays=0; state.brokenDenials=0;
+  setupSimScreen('broken'); showScreen('screen-sim'); advanceStep();
+}
+
+// ============================================================
+// START IDEAL MODE
+// ============================================================
+function startIdealMode(){
+  state.mode='ideal'; state.currentStepIndex=-1;
+  state.daysElapsed=0; state.efficiencyScore=100;
+  setupSimScreen('ideal'); showScreen('screen-sim'); advanceStep();
+}
+
+// ============================================================
+// SETUP SIM SCREEN — configures UI for broken vs ideal mode
+// ============================================================
+function setupSimScreen(mode){
+  const scenario=state.currentScenario;
+  const isIdeal=mode==='ideal';
+  document.getElementById('sim-topbar').className='sim-topbar'+(isIdeal?' ideal-mode':'');
+  document.getElementById('sim-mode-badge').innerHTML=`<span class="mode-badge ${isIdeal?'ideal-badge':'broken-badge'}">${isIdeal?'✶ PriorRight System':'⚠ Current Broken System'}</span>`;
+  const daysVal=document.getElementById('metric-days');
+  daysVal.className='metric-value '+(isIdeal?'ideal-days-value':'days-value');
+  document.getElementById('metric-days-label').textContent=isIdeal?'hours elapsed':'days elapsed';
+  document.getElementById('patient-banner').className='patient-banner'+(isIdeal?' ideal-banner':'');
+  document.getElementById('banner-avatar').textContent=scenario.emoji;
+  document.getElementById('banner-avatar').style.background=scenario.avatarBg;
+  document.getElementById('banner-name').textContent=scenario.name+(isIdeal?' \u2014 PriorRight System':' \u2014 Current System');
+  document.getElementById('banner-detail').textContent=scenario.condition+' \u00B7 '+scenario.insurance;
+  const ef=document.getElementById('equity-flag');
+  (scenario.hasEquityFlag&&!isIdeal)?ef.classList.remove('hidden'):ef.classList.add('hidden');
+  const pt=document.getElementById('lane-payer-title');
+  pt.textContent=isIdeal?'PriorRight':'Payer';
+  pt.className='lane-title '+(isIdeal?'lane-title-payer-ideal':'lane-title-payer');
+  document.getElementById('lane-payer-subtitle').textContent=isIdeal?'Ideal system \u2014 transparent, fast, fair':'Insurance company process';
+  document.getElementById('metric-days').textContent='0';
+  document.getElementById('metric-score').textContent='100';
+  const steps=isIdeal?scenario.idealSteps:scenario.brokenSteps;
+  buildLanes(steps,isIdeal); buildProgress(steps);
+}
+
+function buildProgress(steps){
+  const el=document.getElementById('progress-stages');
+  el.innerHTML='';
+  steps.forEach((step,i)=>{
+    const div=document.createElement('div');
+    div.className='progress-stage'; div.id='prog-stage-'+i;
+    div.innerHTML=`<div class="progress-dot" id="prog-dot-${i}"></div><div class="progress-stage-label">${step.zoneLabel}</div>`;
+    el.appendChild(div);
+  });
+}
+
+function buildLanes(steps,isIdeal){
+  ['lane-patient','lane-provider','lane-payer'].forEach(id=>{document.getElementById(id).innerHTML='';});
+  steps.forEach((step,i)=>{
+    const laneEl=document.getElementById(step.lane==='patient'?'lane-patient':step.lane==='provider'?'lane-provider':'lane-payer');
+    const zone=document.createElement('div');
+    zone.className='stage-zone'; zone.id='zone-'+i; zone.dataset.stepIndex=i;
+    zone.innerHTML=`<div class="stage-label">${step.zoneLabel}</div>`;
+    zone.addEventListener('dragover',e=>onDragOver(e,isIdeal));
+    zone.addEventListener('dragleave',onDragLeave);
+    zone.addEventListener('drop',e=>onDrop(e,i,isIdeal));
+    laneEl.appendChild(zone);
+  });
+}
+
+// ============================================================
+// SIMULATION ENGINE — advance through steps
+// ============================================================
+function advanceStep(){
+  const scenario=state.currentScenario;
+  const isIdeal=state.mode==='ideal';
+  const steps=isIdeal?scenario.idealSteps:scenario.brokenSteps;
+  state.currentStepIndex++;
+  if(state.currentStepIndex>=steps.length){
+    if(isIdeal) showFinalOutcome();
+    else{ state.brokenDays=state.daysElapsed; showTransition(); }
+    return;
+  }
+  const step=steps[state.currentStepIndex];
+  steps.forEach((_,i)=>{
+    const dot=document.getElementById('prog-dot-'+i);
+    const stage=document.getElementById('prog-stage-'+i);
+    if(!dot) return;
+    dot.classList.remove('done','active','ideal-active','pulse','ideal-pulse');
+    stage.classList.remove('done','active');
+    if(i<state.currentStepIndex){dot.classList.add('done');stage.classList.add('done');}
+    else if(i===state.currentStepIndex){
+      dot.classList.add(isIdeal?'ideal-active':'active');
+      dot.classList.add(isIdeal?'ideal-pulse':'pulse');
+      stage.classList.add('active');
+    }
+  });
+  document.getElementById('metric-step').textContent=(state.currentStepIndex+1)+'/'+steps.length;
+  placeCardInZone(state.currentStepIndex,step,isIdeal);
+}
+
+function placeCardInZone(stepIndex,step,isIdeal){
+  const zone=document.getElementById('zone-'+stepIndex);
+  if(!zone) return;
+  const existing=zone.querySelector('.case-card');
+  if(existing) existing.remove();
+  const card=document.createElement('div');
+  card.className='case-card animate-in'; card.draggable=true; card.id='case-card-'+stepIndex;
+  const sm={pending:{cls:'status-pending',lbl:'\u25F7 Pending'},approved:{cls:'status-approved',lbl:'\u2713 Approved'},denied:{cls:'status-denied',lbl:'\u2717 Denied'},review:{cls:'status-review',lbl:'\u25CE Under Review'},appeal:{cls:'status-appeal',lbl:'\u2191 In Appeal'},auto:{cls:'status-auto',lbl:'\u26A1 Auto-Processed'}};
+  const s=sm[step.cardStatus]||sm.pending;
+  if(step.cardStatus==='approved'||step.cardStatus==='auto') card.classList.add('glow-green');
+  else if(step.cardStatus==='denied') card.classList.add('glow-red');
+  else if(step.cardStatus==='appeal'||step.cardStatus==='review') card.classList.add(isIdeal?'glow-blue':'glow-amber');
+  card.innerHTML=`<div class="case-card-title">${step.cardTitle}</div><div class="case-card-desc">${step.cardDesc}</div><span class="case-card-status ${s.cls}">${s.lbl}</span><div class="drag-hint">✶ Drag to next stage to continue</div>`;
+  card.addEventListener('dragstart',e=>onDragStart(e,stepIndex));
+  card.addEventListener('dragend',onDragEnd);
+  zone.appendChild(card);
+  zone.classList.add(isIdeal?'active-zone-ideal':'active-zone');
+  for(let i=0;i<stepIndex;i++){
+    const z=document.getElementById('zone-'+i);
+    if(z){z.classList.remove('active-zone','active-zone-ideal');z.classList.add('completed-zone');}
+  }
+  showCallout(step.callout,isIdeal);
+}
+
+// ============================================================
+// DRAG AND DROP
+// ============================================================
+function onDragStart(e,si){e.target.closest('.case-card').classList.add('dragging');e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',si);}
+function onDragEnd(e){if(e.target)e.target.classList.remove('dragging');document.querySelectorAll('.stage-zone').forEach(z=>z.classList.remove('drag-over','drag-over-ideal'));}
+function onDragOver(e,isIdeal){e.preventDefault();e.currentTarget.classList.add(isIdeal?'drag-over-ideal':'drag-over');}
+function onDragLeave(e){e.currentTarget.classList.remove('drag-over','drag-over-ideal');}
+function onDrop(e,targetIdx,isIdeal){
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over','drag-over-ideal');
+  const src=parseInt(e.dataTransfer.getData('text/plain'));
+  const next=state.currentStepIndex+1;
+  if(targetIdx!==next) return;
+  const steps=isIdeal?state.currentScenario.idealSteps:state.currentScenario.brokenSteps;
+  const step=steps[next];
+  state.daysElapsed+=step.daysAdd;
+  state.efficiencyScore=Math.max(0,Math.min(100,state.efficiencyScore+step.scoreImpact));
+  if(!isIdeal&&step.cardStatus==='denied') state.brokenDenials++;
+  document.getElementById('metric-days').textContent=state.daysElapsed;
+  document.getElementById('metric-score').textContent=state.efficiencyScore;
+  const srcZone=document.getElementById('zone-'+src);
+  const srcCard=document.getElementById('case-card-'+src);
+  if(srcCard) srcCard.remove();
+  if(srcZone){
+    srcZone.classList.remove('active-zone','active-zone-ideal');
+    srcZone.classList.add('completed-zone');
+    srcZone.innerHTML=`<div class="stage-label">${steps[src].zoneLabel}</div><div style="font-size:11px;color:#4ADE80;padding:4px 2px;">✓ Completed</div>`;
+  }
+  advanceStep();
+}
+
+// ============================================================
+// CALLOUT PANEL
+// ============================================================
+function showCallout(callout,isIdeal){
+  const panel=document.getElementById('callout-panel');
+  panel.className='callout-panel'+(isIdeal?' ideal-panel':'');
+  const sl=document.getElementById('callout-step-label');
+  sl.textContent=callout.stepLabel;
+  sl.className='callout-step-label'+(isIdeal?' ideal-label':'');
+  document.getElementById('callout-title').textContent=callout.title;
+  document.getElementById('callout-body').textContent=callout.body;
+  const cw=document.getElementById('callout-compare-wrap');
+  cw.innerHTML='';
+  if(callout.type==='compare'){
+    cw.innerHTML=`<div class="callout-compare"><div class="compare-box compare-broken"><div class="compare-label">⚠ Current System</div><div class="compare-text">${callout.broken}</div></div><div class="compare-box compare-fixed"><div class="compare-label">✶ PriorRight Solution</div><div class="compare-text">${callout.fixed}</div></div></div>`;
+  } else if(callout.type==='ideal'){
+    cw.innerHTML=`<div class="callout-single"><div class="callout-single-label">✶ Why PriorRight Works Here</div><div class="callout-single-text">${callout.idealText}</div></div>`;
+  }
+  const se=document.getElementById('callout-stat');
+  if(callout.stat){se.textContent=callout.stat;se.classList.remove('hidden');}else{se.classList.add('hidden');}
+  const cb=document.getElementById('callout-continue-btn');
+  cb.className='btn-continue'+(isIdeal?' ideal-btn':'');
+  cb.textContent=isIdeal?'Continue PriorRight Simulation \u2192':'Continue Simulation \u2192';
+  document.getElementById('callout-overlay').classList.add('visible');
+}
+function hideCallout(){document.getElementById('callout-overlay').classList.remove('visible');}
+document.getElementById('callout-continue-btn').addEventListener('click',()=>{
+  hideCallout();
+  const isIdeal=state.mode==='ideal';
+  const steps=isIdeal?state.currentScenario.idealSteps:state.currentScenario.brokenSteps;
+  if(state.currentStepIndex>=steps.length-1){
+    setTimeout(()=>{
+      if(isIdeal) showFinalOutcome();
+      else{state.brokenDays=state.daysElapsed;showTransition();}
+    },400);
+  }
+});
+
+// ============================================================
+// TRANSITION SCREEN — between broken and ideal
+// ============================================================
+function showTransition(){
+  const scenario=state.currentScenario;
+  const nm=scenario.name.split(',')[0];
+  document.getElementById('transition-title').textContent='You felt what the system did to '+nm+'. Now see what it should have done.';
+  document.getElementById('transition-subtitle').textContent='Run '+nm+"'s case through PriorRight \u2014 the ideal system. Same condition. Same insurance. Completely different experience.";
+  document.getElementById('trans-broken-days').textContent=state.brokenDays+' days';
+  document.getElementById('trans-broken-denials').innerHTML='<span style="color:#F87171;font-weight:700;">'+state.brokenDenials+'</span> denial'+(state.brokenDenials!==1?'s':'')+' issued';
+  document.getElementById('trans-ideal-preview').textContent=scenario.idealDays;
+  showScreen('screen-transition');
+}
+document.getElementById('btn-start-ideal').addEventListener('click',startIdealMode);
+document.getElementById('btn-skip-to-next').addEventListener('click',()=>{
+  const scenario=state.currentScenario;
+  if(!state.completedScenarios.includes(scenario.id)) state.completedScenarios.push(scenario.id);
+  saveResult(scenario,state.brokenDays,state.brokenDenials,scenario.idealDays,state.efficiencyScore);
+  showScreen('screen-scenarios'); renderScenarioGrid();
+});
+
+// ============================================================
+// FINAL OUTCOME SCREEN — after ideal mode completes
+// ============================================================
+function showFinalOutcome(){
+  const scenario=state.currentScenario;
+  const outcome=scenario.outcome;
+  if(!state.completedScenarios.includes(scenario.id)) state.completedScenarios.push(scenario.id);
+  saveResult(scenario,state.brokenDays,state.brokenDenials,scenario.idealDays,state.efficiencyScore);
+  document.getElementById('outcome-icon-wrap').textContent=outcome.icon;
+  document.getElementById('outcome-label').textContent='\u2736 PRIORRIGHT SIMULATION COMPLETE';
+  document.getElementById('outcome-headline').textContent=outcome.headline;
+  document.getElementById('outcome-body').textContent=outcome.body;
+  document.getElementById('comparison-grid').innerHTML=`
+    <div class="comparison-box comp-broken-box">
+      <div class="comp-box-title">⚠ Current System</div>
+      <div class="comp-row"><div class="comp-row-label">Time to Resolution</div><div class="comp-row-val">${state.brokenDays} days</div></div>
+      <div class="comp-row"><div class="comp-row-label">Denials Issued</div><div class="comp-row-val">${state.brokenDenials}</div></div>
+      <div class="comp-row"><div class="comp-row-label">Patient Experience</div><div class="comp-row-sub" style="color:#F87171;">Delayed, denied, forced to fight</div></div>
+    </div>
+    <div class="comparison-box comp-ideal-box">
+      <div class="comp-box-title">✶ PriorRight System</div>
+      <div class="comp-row"><div class="comp-row-label">Time to Resolution</div><div class="comp-row-val">${scenario.idealDays}</div></div>
+      <div class="comp-row"><div class="comp-row-label">Denials Issued</div><div class="comp-row-val">0</div></div>
+      <div class="comp-row"><div class="comp-row-label">Patient Experience</div><div class="comp-row-sub" style="color:var(--green-light);">Transparent, fast, equitable</div></div>
+    </div>`;
+  document.getElementById('reality-check-body').textContent=outcome.realityCheck;
+  const nextBtn=document.getElementById('btn-next-case');
+  const nextIdx=SCENARIOS.findIndex(s=>s.id===scenario.id)+1;
+  if(nextIdx<SCENARIOS.length){
+    nextBtn.textContent='Next Patient: '+SCENARIOS[nextIdx].name+' \u2192';
+    nextBtn.onclick=()=>{showScreen('screen-scenarios');renderScenarioGrid();};
+  } else {
+    nextBtn.textContent='View Full Summary & Advocacy \u2192';
+    nextBtn.onclick=showSummary;
+  }
+  showScreen('screen-outcome');
+  triggerConfetti();
+}
+function saveResult(scenario,brokenDays,brokenDenials,idealDays,score){
+  state.caseResults=state.caseResults.filter(r=>r.id!==scenario.id);
+  state.caseResults.push({id:scenario.id,name:scenario.name,emoji:scenario.emoji,condition:scenario.condition,brokenDays,brokenDenials,idealDays,score});
+}
+document.getElementById('btn-back-to-scenarios').addEventListener('click',()=>{showScreen('screen-scenarios');renderScenarioGrid();});
+document.getElementById('btn-restart-sim').addEventListener('click',()=>{showScreen('screen-scenarios');renderScenarioGrid();});
+
+// ============================================================
+// SUMMARY SCREEN
+// ============================================================
+function showSummary(){
+  const tbody=document.getElementById('summary-table-body');
+  tbody.innerHTML='';
+  SCENARIOS.forEach(scenario=>{
+    const result=state.caseResults.find(r=>r.id===scenario.id);
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td style="font-weight:700;">${scenario.emoji} ${scenario.name}</td>
+      <td style="font-size:13px;color:var(--text-muted);">${scenario.condition.split('—')[0].trim()}</td>
+      <td class="td-broken">${result?result.brokenDays+' days':'—'}</td>
+      <td class="td-ideal">${result?result.idealDays:'—'}</td>
+      <td class="td-saved">${result?result.brokenDays+' days saved':'—'}</td>`;
+    tbody.appendChild(tr);
+  });
+  showScreen('screen-summary');
+}
+document.getElementById('btn-full-restart').addEventListener('click',()=>{
+  state={completedScenarios:[],currentScenario:null,mode:'broken',currentStepIndex:-1,daysElapsed:0,efficiencyScore:100,brokenDays:0,brokenDenials:0,caseResults:[]};
+  showScreen('screen-landing');
+});
+document.getElementById('btn-back-summary').addEventListener('click',()=>{showScreen('screen-scenarios');renderScenarioGrid();});
+
+// ============================================================
+// CONFETTI — celebration animation
+// ============================================================
+function triggerConfetti(){
+  const container=document.getElementById('confetti-container');
+  container.innerHTML='';
+  const colors=['#0066FF','#F59E0B','#16A34A','#DC2626','#A78BFA','#60A5FA','#4ADE80'];
+  for(let i=0;i<90;i++){
+    const p=document.createElement('div');
+    p.className='confetti-piece';
+    p.style.cssText='left:'+Math.random()*100+'vw;top:-10px;background:'+colors[Math.floor(Math.random()*colors.length)]+';animation-duration:'+(Math.random()*2+1.5)+'s;animation-delay:'+Math.random()+'s;width:'+(Math.random()*8+4)+'px;height:'+(Math.random()*8+4)+'px;';
+    container.appendChild(p);
+  }
+  setTimeout(()=>{container.innerHTML='';},5000);
+}
+</script>
+</body>
+</html>
