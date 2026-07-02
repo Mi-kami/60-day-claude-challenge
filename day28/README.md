@@ -4,7 +4,7 @@
 
 A browser-based training simulator for hospital admission coordination workflows. You play the role of an Admission Coordinator navigating PA status, insurance, bed assignment, documentation, consent, and care coordination — all the way to a final admit decision.
 
-**[Live Demo →](#)** · No backend. No login. Single HTML file.
+**[Live Demo →](https://admitready.netlify.app/)** · No backend. No login. Single HTML file.
 
 ---
 
