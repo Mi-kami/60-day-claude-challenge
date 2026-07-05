@@ -1,0 +1,2854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Operation Lifeline: Supply Chain Crisis Lab</title>
+<style>
+  :root{
+    --bg-void:#0B0E1A;
+    --bg-panel:#141A2B;
+    --bg-elevated:#1C2338;
+    --bg-elevated-2:#232B45;
+    --border:#333F5C;
+    --border-soft:#232B45;
+    --text:#F2F5FC;
+    --text-dim:#9AA5C4;
+    --text-faint:#636F94;
+    --amber:#FFB43C;
+    --teal:#22E5C2;
+    --red:#FF5C7A;
+    --violet:#B18CFF;
+    --blue:#4FC3FF;
+    --pink:#FF6FCB;
+    --lime:#B4F231;
+    --good:#22E5C2;
+    --warn:#FFB43C;
+    --bad:#FF5C7A;
+    --radius:16px;
+    --radius-sm:10px;
+    --mono: ui-monospace, SFMono-Regular, "Cascadia Mono", Consolas, "Liberation Mono", monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1100px 750px at 8% -8%, rgba(177,140,255,0.20), transparent 58%),
+      radial-gradient(950px 680px at 100% 0%, rgba(34,229,194,0.16), transparent 55%),
+      radial-gradient(900px 700px at 50% 110%, rgba(255,111,203,0.10), transparent 55%),
+      var(--bg-void);
+    background-attachment:fixed;
+    color:var(--text);
+    font-family:var(--sans);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  #root{min-height:100vh;position:relative;}
+  a{color:inherit;}
+  button{font-family:inherit;}
+  ::selection{background:rgba(255,180,60,0.35);}
+
+  /* Ambient floating particles */
+  .particle-field{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+  .particle{position:absolute;border-radius:50%;opacity:0.35;filter:blur(1px);animation:floatUp linear infinite;}
+  @keyframes floatUp{
+    0%{transform:translateY(0) translateX(0);opacity:0;}
+    10%{opacity:0.35;}
+    90%{opacity:0.25;}
+    100%{transform:translateY(-100vh) translateX(30px);opacity:0;}
+  }
+
+  /* Layout */
+  .app-shell{max-width:1180px;margin:0 auto;padding:0 20px 64px;position:relative;z-index:1;}
+  .screen{animation:fadeSlideIn 0.5s ease both;}
+  @keyframes fadeSlideIn{
+    from{opacity:0;transform:translateY(14px);}
+    to{opacity:1;transform:translateY(0);}
+  }
+  @keyframes pulseDot{
+    0%,100%{box-shadow:0 0 0 0 rgba(255,180,60,0.55);}
+    50%{box-shadow:0 0 0 7px rgba(255,180,60,0);}
+  }
+  @keyframes shimmer{
+    0%{background-position:-200px 0;}
+    100%{background-position:200px 0;}
+  }
+  @keyframes popIn{
+    0%{transform:scale(0.6);opacity:0;}
+    60%{transform:scale(1.08);opacity:1;}
+    100%{transform:scale(1);opacity:1;}
+  }
+  @keyframes wiggle{
+    0%,100%{transform:rotate(0deg);}
+    25%{transform:rotate(-4deg);}
+    75%{transform:rotate(4deg);}
+  }
+  @keyframes glowPulse{
+    0%,100%{box-shadow:0 0 0 0 rgba(255,180,60,0);}
+    50%{box-shadow:0 0 24px 4px rgba(255,180,60,0.25);}
+  }
+  @keyframes floatDelta{
+    0%{transform:translateY(0) scale(0.8);opacity:0;}
+    15%{transform:translateY(-6px) scale(1.1);opacity:1;}
+    80%{transform:translateY(-34px) scale(1);opacity:1;}
+    100%{transform:translateY(-46px) scale(0.95);opacity:0;}
+  }
+  @keyframes dashMove{
+    to{stroke-dashoffset:-200;}
+  }
+  @keyframes vehicleMove{
+    0%{offset-distance:0%;}
+    100%{offset-distance:100%;}
+  }
+  @keyframes bounceIn{
+    0%{transform:translateY(-10px);opacity:0;}
+    60%{transform:translateY(3px);opacity:1;}
+    100%{transform:translateY(0);}
+  }
+  @keyframes spinSlow{
+    from{transform:rotate(0deg);}
+    to{transform:rotate(360deg);}
+  }
+
+  /* Console header */
+  .console-wrap{position:sticky;top:0;z-index:50;backdrop-filter:blur(10px);background:rgba(11,14,26,0.86);border-bottom:1px solid var(--border-soft);}
+  .console-header{max-width:1180px;margin:0 auto;padding:14px 20px;display:flex;flex-direction:column;gap:12px;}
+  .console-top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+  .brand{display:flex;align-items:center;gap:10px;}
+  .status-dot{width:11px;height:11px;border-radius:50%;background:var(--amber);animation:pulseDot 2s infinite;flex-shrink:0;}
+  .status-dot.ok{background:var(--teal);box-shadow:none;animation:none;}
+  .status-dot.danger{background:var(--red);}
+  .brand-text{font-weight:900;letter-spacing:0.3px;font-size:15.5px;background:linear-gradient(120deg, var(--amber), var(--pink), var(--blue));-webkit-background-clip:text;background-clip:text;color:transparent;background-size:200% auto;animation:shimmer 6s linear infinite;}
+  .brand-sub{font-family:var(--mono);font-size:11px;color:var(--text-faint);letter-spacing:0.5px;text-transform:uppercase;}
+  .mode-pill{font-family:var(--mono);font-size:11px;letter-spacing:0.6px;text-transform:uppercase;padding:4px 10px;border-radius:999px;border:1px solid var(--border);color:var(--text-dim);}
+  .mode-pill.beginner{color:var(--teal);border-color:rgba(34,229,194,0.4);background:rgba(34,229,194,0.08);}
+  .mode-pill.intermediate{color:var(--amber);border-color:rgba(255,180,60,0.4);background:rgba(255,180,60,0.08);}
+  .mode-pill.expert{color:var(--red);border-color:rgba(255,92,122,0.4);background:rgba(255,92,122,0.08);}
+
+  .sound-toggle{cursor:pointer;background:var(--bg-elevated);border:1px solid var(--border);border-radius:999px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-size:15px;transition:all 0.2s ease;flex-shrink:0;}
+  .sound-toggle:hover{border-color:var(--blue);transform:scale(1.08);}
+
+  .ticker{display:flex;gap:18px;flex-wrap:wrap;font-family:var(--mono);font-size:12px;color:var(--text-dim);}
+  .ticker-item{display:flex;align-items:center;gap:6px;}
+  .ticker-val{font-weight:700;}
+  .ticker-val.good{color:var(--good);}
+  .ticker-val.warn{color:var(--warn);}
+  .ticker-val.bad{color:var(--bad);}
+
+  .stepper{display:flex;gap:4px;overflow-x:auto;padding-bottom:2px;}
+  .step-node{font-family:var(--mono);font-size:10.5px;letter-spacing:0.4px;text-transform:uppercase;color:var(--text-faint);padding:6px 10px;border-radius:8px;white-space:nowrap;border:1px solid transparent;transition:all 0.3s ease;}
+  .step-node.active{color:#1A1303;background:linear-gradient(120deg, var(--amber), var(--pink));font-weight:800;box-shadow:0 0 14px rgba(255,180,60,0.35);}
+  .step-node.done{color:var(--teal);border-color:rgba(34,229,194,0.3);}
+
+  /* Generic cards */
+  .card{background:linear-gradient(160deg, var(--bg-panel), var(--bg-elevated));border:1px solid var(--border-soft);border-radius:var(--radius);padding:20px;transition:border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;}
+  .card:hover{border-color:var(--blue);transform:translateY(-2px);box-shadow:0 10px 26px rgba(79,195,255,0.10);}
+  .card-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:14px;}
+  .section-title{font-size:23px;font-weight:900;letter-spacing:-0.3px;margin:0 0 6px;}
+  .section-sub{color:var(--text-dim);font-size:14.5px;line-height:1.6;margin:0 0 22px;max-width:760px;}
+  .eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--amber);font-weight:800;margin-bottom:8px;display:inline-block;padding:3px 10px;border-radius:999px;background:rgba(255,180,60,0.10);border:1px solid rgba(255,180,60,0.25);}
+
+  .stat-label{font-family:var(--mono);font-size:11px;letter-spacing:0.6px;text-transform:uppercase;color:var(--text-faint);margin-bottom:6px;}
+  .stat-value{font-size:21px;font-weight:800;font-family:var(--mono);}
+  .stat-icon{font-size:24px;margin-bottom:10px;display:block;}
+
+  .chip{display:inline-block;background:var(--bg-elevated);border:1px solid var(--border-soft);border-radius:999px;padding:5px 12px;font-size:12.5px;color:var(--text-dim);margin:3px 5px 0 0;transition:all 0.2s ease;}
+  .chip:hover{border-color:var(--violet);color:var(--text);transform:translateY(-1px);}
+
+  /* Buttons */
+  .btn{cursor:pointer;border-radius:12px;border:1px solid var(--border);padding:13px 24px;font-size:14.5px;font-weight:800;transition:all 0.15s ease;background:var(--bg-elevated);color:var(--text);}
+  .btn:hover:not(:disabled){transform:translateY(-2px) scale(1.02);border-color:var(--text-faint);}
+  .btn:active:not(:disabled){transform:translateY(0) scale(0.98);}
+  .btn:disabled{opacity:0.35;cursor:not-allowed;}
+  .btn-primary{background:linear-gradient(120deg, var(--amber), var(--pink));color:#210E00;border:none;box-shadow:0 6px 22px rgba(255,111,203,0.25);}
+  .btn-primary:hover:not(:disabled){box-shadow:0 10px 30px rgba(255,111,203,0.4);}
+  .btn-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px;align-items:center;}
+  .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text-dim);}
+
+  /* Welcome */
+  .hero{padding:56px 0 28px;text-align:center;}
+  .hero-title{font-size:clamp(34px,6vw,54px);font-weight:900;letter-spacing:-1.4px;margin:0 0 14px;line-height:1.05;}
+  .hero-title span{background:linear-gradient(120deg, var(--amber), var(--pink), var(--blue), var(--amber));background-size:300% auto;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shimmer 5s linear infinite;}
+  .hero-sub{color:var(--text-dim);font-size:16.5px;max-width:560px;margin:0 auto 30px;line-height:1.65;}
+
+  .route-strip{position:relative;height:64px;max-width:760px;margin:0 auto 34px;}
+  .route-strip svg{width:100%;height:100%;}
+  .route-path{fill:none;stroke:var(--border);stroke-width:2;stroke-dasharray:4 6;}
+  .route-path-glow{fill:none;stroke:url(#routeGrad);stroke-width:2.5;stroke-dasharray:10 220;animation:dashMove 4.5s linear infinite;}
+  .route-node{font-size:20px;}
+  .route-vehicle{font-size:22px;offset-path:path('M20,32 Q 190,-10 380,32 T 740,32');animation:vehicleMove 6s linear infinite;filter:drop-shadow(0 2px 6px rgba(255,180,60,0.5));}
+
+  .mode-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(240px,1fr));gap:16px;max-width:860px;margin:0 auto;text-align:left;}
+  .mode-card{background:linear-gradient(160deg, var(--bg-panel), var(--bg-elevated));border:1.5px solid var(--border-soft);border-radius:var(--radius);padding:22px;cursor:pointer;transition:all 0.25s ease;position:relative;overflow:hidden;}
+  .mode-card:hover{transform:translateY(-4px);}
+  .mode-card.selected{box-shadow:0 12px 32px rgba(0,0,0,0.3);}
+  .mode-card.selected.beginner{border-color:var(--teal);box-shadow:0 0 0 1px var(--teal), 0 12px 32px rgba(34,229,194,0.18);}
+  .mode-card.selected.intermediate{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber), 0 12px 32px rgba(255,180,60,0.18);}
+  .mode-card.selected.expert{border-color:var(--red);box-shadow:0 0 0 1px var(--red), 0 12px 32px rgba(255,92,122,0.18);}
+  .mode-card.selected.path-build{border-color:var(--violet);box-shadow:0 0 0 1px var(--violet), 0 12px 32px rgba(177,140,255,0.18);}
+  .mode-card.selected.path-crisis{border-color:var(--red);box-shadow:0 0 0 1px var(--red), 0 12px 32px rgba(255,92,122,0.18);}
+  .mode-card.selected.path-journey{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue), 0 12px 32px rgba(79,195,255,0.18);}
+  .mode-card.selected.path-tower{border-color:var(--lime);box-shadow:0 0 0 1px var(--lime), 0 12px 32px rgba(180,242,49,0.18);}
+  .mode-card h3{margin:0 0 8px;font-size:17px;}
+  .mode-card p{margin:0;font-size:13.5px;color:var(--text-dim);line-height:1.55;}
+  .mode-dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:8px;box-shadow:0 0 8px currentColor;}
+
+  /* Why box */
+  .why-box{margin-top:12px;background:linear-gradient(120deg, rgba(255,180,60,0.08), rgba(255,111,203,0.06));border:1px solid rgba(255,180,60,0.22);border-radius:var(--radius-sm);padding:12px 14px;}
+  .why-text{margin:0;font-size:13.5px;line-height:1.6;color:#F0E2C4;}
+  .why-toggle{background:none;border:none;color:var(--amber);font-size:12.5px;font-weight:800;cursor:pointer;padding:0;font-family:var(--mono);letter-spacing:0.3px;}
+  .why-terse{margin:8px 0 0;font-size:12px;color:var(--text-faint);font-family:var(--mono);line-height:1.5;border-left:2px solid var(--violet);padding-left:10px;}
+
+  /* Metric bars */
+  .metric-bar{margin-bottom:14px;}
+  .metric-bar-top{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;color:var(--text-dim);}
+  .metric-bar-label{font-weight:700;}
+  .metric-bar-value{font-family:var(--mono);font-weight:900;}
+  .metric-bar-track{height:10px;border-radius:999px;background:var(--bg-elevated-2);overflow:hidden;position:relative;}
+  .metric-bar-fill{height:100%;border-radius:999px;transition:width 0.9s cubic-bezier(.2,.8,.2,1), background 0.4s ease;position:relative;}
+  .metric-bar-fill.pos-flash{animation:glowPulse 0.9s ease 1;}
+
+  /* Action / option cards */
+  .action-card{background:linear-gradient(160deg, var(--bg-panel), var(--bg-elevated));border:1.5px solid var(--border-soft);border-radius:var(--radius);padding:18px;cursor:pointer;transition:all 0.22s ease;position:relative;}
+  .action-card:hover:not(.locked){transform:translateY(-3px);border-color:var(--blue);box-shadow:0 10px 24px rgba(79,195,255,0.12);}
+  .action-card.selected{border-color:var(--teal);box-shadow:0 0 0 1px var(--teal), 0 12px 28px rgba(34,229,194,0.16);animation:popIn 0.35s ease;}
+  .action-card.locked{opacity:0.4;cursor:not-allowed;}
+  .action-title{font-size:15.5px;font-weight:800;margin:2px 0 6px;}
+  .action-icon{font-size:26px;display:inline-block;}
+  .action-card:hover:not(.locked) .action-icon{animation:wiggle 0.4s ease;}
+  .target-tags{margin-top:10px;font-size:11.5px;color:var(--text-faint);font-family:var(--mono);}
+  .check-badge{position:absolute;top:14px;right:14px;width:24px;height:24px;border-radius:50%;background:linear-gradient(120deg, var(--teal), var(--blue));color:#062023;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;animation:popIn 0.3s ease;box-shadow:0 0 12px rgba(34,229,194,0.5);}
+  .synergy-hint{margin-top:10px;font-size:12px;color:var(--lime);font-weight:800;}
+
+  .selection-counter{font-family:var(--mono);font-size:13px;color:var(--text-dim);margin-top:18px;}
+
+  /* Log feed */
+  .log-feed{margin-top:24px;display:flex;flex-direction:column;gap:8px;}
+  .log-item{background:linear-gradient(120deg, var(--bg-elevated), var(--bg-elevated-2));border:1px solid var(--border-soft);border-radius:var(--radius-sm);padding:12px 14px;font-size:13.5px;animation:bounceIn 0.4s ease both;}
+  .log-item.synergy{border-color:rgba(180,242,49,0.4);}
+  .log-item .deltas{font-family:var(--mono);font-size:12px;color:var(--text-dim);margin-top:4px;}
+  .delta-pos{color:var(--good);font-weight:800;}
+  .delta-neg{color:var(--bad);font-weight:800;}
+
+  /* Negotiation */
+  .meter-row{display:grid;grid-template-columns:repeat(auto-fit, minmax(180px,1fr));gap:18px;margin:18px 0 26px;}
+  .situation-box{background:linear-gradient(120deg, rgba(177,140,255,0.12), rgba(79,195,255,0.06));border-left:3px solid var(--violet);border-radius:0 var(--radius-sm) var(--radius-sm) 0;padding:14px 16px;font-size:14.5px;line-height:1.6;color:#E4DFFB;margin-bottom:18px;}
+  .option-list{display:flex;flex-direction:column;gap:10px;}
+  .option-row{background:linear-gradient(160deg, var(--bg-panel), var(--bg-elevated));border:1.5px solid var(--border-soft);border-left-width:4px;border-radius:var(--radius-sm);padding:14px 16px;cursor:pointer;transition:all 0.2s ease;}
+  .option-row:hover:not(.disabled){border-color:var(--text-faint);transform:translateX(3px);}
+  .option-row.tag-empathetic{border-left-color:var(--teal);}
+  .option-row.tag-leverage{border-left-color:var(--amber);}
+  .option-row.tag-aggressive{border-left-color:var(--red);}
+  .option-row.tag-compromise{border-left-color:var(--violet);}
+  .option-row.chosen{background:rgba(255,180,60,0.08);box-shadow:0 8px 20px rgba(0,0,0,0.2);animation:popIn 0.3s ease;}
+  .option-row.disabled{cursor:default;}
+  .option-tag{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-faint);font-weight:700;}
+  .option-label{font-weight:700;font-size:14.5px;margin-top:4px;}
+  .rationale-box{margin-top:14px;background:var(--bg-elevated);border-radius:var(--radius-sm);padding:14px 16px;border:1px solid var(--border-soft);font-size:13.5px;line-height:1.6;color:var(--text-dim);}
+
+  /* AI strategy */
+  .ai-card{background:linear-gradient(160deg, var(--bg-panel), var(--bg-elevated));border:1.5px solid var(--border-soft);border-radius:var(--radius);padding:20px;cursor:pointer;transition:all 0.22s ease;position:relative;}
+  .ai-card:hover:not(.locked){transform:translateY(-3px);border-color:var(--violet);box-shadow:0 10px 24px rgba(177,140,255,0.14);}
+  .ai-card.selected{border-color:var(--violet);box-shadow:0 0 0 1px var(--violet), 0 12px 28px rgba(177,140,255,0.2);animation:popIn 0.35s ease;}
+  .ai-card.locked{opacity:0.4;cursor:not-allowed;}
+  .impact-tag{display:inline-block;font-family:var(--mono);font-size:11px;background:linear-gradient(120deg, rgba(177,140,255,0.14), rgba(79,195,255,0.1));border:1px solid rgba(177,140,255,0.3);border-radius:6px;padding:3px 8px;margin:3px 4px 0 0;color:#DCD3FF;}
+
+  /* Dashboard */
+  .score-hero{text-align:center;padding:30px 20px 10px;}
+  .score-big{font-family:var(--mono);font-size:clamp(56px,12vw,96px);font-weight:900;line-height:1;background:linear-gradient(120deg, var(--amber), var(--pink), var(--blue));background-size:200% auto;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shimmer 4s linear infinite;}
+  .score-tier{font-size:20px;font-weight:900;margin:8px 0 6px;}
+  .score-tone{color:var(--text-dim);font-size:14.5px;max-width:520px;margin:0 auto;}
+  .category-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(260px,1fr));gap:16px;margin:30px 0;}
+  .feedback-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(280px,1fr));gap:16px;margin-top:10px;}
+  .feedback-card{background:linear-gradient(160deg, var(--bg-panel), var(--bg-elevated));border:1px solid var(--border-soft);border-radius:var(--radius);padding:20px;}
+  .feedback-card h4{margin:0 0 10px;font-size:14px;display:flex;align-items:center;gap:8px;}
+  .feedback-card p, .feedback-card li{font-size:13.5px;line-height:1.65;color:var(--text-dim);}
+  .feedback-card ul{margin:0;padding-left:18px;}
+  .mistake-card{border-color:rgba(255,92,122,0.35);}
+  .best-card{border-color:rgba(34,229,194,0.35);}
+
+  .badge-row{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:22px 0 6px;}
+  .badge-pill{display:flex;align-items:center;gap:7px;background:linear-gradient(120deg, rgba(255,180,60,0.14), rgba(255,111,203,0.10));border:1px solid rgba(255,180,60,0.35);border-radius:999px;padding:8px 16px;font-size:13px;font-weight:800;animation:bounceIn 0.5s ease both;}
+  .badge-pill .badge-icon{font-size:16px;}
+
+  /* Confetti + toast overlays */
+  .confetti-canvas{position:fixed;inset:0;pointer-events:none;z-index:200;}
+  .toast-stack{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:300;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;}
+  .toast{background:linear-gradient(120deg, rgba(20,26,43,0.95), rgba(35,43,69,0.95));border:1px solid var(--border);border-radius:999px;padding:9px 18px;font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:8px;box-shadow:0 8px 24px rgba(0,0,0,0.35);animation:bounceIn 0.35s ease both;backdrop-filter:blur(6px);}
+  .toast.good{border-color:rgba(34,229,194,0.5);color:var(--teal);}
+  .toast.great{border-color:rgba(255,180,60,0.5);color:var(--amber);}
+  .toast.meh{border-color:rgba(255,92,122,0.5);color:var(--red);}
+
+  .floating-delta{position:absolute;font-family:var(--mono);font-weight:900;font-size:13px;pointer-events:none;animation:floatDelta 1.1s ease forwards;white-space:nowrap;}
+
+  /* Control Tower */
+  .tower-topbar{display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;background:var(--bg-panel);border:1px solid var(--border-soft);border-radius:var(--radius);padding:14px 18px;margin-bottom:20px;}
+  .tower-counter{text-align:center;min-width:90px;}
+  .tower-counter-label{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-faint);}
+  .tower-counter-value{font-family:var(--mono);font-size:22px;font-weight:900;color:var(--text);}
+  .tower-counter-value.timer-low{color:var(--red);animation:pulseDot 1s infinite;}
+  .tower-controls{display:flex;gap:8px;}
+  .tower-icon-btn{cursor:pointer;background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all 0.2s ease;}
+  .tower-icon-btn:hover{border-color:var(--blue);transform:translateY(-1px);}
+
+  .tower-kpi-strip{display:grid;grid-template-columns:repeat(auto-fit, minmax(160px,1fr));gap:12px;margin-bottom:22px;}
+
+  .alert-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(280px,1fr));gap:14px;margin-bottom:24px;}
+  .alert-card{background:linear-gradient(160deg, var(--bg-panel), var(--bg-elevated));border:1.5px solid var(--border-soft);border-radius:var(--radius);padding:16px;position:relative;transition:all 0.25s ease;}
+  .alert-card.stage-0{border-color:rgba(255,180,60,0.4);}
+  .alert-card.stage-1{border-color:rgba(255,92,122,0.5);}
+  .alert-card.stage-2{border-color:var(--red);box-shadow:0 0 20px rgba(255,92,122,0.3);animation:glowPulse 1.1s infinite;}
+  .alert-card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+  .alert-card-title{font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px;}
+  .alert-stage-tag{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:0.5px;padding:3px 9px;border-radius:999px;font-weight:800;white-space:nowrap;}
+  .alert-stage-tag.stage-0{background:rgba(255,180,60,0.15);color:var(--amber);}
+  .alert-stage-tag.stage-1{background:rgba(255,92,122,0.15);color:var(--red);}
+  .alert-stage-tag.stage-2{background:rgba(255,92,122,0.25);color:var(--red);}
+  .alert-desc{font-size:13px;color:var(--text-dim);line-height:1.5;margin:8px 0 10px;}
+  .alert-timer-track{height:6px;border-radius:999px;background:var(--bg-elevated-2);overflow:hidden;margin-bottom:12px;}
+  .alert-timer-fill{height:100%;border-radius:999px;transition:width 0.3s linear;}
+  .alert-action-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+  .alert-action-btn{cursor:pointer;background:var(--bg-elevated-2);border:1px solid var(--border-soft);border-radius:8px;padding:7px 8px;font-size:11.5px;font-weight:700;color:var(--text);text-align:left;transition:all 0.15s ease;display:flex;align-items:center;gap:5px;}
+  .alert-action-btn:hover{border-color:var(--blue);background:var(--bg-elevated);transform:translateY(-1px);}
+  .alert-action-btn.ignore-btn{color:var(--text-faint);}
+
+  .tower-log-feed{max-height:220px;overflow-y:auto;display:flex;flex-direction:column-reverse;gap:6px;padding-right:4px;}
+
+  .pause-overlay{position:fixed;inset:0;background:rgba(11,14,26,0.88);backdrop-filter:blur(6px);z-index:400;display:flex;align-items:center;justify-content:center;}
+  .pause-panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius);padding:36px;text-align:center;max-width:360px;}
+
+  .help-modal-overlay{position:fixed;inset:0;background:rgba(11,14,26,0.82);backdrop-filter:blur(4px);z-index:400;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .help-modal{background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius);padding:28px;max-width:520px;max-height:80vh;overflow-y:auto;}
+
+  @media (max-width:680px){
+    .console-top{flex-direction:column;align-items:flex-start;}
+    .hero{padding:46px 0 20px;}
+    .card{padding:16px;}
+    .alert-action-grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+<div id="root">
+  <div id="boot-fallback" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px;text-align:center;">
+    <div>
+      <div style="font-size:17px;font-weight:800;margin-bottom:10px;">Loading Operation Lifeline…</div>
+      <div id="boot-message" style="font-size:14px;color:#8B97A8;line-height:1.6;max-width:420px;">
+        If this message doesn't disappear within a few seconds, this file is likely open in a restricted preview (like iOS Quick Look) that blocks the scripts it needs.
+        <br/><br/>
+        Open it in an actual browser instead: tap the "•••" or share icon and choose <strong style="color:#E8EDF4;">Open in Safari</strong> (or Chrome), then reload.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function showBootError(msg){
+    var el = document.getElementById("boot-message");
+    if(el){ el.innerHTML = '<strong style="color:#FF5C5C;">Could not load a required script.</strong><br/><br/>' + msg + '<br/><br/>This app needs an internet connection the first time it loads (to fetch React), and must be opened in a real browser tab, not a file preview panel. Try opening this file in Safari or Chrome with an active connection.'; }
+  }
+</script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin onerror="showBootError('React failed to load from unpkg.com.')"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin onerror="showBootError('React-DOM failed to load from unpkg.com.')"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js" crossorigin onerror="showBootError('Babel failed to load from unpkg.com.')"></script>
+<script>
+  setTimeout(function(){
+    if(!window.__lifelineMounted){
+      showBootError('The app scripts loaded but did not start correctly.');
+    }
+  }, 7000);
+</script>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef } = React;
+
+/* ============================== SOUND ENGINE ============================== */
+let __audioCtx = null;
+let __soundOn = true;
+function getAudioCtx(){
+  if(!__audioCtx){
+    try { __audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){ __audioCtx = null; }
+  }
+  return __audioCtx;
+}
+function playTone(freq, duration, type, volume, delay){
+  if(!__soundOn) return;
+  const ctx = getAudioCtx();
+  if(!ctx) return;
+  try{
+    const t0 = ctx.currentTime + (delay || 0);
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type || "sine";
+    osc.frequency.setValueAtTime(freq, t0);
+    gain.gain.setValueAtTime(0, t0);
+    gain.gain.linearRampToValueAtTime(volume || 0.08, t0 + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, t0 + duration);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t0);
+    osc.stop(t0 + duration + 0.05);
+  } catch(e){ /* ignore audio errors */ }
+}
+function playClick(){ playTone(520, 0.08, "sine", 0.05); }
+function playSelect(){ playTone(660, 0.1, "triangle", 0.06); }
+function playSuccess(){ playTone(523.25, 0.12, "sine", 0.08); playTone(659.25, 0.14, "sine", 0.07, 0.08); playTone(783.99, 0.22, "sine", 0.07, 0.16); }
+function playGreat(){ playTone(523.25, 0.1, "square", 0.05, 0); playTone(659.25, 0.1, "square", 0.05, 0.09); playTone(783.99, 0.1, "square", 0.05, 0.18); playTone(1046.5, 0.24, "sine", 0.08, 0.27); }
+function playMeh(){ playTone(300, 0.16, "sawtooth", 0.05); playTone(220, 0.22, "sawtooth", 0.05, 0.1); }
+function playWhoosh(){ playTone(180, 0.28, "sine", 0.05); playTone(340, 0.2, "sine", 0.03, 0.05); }
+
+function SoundToggle(){
+  const [on, setOn] = useState(true);
+  return React.createElement("button", {
+    className: "sound-toggle",
+    title: on ? "Sound on — tap to mute" : "Muted — tap to unmute",
+    onClick: function(){ __soundOn = !on; setOn(!on); }
+  }, on ? "🔊" : "🔇");
+}
+
+/* ============================== PARTICLE BACKGROUND ============================== */
+function ParticleField(){
+  const colors = ["#FFB43C","#22E5C2","#FF6FCB","#4FC3FF","#B18CFF"];
+  const particles = React.useMemo(function(){
+    return Array.from({ length: 22 }).map(function(_, i){
+      return {
+        id: i,
+        left: Math.random() * 100,
+        size: 3 + Math.random() * 6,
+        color: colors[i % colors.length],
+        duration: 14 + Math.random() * 16,
+        delay: Math.random() * -20
+      };
+    });
+  }, []);
+  return React.createElement("div", { className: "particle-field" },
+    particles.map(function(p){
+      return React.createElement("div", {
+        key: p.id,
+        className: "particle",
+        style: {
+          left: p.left + "%",
+          bottom: "-20px",
+          width: p.size + "px",
+          height: p.size + "px",
+          background: p.color,
+          animationDuration: p.duration + "s",
+          animationDelay: p.delay + "s"
+        }
+      });
+    })
+  );
+}
+
+/* ============================== CONFETTI ============================== */
+function Confetti(props){
+  const canvasRef = useRef(null);
+  useEffect(function(){
+    const canvas = canvasRef.current;
+    if(!canvas) return;
+    const ctx = canvas.getContext("2d");
+    let w = canvas.width = window.innerWidth;
+    let h = canvas.height = window.innerHeight;
+    const colors = ["#FFB43C","#22E5C2","#FF6FCB","#4FC3FF","#B18CFF","#B4F231"];
+    const count = props.big ? 140 : 70;
+    const pieces = Array.from({ length: count }).map(function(){
+      return {
+        x: w / 2 + (Math.random() - 0.5) * (props.big ? w * 0.6 : 200),
+        y: h * 0.3 + (Math.random() - 0.5) * 100,
+        vx: (Math.random() - 0.5) * 8,
+        vy: -Math.random() * 9 - 3,
+        size: 4 + Math.random() * 5,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        rot: Math.random() * 360,
+        vrot: (Math.random() - 0.5) * 14,
+        life: 0
+      };
+    });
+    let raf;
+    let frame = 0;
+    const maxFrames = props.big ? 130 : 90;
+    function tick(){
+      frame++;
+      ctx.clearRect(0, 0, w, h);
+      pieces.forEach(function(p){
+        p.vy += 0.28;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.rot += p.vrot;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.rot * Math.PI) / 180);
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = Math.max(0, 1 - frame / maxFrames);
+        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+        ctx.restore();
+      });
+      if(frame < maxFrames){ raf = requestAnimationFrame(tick); }
+      else { ctx.clearRect(0, 0, w, h); }
+    }
+    tick();
+    return function(){ if(raf) cancelAnimationFrame(raf); };
+  }, []);
+  return React.createElement("canvas", { ref: canvasRef, className: "confetti-canvas" });
+}
+
+/* ============================== TOASTS ============================== */
+let __toastId = 0;
+function ToastStack(props){
+  return React.createElement("div", { className: "toast-stack" },
+    props.toasts.map(function(t){
+      return React.createElement("div", { key: t.id, className: "toast " + t.tone }, t.icon, " ", t.text);
+    })
+  );
+}
+function useToasts(){
+  const [toasts, setToasts] = useState([]);
+  function pushToast(text, tone, icon){
+    const id = ++__toastId;
+    setToasts(function(prev){ return prev.concat([{ id: id, text: text, tone: tone || "good", icon: icon || "✨" }]); });
+    setTimeout(function(){
+      setToasts(function(prev){ return prev.filter(function(t){ return t.id !== id; }); });
+    }, 2600);
+  }
+  return [toasts, pushToast];
+}
+
+function randInt(min, max){ return Math.floor(Math.random() * (max - min + 1)) + min; }
+function randFloat(min, max){ return Math.random() * (max - min) + min; }
+function pick(arr){ return arr[randInt(0, arr.length - 1)]; }
+function sampleN(arr, n){
+  const copy = arr.slice();
+  const out = [];
+  for(let i = 0; i < n && copy.length; i++){
+    out.push(copy.splice(randInt(0, copy.length - 1), 1)[0]);
+  }
+  return out;
+}
+function clamp(v, min, max){
+  min = (min === undefined) ? 0 : min;
+  max = (max === undefined) ? 100 : max;
+  return Math.max(min, Math.min(max, v));
+}
+function fmtMoney(m){
+  if(m >= 1000) return "$" + (m / 1000).toFixed(2) + "B";
+  return "$" + m.toFixed(0) + "M";
+}
+function fmtDollarsShort(n){
+  if(n >= 1000000) return "$" + (n / 1000000).toFixed(2) + "M";
+  if(n >= 1000) return "$" + Math.round(n / 1000) + "K";
+  return "$" + Math.round(n);
+}
+function fmtSigned(n){
+  const r = Math.round(n);
+  return (r > 0 ? "+" : "") + r;
+}
+function metricLabel(key){
+  const map = {
+    cost: "Cost Control",
+    inventory: "Inventory Health",
+    profit: "Profit",
+    deliverySpeed: "Delivery Speed",
+    customerSatisfaction: "Customer Satisfaction",
+    risk: "Risk Control",
+    sustainability: "Sustainability",
+    efficiency: "Network Efficiency"
+  };
+  return map[key] || key;
+}
+function metricIcon(key){
+  const map = { cost: "💰", inventory: "📦", profit: "📈", deliverySpeed: "🚚", customerSatisfaction: "🤝", risk: "🛡️", sustainability: "🌱", efficiency: "⚙️" };
+  return map[key] || "•";
+}
+function barColor(v){
+  if(v >= 70) return "var(--good)";
+  if(v >= 45) return "var(--warn)";
+  return "var(--bad)";
+}
+
+/* ============================== GAME DATA ============================== */
+const INDUSTRIES = [
+  { name: "Automotive Parts Manufacturing", icon: "🚗" },
+  { name: "Consumer Electronics", icon: "📱" },
+  { name: "Pharmaceuticals", icon: "💊" },
+  { name: "Fashion & Apparel", icon: "👕" },
+  { name: "Food & Beverage", icon: "🥫" },
+  { name: "Industrial Machinery", icon: "⚙️" },
+  { name: "Renewable Energy Components", icon: "🔋" },
+  { name: "Medical Devices", icon: "🩺" },
+  { name: "E-commerce Retail & Fulfillment", icon: "📦" },
+  { name: "Semiconductor Manufacturing", icon: "🖥️" }
+];
+const NAME_PREFIX = ["Atlas","Northbridge","Vantage","Summit","Meridian","Cascade","Ironclad","Horizon","Pinnacle","Crestline","Anchor","Lumen","Granite","Beacon","Sterling","Vertex","Halcyon","Ridgeline"];
+const NAME_SUFFIX = ["Industries","Holdings","Group","Dynamics","Systems","Logistics","Manufacturing","Global","& Co.","Works"];
+const COUNTRIES = ["United States","Germany","China","Vietnam","Mexico","India","Brazil","Poland","South Korea","Nigeria","Indonesia","Netherlands","Japan","Turkey","South Africa","Canada","United Kingdom"];
+
+const PRODUCTS_BY_INDUSTRY = {
+  "Automotive Parts Manufacturing": ["brake assemblies", "wiring harnesses", "alternators", "suspension components"],
+  "Consumer Electronics": ["wireless earbuds", "smart home hubs", "power banks", "fitness trackers"],
+  "Pharmaceuticals": ["generic antibiotics", "insulin pens", "vitamin supplements", "diagnostic test kits"],
+  "Fashion & Apparel": ["denim jackets", "athletic footwear", "children's clothing lines", "accessories"],
+  "Food & Beverage": ["canned vegetables", "bottled beverages", "packaged snacks", "frozen meals"],
+  "Industrial Machinery": ["hydraulic pumps", "conveyor systems", "industrial motors", "precision gears"],
+  "Renewable Energy Components": ["solar inverters", "battery storage cells", "wind turbine blades", "charge controllers"],
+  "Medical Devices": ["surgical instruments", "diagnostic imaging parts", "patient monitors", "orthopedic implants"],
+  "E-commerce Retail & Fulfillment": ["household goods", "electronics accessories", "apparel", "beauty products"],
+  "Semiconductor Manufacturing": ["memory chips", "microcontrollers", "power semiconductors", "sensor modules"]
+};
+const DEMAND_LEVELS = [
+  { label: "Steady", note: "Demand is predictable and grows slowly year over year." },
+  { label: "Seasonal Spikes", note: "Demand is calm most of the year but surges hard during peak season." },
+  { label: "Rapidly Growing", note: "Demand is climbing fast as the company scales into new markets." },
+  { label: "High & Volatile", note: "Demand is consistently high but swings unpredictably week to week." }
+];
+
+function generateCompany(){
+  const industry = pick(INDUSTRIES);
+  const name = pick(NAME_PREFIX) + " " + pick(NAME_SUFFIX);
+  const revenue = randInt(60, 4800);
+  const factories = randInt(2, 11);
+  const warehouses = randInt(3, 22);
+  const suppliers = randInt(12, 160);
+  const inventoryDays = randInt(6, 55);
+  const leadTime = randInt(9, 115);
+  const countries = sampleN(COUNTRIES, randInt(3, 6));
+  const products = sampleN(PRODUCTS_BY_INDUSTRY[industry.name] || ["core products"], Math.min(3, (PRODUCTS_BY_INDUSTRY[industry.name] || ["core products"]).length));
+  const demandLevel = pick(DEMAND_LEVELS);
+  return { industry, name, revenue, factories, warehouses, suppliers, inventoryDays, leadTime, countries, products, demandLevel };
+}
+
+const CRISIS_TYPES = [
+  { id: "fire", name: "Factory Fire", icon: "🔥", primaryHit: ["inventory","deliverySpeed"], secondaryHit: ["cost"],
+    desc: (c) => "A fire broke out at one of " + c.name + "'s production facilities overnight. Local authorities have confirmed the building is structurally unsafe for at least three weeks, taking a meaningful share of your manufacturing capacity offline with no warning." },
+  { id: "bankruptcy", name: "Supplier Bankruptcy", icon: "🏚️", primaryHit: ["inventory","cost"], secondaryHit: ["profit"],
+    desc: (c) => "One of " + c.name + "'s key component suppliers has filed for bankruptcy protection. Shipments already in progress are frozen pending court proceedings, with no clear timeline for resolution." },
+  { id: "strike", name: "Port Strike", icon: "⚓", primaryHit: ["deliverySpeed","inventory"], secondaryHit: ["customerSatisfaction"],
+    desc: (c) => "Dockworkers at a major port used by " + c.name + " have walked out over contract disputes. Container ships are backing up offshore, and nobody can say how long the standoff will last." },
+  { id: "cyber", name: "Cyberattack", icon: "🛰️", primaryHit: ["customerSatisfaction","deliverySpeed"], secondaryHit: ["cost"],
+    desc: (c) => "A ransomware attack has knocked out " + c.name + "'s order management and warehouse systems. Staff are tracking shipments on paper while IT works to confirm no customer data was compromised." },
+  { id: "flood", name: "Regional Flooding", icon: "🌊", primaryHit: ["inventory","deliverySpeed"], secondaryHit: ["cost"],
+    desc: (c) => "Severe flooding has cut off road access to one of " + c.name + "'s major warehouses and damaged a portion of stored inventory. Regional infrastructure is expected to take weeks to fully recover." },
+  { id: "shortage", name: "Raw Material Shortage", icon: "⛏️", primaryHit: ["cost","profit"], secondaryHit: ["inventory"],
+    desc: (c) => "A sudden global shortage of a key raw material has sent input prices climbing fast for " + c.name + ". Several suppliers have already issued notices that they cannot guarantee allocations at current prices." },
+  { id: "conflict", name: "Political Conflict", icon: "⚠️", primaryHit: ["deliverySpeed","cost"], secondaryHit: ["inventory"],
+    desc: (c) => "Escalating political conflict in a region where " + c.name + " sources materials has triggered new export controls and insurance restrictions. Shipping routes that were reliable last month are now unusable." },
+  { id: "delay", name: "Shipping Delay", icon: "🚢", primaryHit: ["deliverySpeed","customerSatisfaction"], secondaryHit: ["inventory"],
+    desc: (c) => "A major shipping lane " + c.name + " depends on is blocked after a vessel ran aground, stranding dozens of container ships. Even after it clears, the backlog will take time to work through." }
+];
+
+function generateCrisis(mode, severityMultiplier){
+  const sevMult = severityMultiplier || 1;
+  const type = pick(CRISIS_TYPES);
+  const urgency = pick(["High","Critical","Severe"]);
+  const urgencyMult = urgency === "Severe" ? 1.3 : urgency === "Critical" ? 1.15 : 1.0;
+  const sevRanges = { beginner: [16,26], intermediate: [24,36], expert: [30,46] };
+  const secRanges = { beginner: [6,14], intermediate: [10,18], expert: [16,26] };
+  const pr = sevRanges[mode]; const sr = secRanges[mode];
+  const primarySeverity = clamp(Math.round(randInt(pr[0], pr[1]) * urgencyMult * sevMult), 5, 65);
+  const secondarySeverity = clamp(Math.round(randInt(sr[0], sr[1]) * urgencyMult * sevMult), 2, 40);
+  return Object.assign({}, type, { urgency, urgencyMult, primarySeverity, secondarySeverity });
+}
+
+function applyCrisisImpact(crisis, baseline){
+  const b = (baseline === undefined || baseline === null) ? 78 : baseline;
+  const m = { cost: b, inventory: b, profit: b, deliverySpeed: b, customerSatisfaction: b };
+  crisis.primaryHit.forEach(function(k){ m[k] = clamp(m[k] - crisis.primarySeverity); });
+  crisis.secondaryHit.forEach(function(k){ m[k] = clamp(m[k] - crisis.secondarySeverity); });
+  Object.keys(m).forEach(function(k){ m[k] = clamp(m[k] + randInt(-4, 4)); });
+  return m;
+}
+
+const WAR_ROOM_ACTIONS = [
+  { id: "air", name: "Expedite by Air Freight", icon: "✈️", targetMetrics: ["deliverySpeed","customerSatisfaction"],
+    why: "Flying goods in is fast but expensive. It buys you delivery speed and happier customers right now, at a real cost to your margins.",
+    base: { cost: -16, inventory: 0, profit: -9, deliverySpeed: 20, customerSatisfaction: 11 },
+    synergyCrises: ["strike","delay","conflict"] },
+  { id: "backup", name: "Activate Backup Supplier", icon: "🔁", targetMetrics: ["inventory","cost"],
+    why: "Switching to a backup supplier takes a moment to ramp up, but it rebuilds your supply pipeline and reduces how exposed you are if this keeps dragging on.",
+    base: { cost: -7, inventory: 17, profit: -3, deliverySpeed: 5, customerSatisfaction: 3 },
+    synergyCrises: ["bankruptcy","shortage","conflict","fire"] },
+  { id: "safety", name: "Deploy Safety Stock", icon: "📦", targetMetrics: ["deliverySpeed","customerSatisfaction"],
+    why: "Using your reserve inventory gets product moving again immediately, but it spends down the buffer you'd want for the next crisis.",
+    base: { cost: -1, inventory: -13, profit: 2, deliverySpeed: 15, customerSatisfaction: 9 },
+    synergyCrises: ["fire","flood","bankruptcy"] },
+  { id: "partial", name: "Negotiate Partial Delivery", icon: "🤝", targetMetrics: ["inventory","profit"],
+    why: "Asking for whatever the supplier can send now, even a partial shipment, is low-risk and low-cost. It won't fully solve the problem, but it keeps things moving without overspending.",
+    base: { cost: 3, inventory: 6, profit: 3, deliverySpeed: 5, customerSatisfaction: 2 },
+    synergyCrises: ["bankruptcy","shortage"] },
+  { id: "comms", name: "Proactive Customer Communication", icon: "📣", targetMetrics: ["customerSatisfaction"],
+    why: "Customers forgive delays far more easily when you tell them early, honestly, and with a plan. This barely touches your budget but does a lot for trust.",
+    base: { cost: 2, inventory: 0, profit: 1, deliverySpeed: 0, customerSatisfaction: 19 },
+    synergyCrises: ["cyber","delay","strike"] },
+  { id: "triage", name: "Triage by Customer Priority", icon: "🎯", targetMetrics: ["profit","deliverySpeed"],
+    why: "Serving your most important customers first protects revenue and key relationships, but the customers who get pushed back will notice.",
+    base: { cost: 5, inventory: 4, profit: 8, deliverySpeed: 9, customerSatisfaction: -6 },
+    synergyCrises: ["fire","flood","cyber"] }
+];
+
+function getActionEffect(action, crisis, mode){
+  const isSynergy = action.synergyCrises.indexOf(crisis.id) !== -1;
+  const modeMult = mode === "beginner" ? { pos: 1.12, neg: 0.7 } : mode === "expert" ? { pos: 0.85, neg: 1.3 } : { pos: 1, neg: 1 };
+  const out = {};
+  Object.keys(action.base).forEach(function(k){
+    let v = action.base[k];
+    if(isSynergy && v > 0) v = v * 1.4;
+    if(isSynergy && v < 0) v = v * 0.7;
+    v = v >= 0 ? v * modeMult.pos : v * modeMult.neg;
+    const jitter = mode === "expert" ? 4 : mode === "beginner" ? 1.5 : 2.5;
+    v += randFloat(-jitter, jitter);
+    out[k] = Math.round(v);
+  });
+  const quality = isSynergy ? 3 : (action.targetMetrics.some(function(t){ return crisis.primaryHit.indexOf(t) !== -1; }) ? 2 : 1);
+  return { deltas: out, quality: quality, isSynergy: isSynergy };
+}
+
+/* ============================== BUILDER MODE ============================== */
+const BUILDER_METRIC_KEYS = ["cost", "deliverySpeed", "risk", "customerSatisfaction", "sustainability"];
+
+const BUILDER_DECISIONS = [
+  {
+    id: "suppliers",
+    step: 1,
+    title: "How Many Suppliers Will You Use?",
+    concept: "Every product you sell is built from materials someone else supplies to you. The number of suppliers you rely on for a critical material is one of the biggest resilience decisions a business makes, and it's usually invisible until something goes wrong.",
+    options: [
+      {
+        id: "single", label: "Single Supplier", icon: "🔗",
+        blurb: "One trusted supplier handles this material exclusively.",
+        tradeoff: "You unlock better pricing and simpler coordination because you're their priority customer, but if anything happens to that one supplier, your entire production line stops with no backup.",
+        deltas: { cost: 14, deliverySpeed: 4, risk: -18, customerSatisfaction: 0, sustainability: 2 }
+      },
+      {
+        id: "multiple", label: "Multiple Suppliers", icon: "🕸️",
+        blurb: "You split this material across two or more independent suppliers.",
+        tradeoff: "You lose some bulk-pricing leverage and add coordination overhead, but if one supplier fails, the others keep you running. This is the core idea behind supply chain resilience.",
+        deltas: { cost: -10, deliverySpeed: -2, risk: 16, customerSatisfaction: 4, sustainability: -2 }
+      }
+    ]
+  },
+  {
+    id: "factory",
+    step: 2,
+    title: "Where Will You Build Your Factory?",
+    concept: "Factory location decides how far your product has to travel before it even reaches a warehouse. It shapes your labor costs, how exposed you are to regional disruptions, and how quickly you can react to local demand.",
+    options: [
+      {
+        id: "domestic", label: "Domestic (Home Market)", icon: "🏠",
+        blurb: "Build close to your biggest customer base.",
+        tradeoff: "Labor and land cost more, but you get fast delivery, tight oversight, and lower emissions from short transport. Most premium and fast-fashion brands pay this cost on purpose.",
+        deltas: { cost: -12, deliverySpeed: 16, risk: 10, customerSatisfaction: 10, sustainability: 14 }
+      },
+      {
+        id: "nearshore", label: "Nearshore (Neighboring Region)", icon: "🌉",
+        blurb: "Build in a nearby country with cheaper labor but a short shipping hop.",
+        tradeoff: "A genuine middle ground: moderate savings, moderate speed, moderate risk. This is why nearshoring to Mexico or Eastern Europe became so popular after recent global shipping disruptions.",
+        deltas: { cost: 0, deliverySpeed: 8, risk: 6, customerSatisfaction: 5, sustainability: 6 }
+      },
+      {
+        id: "offshore", label: "Offshore Low-Cost Hub", icon: "🌏",
+        blurb: "Build far away where labor and materials are cheapest.",
+        tradeoff: "Your unit cost drops significantly, but you're now exposed to long shipping lines, customs delays, and geopolitical risk, and your delivery speed and emissions both take a real hit.",
+        deltas: { cost: 18, deliverySpeed: -14, risk: -10, customerSatisfaction: -6, sustainability: -14 }
+      },
+      {
+        id: "distributed", label: "Distributed (Multiple Regional Factories)", icon: "🗺️",
+        blurb: "Build smaller factories in several regions instead of one large one.",
+        tradeoff: "Running multiple factories costs more to operate, but no single disruption can take down your whole production capacity, and each region is served locally, which helps both speed and emissions.",
+        deltas: { cost: -14, deliverySpeed: 10, risk: 14, customerSatisfaction: 6, sustainability: 4 }
+      }
+    ]
+  },
+  {
+    id: "warehouse",
+    step: 3,
+    title: "What's Your Warehouse Strategy?",
+    concept: "Warehouses are the buffer between 'made' and 'delivered.' Where you place them, and how many you run, decides how fast you can reach customers and how exposed you are if any single location goes down.",
+    options: [
+      {
+        id: "centralized", label: "One Centralized Warehouse", icon: "🏢",
+        blurb: "A single large warehouse serves every market.",
+        tradeoff: "Cheaper to run since you're not duplicating storage costs, but distant customers wait longer, and if that one warehouse floods, catches fire, or loses power, your entire distribution stops.",
+        deltas: { cost: 10, deliverySpeed: -10, risk: -8, customerSatisfaction: -6, sustainability: 4 }
+      },
+      {
+        id: "distributed", label: "Regional Distributed Warehouses", icon: "🏬",
+        blurb: "Smaller warehouses placed close to each market you serve.",
+        tradeoff: "More rent, more staff, more to manage, but dramatically faster last-mile delivery and no single point of failure. Most mature e-commerce operations end up here.",
+        deltas: { cost: -12, deliverySpeed: 16, risk: 10, customerSatisfaction: 12, sustainability: -2 }
+      },
+      {
+        id: "jit", label: "Minimal / Just-In-Time", icon: "⚡",
+        blurb: "Skip large buffer storage and ship close to directly from the factory.",
+        tradeoff: "Your holding costs nearly disappear and there's less overproduction waste, but you have almost no cushion if demand spikes or a shipment is delayed. One hiccup and customers feel it immediately.",
+        deltas: { cost: 14, deliverySpeed: -4, risk: -14, customerSatisfaction: -8, sustainability: 8 }
+      }
+    ]
+  },
+  {
+    id: "transport",
+    step: 4,
+    title: "How Will You Move Your Goods?",
+    concept: "Transportation mode is a genuine three-way trade-off between speed, cost, and environmental impact, and there's no mode that wins on all three. Real logistics teams mix modes depending on the shipment.",
+    options: [
+      {
+        id: "air", label: "Air Freight", icon: "✈️",
+        blurb: "The fastest way to move goods, at a steep price.",
+        tradeoff: "Nothing beats air on speed and reliability of schedule, but it's by far the most expensive option per unit and carries the heaviest carbon footprint of any transport mode.",
+        deltas: { cost: -20, deliverySpeed: 20, risk: 6, customerSatisfaction: 10, sustainability: -20 }
+      },
+      {
+        id: "sea", label: "Sea Freight", icon: "🚢",
+        blurb: "The cheapest way to move large volumes, but the slowest.",
+        tradeoff: "Sea freight is remarkably efficient per unit shipped and relatively fuel-efficient for its volume, but transit times are measured in weeks, and long voyages mean more exposure to weather and port delays.",
+        deltas: { cost: 16, deliverySpeed: -16, risk: -6, customerSatisfaction: -6, sustainability: 10 }
+      },
+      {
+        id: "rail", label: "Rail Freight", icon: "🚆",
+        blurb: "A steady, efficient option for continental distances.",
+        tradeoff: "Rail hits a genuinely good balance: reasonably fast for long overland distances, very fuel-efficient, and fixed schedules make it predictable, though it only works where rail infrastructure actually exists.",
+        deltas: { cost: 6, deliverySpeed: 2, risk: 4, customerSatisfaction: 2, sustainability: 12 }
+      },
+      {
+        id: "road", label: "Road Freight", icon: "🚚",
+        blurb: "The flexible default for regional and last-mile delivery.",
+        tradeoff: "Road can go anywhere there's a road, which makes it the most flexible option, but it produces more emissions than rail over long distances and comes with real exposure to traffic and accidents.",
+        deltas: { cost: 0, deliverySpeed: 6, risk: 0, customerSatisfaction: 4, sustainability: -4 }
+      }
+    ]
+  },
+  {
+    id: "inventory",
+    step: 5,
+    title: "What's Your Inventory Strategy?",
+    concept: "This is how many days of stock you keep on hand as a buffer. It's the same 'inventory days' idea that shapes how a company survives a crisis, except now you're the one setting the number from scratch.",
+    options: [
+      {
+        id: "low", label: "Low Inventory", icon: "📉",
+        blurb: "Keep minimal stock and restock frequently.",
+        tradeoff: "You free up a lot of cash that would otherwise sit on shelves, and you waste less on unsold stock, but any spike in demand or delay in supply immediately turns into stockouts customers can feel.",
+        deltas: { cost: 16, deliverySpeed: -8, risk: -12, customerSatisfaction: -10, sustainability: 6 }
+      },
+      {
+        id: "balanced", label: "Balanced Inventory", icon: "⚖️",
+        blurb: "Keep a moderate, data-informed buffer.",
+        tradeoff: "This is the boring, sensible middle path. No single metric shines, but nothing is left dangerously exposed either. Most well-run companies land close to here.",
+        deltas: { cost: 0, deliverySpeed: 4, risk: 4, customerSatisfaction: 4, sustainability: 2 }
+      },
+      {
+        id: "high", label: "High Inventory", icon: "📈",
+        blurb: "Stock up heavily as a buffer against uncertainty.",
+        tradeoff: "You're rarely caught out by a demand spike or supply delay, and customers get consistent availability, but a lot of capital sits idle on shelves and unsold stock risks going to waste, which hurts sustainability.",
+        deltas: { cost: -16, deliverySpeed: 12, risk: 10, customerSatisfaction: 10, sustainability: -10 }
+      }
+    ]
+  }
+];
+
+function computeBuilderMetrics(choiceIds){
+  const m = { cost: 50, deliverySpeed: 50, risk: 50, customerSatisfaction: 50, sustainability: 50 };
+  BUILDER_DECISIONS.forEach(function(decision){
+    const chosenId = choiceIds[decision.id];
+    if(!chosenId) return;
+    const opt = decision.options.filter(function(o){ return o.id === chosenId; })[0];
+    if(!opt) return;
+    Object.keys(opt.deltas).forEach(function(k){ m[k] = clamp(m[k] + opt.deltas[k]); });
+  });
+  return m;
+}
+
+function computeBuilderScore(metrics){
+  return Math.round(
+    metrics.cost * 0.2 +
+    metrics.deliverySpeed * 0.2 +
+    metrics.risk * 0.2 +
+    metrics.customerSatisfaction * 0.2 +
+    metrics.sustainability * 0.2
+  );
+}
+
+function applyBuilderChoicesToCompany(baseCompany, choiceIds){
+  const c = Object.assign({}, baseCompany);
+  const supplierChoice = choiceIds.suppliers;
+  const factoryChoice = choiceIds.factory;
+  const warehouseChoice = choiceIds.warehouse;
+  const inventoryChoice = choiceIds.inventory;
+
+  if(supplierChoice === "single") c.suppliers = randInt(1, 3);
+  else if(supplierChoice === "multiple") c.suppliers = randInt(40, 160);
+
+  if(factoryChoice === "domestic"){ c.factories = randInt(1, 2); c.leadTime = randInt(9, 20); }
+  else if(factoryChoice === "nearshore"){ c.factories = randInt(2, 3); c.leadTime = randInt(18, 40); }
+  else if(factoryChoice === "offshore"){ c.factories = randInt(1, 2); c.leadTime = randInt(60, 115); }
+  else if(factoryChoice === "distributed"){ c.factories = randInt(5, 11); c.leadTime = randInt(20, 45); }
+
+  if(warehouseChoice === "centralized") c.warehouses = randInt(1, 2);
+  else if(warehouseChoice === "distributed") c.warehouses = randInt(8, 22);
+  else if(warehouseChoice === "jit") c.warehouses = randInt(1, 3);
+
+  if(inventoryChoice === "low") c.inventoryDays = randInt(5, 12);
+  else if(inventoryChoice === "balanced") c.inventoryDays = randInt(18, 30);
+  else if(inventoryChoice === "high") c.inventoryDays = randInt(35, 55);
+
+  c.transportMethod = choiceIds.transport;
+  c.builderChoices = choiceIds;
+  return c;
+}
+
+const BUILDER_IMPROVEMENT_TIPS = {
+  cost: "Cost is your softest spot. Revisit your factory location or transport mode. Even shifting one shipment lane from air to rail can meaningfully cut spend without wrecking delivery speed.",
+  deliverySpeed: "Delivery speed needs work. A distributed warehouse strategy or a faster transport mode for your highest-priority lanes would close this gap quickly.",
+  risk: "Your risk exposure is high. Concentration risk, whether it's a single supplier or a single factory, is usually the culprit. Diversifying even one link in the chain meaningfully changes your resilience.",
+  customerSatisfaction: "Customer satisfaction is lagging. This is usually a delivery speed or reliability problem underneath, look at your warehouse and inventory choices, since those drive whether customers actually get what they expect on time.",
+  sustainability: "Sustainability is weak here. Long-haul air freight and overstocked inventory are the two most common culprits, look at whether a slower transport mode or leaner inventory could recover this without much real cost."
+};
+
+function generateBuilderFeedback(metrics, choiceIds, company){
+  const keys = BUILDER_METRIC_KEYS;
+  const sorted = keys.slice().sort(function(a, b){ return metrics[b] - metrics[a]; });
+  const strengths = sorted.slice(0, 2).filter(function(k){ return metrics[k] >= 55; });
+  const weaknesses = sorted.slice(-2).filter(function(k){ return metrics[k] < 60; });
+  const weakestKey = sorted[sorted.length - 1];
+
+  let biggestRisk = "Your setup is reasonably balanced, so no single point of failure stands out, keep an eye on demand growth outpacing your current capacity.";
+  if(choiceIds.suppliers === "single" && choiceIds.factory === "offshore"){
+    biggestRisk = "You paired a single supplier with a single offshore factory. If either one goes down, whether it's a supplier failure or a regional disruption, your entire production line has no fallback. This is the exact combination that has taken down real companies during port strikes and factory fires.";
+  } else if(choiceIds.suppliers === "single"){
+    biggestRisk = "Your single-supplier strategy means one bankruptcy, one factory fire, or one contract dispute at your supplier could stop your production line entirely, with no fallback in place.";
+  } else if(choiceIds.warehouse === "centralized"){
+    biggestRisk = "Your centralized warehouse is a single point of failure. One flood, fire, or system outage at that location could stall deliveries across every market you serve.";
+  } else if(choiceIds.factory === "offshore"){
+    biggestRisk = "Your offshore factory choice leaves you exposed to long shipping lines and geopolitical risk. A port strike or regional conflict on that route could stall your entire pipeline for weeks.";
+  } else if(choiceIds.inventory === "low" || choiceIds.warehouse === "jit"){
+    biggestRisk = "Your lean inventory and warehousing setup means you're one demand spike or one delayed shipment away from visible stockouts and unhappy customers.";
+  }
+
+  const improvements = [];
+  weaknesses.slice().reverse().forEach(function(k){
+    if(BUILDER_IMPROVEMENT_TIPS[k]) improvements.push(BUILDER_IMPROVEMENT_TIPS[k]);
+  });
+  if(improvements.length < 3 && BUILDER_IMPROVEMENT_TIPS[weakestKey] && improvements.indexOf(BUILDER_IMPROVEMENT_TIPS[weakestKey]) === -1){
+    improvements.push(BUILDER_IMPROVEMENT_TIPS[weakestKey]);
+  }
+  const generalTips = [
+    "Invest in supply chain visibility tools, such as real-time tracking or supplier risk monitoring, so problems surface days or weeks before they become a full crisis.",
+    "Revisit this setup every time demand shifts. A supply chain built for steady demand can crack under seasonal spikes or rapid growth if it isn't re-evaluated.",
+    "Run a tabletop exercise with your team imagining your weakest link failing tomorrow. Most companies discover their real vulnerabilities on paper, not in the middle of an actual crisis."
+  ];
+  while(improvements.length < 3){
+    const tip = generalTips[improvements.length % generalTips.length];
+    if(improvements.indexOf(tip) === -1) improvements.push(tip);
+    else break;
+  }
+
+  return {
+    strengths: strengths,
+    weaknesses: weaknesses,
+    biggestRisk: biggestRisk,
+    improvements: improvements.slice(0, 3),
+    weakestKey: weakestKey
+  };
+}
+
+const PATH_OPTIONS = [
+  { id: "build", label: "Chain Builder", icon: "🧩", desc: "Design a supply chain from scratch. Choose your suppliers, factory, warehouses, transport, and inventory strategy, with plain-English explanations before every decision." },
+  { id: "crisis", label: "Crisis Simulator", icon: "🚨", desc: "Jump straight into a random company hit by a random crisis. Respond in the War Room, negotiate with suppliers, and lead the boardroom through it." },
+  { id: "tower", label: "Control Tower", icon: "🗼", desc: "Run live operations as Head of Ops. Watch signals stream in and catch small problems before they escalate into full crises." },
+  { id: "journey", label: "Full Command Journey", icon: "🔗", desc: "Build your own chain, stress-test it in a crisis, then run your Control Tower to see if the lessons actually stuck. The complete arc." }
+];
+
+/* ============================== CONTROL TOWER ============================== */
+const TOWER_STAGE_NAMES = ["Signal", "Elevated", "Critical"];
+const TOWER_STAGE_COLORS = ["var(--amber)", "var(--red)", "var(--red)"];
+
+const ALERT_CATALOG = [
+  { id: "port_congestion", label: "Port Congestion", icon: "🚢", desc: "Container volumes at a key port have backed up well beyond normal levels.", hitMetrics: ["deliverySpeed", "efficiency"], bestActions: ["reroute", "air_freight"] },
+  { id: "supplier_delay", label: "Supplier Delay", icon: "🕰️", desc: "A supplier has flagged that their next shipment to you will be late.", hitMetrics: ["inventory", "cost"], bestActions: ["backup_supplier", "expedite"] },
+  { id: "truck_breakdown", label: "Truck Breakdown", icon: "🚛", desc: "A delivery truck has broken down mid-route with active cargo onboard.", hitMetrics: ["deliverySpeed", "efficiency"], bestActions: ["reroute", "expedite"] },
+  { id: "warehouse_stockout", label: "Warehouse Running Out of Stock", icon: "📦", desc: "One regional warehouse is projected to run out of a key SKU within days.", hitMetrics: ["inventory", "customerSatisfaction"], bestActions: ["transfer_inventory", "increase_production"] },
+  { id: "customs_inspection", label: "Customs Inspection", icon: "🛂", desc: "A shipment has been flagged for a random customs inspection at the border.", hitMetrics: ["deliverySpeed", "cost"], bestActions: ["expedite", "reroute"] },
+  { id: "demand_spike", label: "Demand Spike", icon: "📈", desc: "Orders for one product line have spiked well above forecast.", hitMetrics: ["inventory", "customerSatisfaction"], bestActions: ["increase_production", "transfer_inventory"] },
+  { id: "factory_failure", label: "Factory Machine Failure", icon: "⚙️", desc: "A critical machine on the production line has gone down unexpectedly.", hitMetrics: ["inventory", "efficiency"], bestActions: ["increase_production", "backup_supplier"] },
+  { id: "weather_disruption", label: "Weather Disruption", icon: "🌩️", desc: "Severe weather is closing in on a route your shipments depend on.", hitMetrics: ["deliverySpeed", "efficiency"], bestActions: ["reroute", "air_freight"] },
+  { id: "wrong_count", label: "Wrong Inventory Count", icon: "🔢", desc: "A warehouse audit found the system's stock count doesn't match reality.", hitMetrics: ["inventory", "customerSatisfaction"], bestActions: ["transfer_inventory", "increase_production"] },
+  { id: "damaged_shipment", label: "Damaged Shipment", icon: "📦", desc: "A shipment arrived at a distribution hub with visible damage to the cargo.", hitMetrics: ["customerSatisfaction", "cost"], bestActions: ["expedite", "air_freight"] }
+];
+
+const TOWER_ACTIONS = [
+  { id: "expedite", label: "Expedite Shipment", icon: "🚀", why: "Pushes a shipment to the front of the queue at extra cost. Best for anything already running late." },
+  { id: "backup_supplier", label: "Use Backup Supplier", icon: "🔁", why: "Switches to a secondary source. Best when the problem is upstream, at a supplier or factory." },
+  { id: "reroute", label: "Reroute Trucks", icon: "🛣️", why: "Sends transport around a blockage. Best for anything happening on the road, at ports, or with weather." },
+  { id: "increase_production", label: "Increase Production", icon: "🏭", why: "Ramps up output to cover a shortfall. Best for anything about stock running low or demand running high." },
+  { id: "transfer_inventory", label: "Transfer Inventory", icon: "📤", why: "Moves stock from a healthy location to a struggling one. Best for local stock problems that other warehouses can cover." },
+  { id: "air_freight", label: "Approve Air Freight", icon: "✈️", why: "The fastest possible fix, at the highest cost. Best when speed matters more than anything else." },
+  { id: "ignore", label: "Ignore", icon: "🙈", why: "Leave it alone and focus elsewhere. Sometimes correct if you're juggling worse fires, but it keeps ticking." },
+  { id: "delay_decision", label: "Delay Decision", icon: "⏳", why: "Buy a little more time to think without committing to a fix yet." }
+];
+
+const TOWER_DIFFICULTY_CONFIG = {
+  beginner: { gameDurationMs: 240000, maxConcurrentAlerts: 2, baseSpawnIntervalMs: 23000, baseStageWindowMs: 27000, autoPauseOnInspect: true },
+  intermediate: { gameDurationMs: 180000, maxConcurrentAlerts: 3, baseSpawnIntervalMs: 16000, baseStageWindowMs: 20000, autoPauseOnInspect: false },
+  expert: { gameDurationMs: 180000, maxConcurrentAlerts: 5, baseSpawnIntervalMs: 10000, baseStageWindowMs: 14000, autoPauseOnInspect: false }
+};
+
+function computeTowerLinkage(linkMode, foundationScore){
+  if(linkMode !== "dependent" || typeof foundationScore !== "number"){
+    return { escalationMultiplier: 1, spawnIntervalMultiplier: 1, startingBaseline: 78 };
+  }
+  const resilienceFactor = (foundationScore - 50) / 100;
+  return {
+    escalationMultiplier: clamp(1 + resilienceFactor * 0.4, 0.7, 1.4),
+    spawnIntervalMultiplier: clamp(1 + resilienceFactor * 0.5, 0.6, 1.6),
+    startingBaseline: clamp(50 + foundationScore * 0.35, 40, 90)
+  };
+}
+
+let __towerUid = 0;
+function createAlertInstance(mode, escalationMultiplier){
+  const catalogEntry = pick(ALERT_CATALOG);
+  const cfg = TOWER_DIFFICULTY_CONFIG[mode];
+  __towerUid++;
+  return {
+    uid: "alert_" + __towerUid,
+    catalogId: catalogEntry.id,
+    label: catalogEntry.label,
+    icon: catalogEntry.icon,
+    desc: catalogEntry.desc,
+    hitMetrics: catalogEntry.hitMetrics,
+    bestActions: catalogEntry.bestActions,
+    stage: 0,
+    stageWindowMs: cfg.baseStageWindowMs * escalationMultiplier,
+    stageMsRemaining: cfg.baseStageWindowMs * escalationMultiplier,
+    resolved: false
+  };
+}
+
+function tickAlerts(alerts, deltaMs, mode, escalationMultiplier){
+  const events = [];
+  const survivors = [];
+  alerts.forEach(function(a){
+    if(a.resolved) return;
+    let next = Object.assign({}, a);
+    next.stageMsRemaining -= deltaMs;
+    if(next.stageMsRemaining > 0){
+      survivors.push(next);
+      return;
+    }
+    if(next.stage < 2){
+      next.stage = next.stage + 1;
+      next.stageWindowMs = TOWER_DIFFICULTY_CONFIG[mode].baseStageWindowMs * escalationMultiplier;
+      next.stageMsRemaining = next.stageWindowMs;
+      events.push({ type: "escalate", alert: next });
+      survivors.push(next);
+    } else {
+      events.push({ type: "detonate", alert: next });
+    }
+  });
+  return { alerts: survivors, events: events };
+}
+
+function resolveAlertAction(alert, actionId, mode){
+  const modeMult = mode === "beginner" ? 1.15 : mode === "expert" ? 0.85 : 1;
+  if(actionId === "ignore"){
+    return { deltas: {}, resolved: false, matched: null, scoreDelta: 0, revenueDelta: 0, message: "Left active, you're betting something else needs you more right now." };
+  }
+  if(actionId === "delay_decision"){
+    return { deltas: { cost: -1 }, resolved: false, matched: null, scoreDelta: 0, revenueDelta: 0, extraTimeMs: 6000, message: "Bought a little more time before this needs a real decision." };
+  }
+  const matched = alert.bestActions.indexOf(actionId) !== -1;
+  const deltas = {};
+  let scoreDelta = 0;
+  let revenueDelta = 0;
+  let message = "";
+  if(matched){
+    if(alert.stage === 0){
+      alert.hitMetrics.forEach(function(k){ deltas[k] = Math.round(6 * modeMult); });
+      scoreDelta = Math.round(140 * modeMult);
+      revenueDelta = randInt(60, 120) * 1000;
+      message = "Caught it at the Signal stage, this barely cost you anything.";
+    } else if(alert.stage === 1){
+      alert.hitMetrics.forEach(function(k){ deltas[k] = Math.round(2 * modeMult); });
+      scoreDelta = Math.round(80 * modeMult);
+      revenueDelta = randInt(25, 60) * 1000;
+      message = "Handled at the Elevated stage, some damage was already done, but you stopped it there.";
+    } else {
+      alert.hitMetrics.forEach(function(k){ deltas[k] = Math.round(-4 * modeMult); });
+      scoreDelta = Math.round(30 * modeMult);
+      revenueDelta = randInt(5, 20) * 1000;
+      message = "Resolved at Critical, this is damage control, not prevention. It cost you.";
+    }
+    return { deltas: deltas, resolved: true, matched: true, scoreDelta: scoreDelta, revenueDelta: revenueDelta, message: message };
+  }
+  alert.hitMetrics.forEach(function(k){ deltas[k] = Math.round(-3 * modeMult); });
+  return { deltas: deltas, resolved: false, matched: false, scoreDelta: Math.round(-15 * modeMult), revenueDelta: 0, message: "Wrong tool for this problem, it's still live and still ticking." };
+}
+
+function escalationPenalty(alert){
+  const deltas = {};
+  const mag = alert.stage === 1 ? 3 : 5;
+  alert.hitMetrics.forEach(function(k){ deltas[k] = -mag; });
+  return deltas;
+}
+
+function detonationPenalty(alert){
+  const deltas = {};
+  alert.hitMetrics.forEach(function(k){ deltas[k] = -14; });
+  return { deltas: deltas, scoreDelta: -60 };
+}
+
+function computeTowerGrade(score){
+  if(score >= 95) return "A+";
+  if(score >= 85) return "A";
+  if(score >= 70) return "B";
+  if(score >= 55) return "C";
+  return "D";
+}
+
+function computeTowerPerformance(metrics, resolvedCount, wrongCount, missedCount){
+  const keys = ["cost", "inventory", "deliverySpeed", "customerSatisfaction", "efficiency"];
+  const kpiAvg = keys.reduce(function(a, k){ return a + metrics[k]; }, 0) / keys.length;
+  const totalEncountered = resolvedCount + wrongCount + missedCount;
+  const resolutionRate = totalEncountered > 0 ? resolvedCount / totalEncountered : 0.5;
+  const towerScore = clamp(Math.round(kpiAvg * 0.5 + resolutionRate * 100 * 0.5));
+  return { towerScore: towerScore, grade: computeTowerGrade(towerScore), kpiAvg: Math.round(kpiAvg) };
+}
+
+const NEGOTIATION_ROUNDS = [
+  { id: 1, title: "Opening the Call",
+    situation: function(c, cr){ return "Your lead buyer gets the supplier on the phone. Their shipment to " + c.name + " is delayed because of the " + cr.name.toLowerCase() + ", and the tone on the call is tense."; },
+    options: [
+      { label: "Acknowledge their situation first, then ask about solutions", tag: "Empathetic", trust: 14, price: -2, leadTime: -2, quality: 3, rationale: "Leading with empathy lowers defensiveness and tends to open suppliers up to genuine problem-solving, not just damage control." },
+      { label: "Lead with how much business you give them", tag: "Leverage", trust: 4, price: -10, leadTime: 4, quality: 2, rationale: "Reminding them of your volume can move price, but it's a transactional opener that doesn't build goodwill." },
+      { label: "Demand immediate compensation for the delay", tag: "Aggressive", trust: -15, price: -5, leadTime: 6, quality: 1, rationale: "Coming in hot can win a small concession, but it puts the supplier on the defensive right when you need their cooperation most." },
+      { label: "Propose splitting the extra cost 50/50", tag: "Compromise", trust: 8, price: 6, leadTime: -4, quality: 2, rationale: "Sharing the pain is fair and fast, but you're paying for speed instead of negotiating for it." }
+    ]
+  },
+  { id: 2, title: "Getting Into Numbers",
+    situation: function(c, cr, trust){ return trust >= 70 ? "The supplier sounds genuinely relieved and ready to find a real fix together." : trust >= 40 ? "The supplier is cautious but listening closely to what you propose." : "The supplier sounds guarded, picking their words carefully after the last exchange."; },
+    options: [
+      { label: "Ask what timeline they can realistically commit to", tag: "Empathetic", trust: 10, price: -3, leadTime: -8, quality: 3, rationale: "Letting them set a realistic number instead of demanding one makes the commitment far more likely to actually hold." },
+      { label: "Reference competitor quotes to push for a discount", tag: "Leverage", trust: -3, price: -14, leadTime: 2, quality: 2, rationale: "This usually wins on price, but suppliers remember being shopped against competitors, and it can cost goodwill later." },
+      { label: "Threaten to find another supplier today", tag: "Aggressive", trust: -18, price: -18, leadTime: 10, quality: 1, rationale: "An ultimatum this early can blow up the relationship before you even know if switching is realistic." },
+      { label: "Offer a longer contract in exchange for a small discount", tag: "Compromise", trust: 6, price: -8, leadTime: -2, quality: 3, rationale: "Trading future commitment for present-day flexibility is a classic win-win that suppliers respond well to." }
+    ]
+  },
+  { id: 3, title: "The Sticking Point",
+    situation: function(c, cr, trust){ return trust >= 70 ? "Things are going well, but the supplier pushes back on one specific term." : trust >= 40 ? "You hit a real disagreement and the room goes quiet for a moment." : "The conversation gets tense again as you hit a contested point."; },
+    options: [
+      { label: "Ask what would make this work for both sides", tag: "Empathetic", trust: 12, price: -4, leadTime: -4, quality: 3, rationale: "Turning a sticking point into a joint problem to solve usually unlocks options neither side saw alone." },
+      { label: "Remind them of your years-long relationship", tag: "Leverage", trust: 8, price: -9, leadTime: -3, quality: 3, rationale: "Calling on real history is persuasive precisely because it's true, and it rarely damages trust." },
+      { label: "Set a hard ultimatum: agree today or we walk", tag: "Aggressive", trust: -20, price: -12, leadTime: 8, quality: 1, rationale: "Ultimatums can work once, but they tend to be remembered the next time you need flexibility from this supplier." },
+      { label: "Meet in the middle on price, hold firm on timeline", tag: "Compromise", trust: 4, price: 2, leadTime: -10, quality: 2, rationale: "Picking your one priority and trading on the rest is sound tactic, just make sure timeline really is your priority here." }
+    ]
+  },
+  { id: 4, title: "Sealing the Deal",
+    situation: function(c, cr, trust){ return trust >= 70 ? "The supplier seems ready to close on good terms." : trust >= 40 ? "You're close to a deal, but the details still need care." : "Closing this will take some careful handling after a rocky conversation."; },
+    options: [
+      { label: "Thank them and confirm details in writing", tag: "Empathetic", trust: 10, price: -1, leadTime: -1, quality: 3, rationale: "Closing warmly and in writing protects the relationship and the paper trail at the same time." },
+      { label: "Push for one more concession before signing", tag: "Leverage", trust: -5, price: -10, leadTime: 3, quality: 2, rationale: "Squeezing a final discount can pay off financially, but pushing too far right at the finish line carries relationship risk." },
+      { label: "Insist on penalty clauses for any future delay", tag: "Aggressive", trust: -12, price: -3, leadTime: 2, quality: 1, rationale: "Penalty clauses feel protective, but loading the contract with punishments can sour what should be a fresh start." },
+      { label: "Accept their final offer to close quickly", tag: "Compromise", trust: 2, price: 3, leadTime: -6, quality: 2, rationale: "Speed has real value during a crisis, even if it means leaving a little on the table." }
+    ]
+  }
+];
+
+const BOARDROOM_QUESTIONS = [
+  { id: 1, question: "News of the crisis is about to break publicly. What do you tell the board first?",
+    options: [
+      { label: "Full transparency: exact numbers, what we don't know yet, and our plan", quality: 3, explain: "Boards, and later the public, trust leaders who name the uncertainty instead of hiding it. This builds credibility you'll need for the rest of the crisis." },
+      { label: "A reassuring summary that downplays the severity for now", quality: 1, explain: "It buys short-term calm, but if the real numbers come out later, you lose more trust than you saved." },
+      { label: "Wait until you have a complete picture before saying anything", quality: 1, explain: "Silence during a visible crisis tends to get filled with speculation, often worse than the truth." },
+      { label: "Delegate the announcement entirely to PR without board review", quality: 0, explain: "Leadership during a crisis is exactly when the board expects to hear directly from you, not through a press release." }
+    ]
+  },
+  { id: 2, question: "Your best factory is down for at least three weeks. How do you allocate the production capacity you have left?",
+    options: [
+      { label: "Prioritize by contract penalties and long-term relationship value", quality: 3, explain: "This protects the relationships and revenue that matter most over time, even if it feels unfair in the moment." },
+      { label: "First come, first served on existing orders", quality: 1, explain: "It feels fair, but it ignores that not every customer or order carries the same business weight." },
+      { label: "Prioritize whichever customers complain loudest", quality: 0, explain: "This rewards volume of complaints over actual business importance, and trains customers to escalate every time." },
+      { label: "Split capacity evenly across all customers regardless of size", quality: 2, explain: "Even-handed and easy to defend, but it can underserve your most strategically important accounts." }
+    ]
+  },
+  { id: 3, question: "A junior analyst points out the crisis was partly caused by a decision you personally approved six months ago. What do you do?",
+    options: [
+      { label: "Own it publicly, explain the reasoning at the time, and outline the fix", quality: 3, explain: "Owning a past call, even an imperfect one, is what builds the kind of trust that survives the next crisis too." },
+      { label: "Acknowledge it privately to the board only", quality: 2, explain: "Better than hiding it, but it leaves the public narrative incomplete." },
+      { label: "Reframe it as a 'team decision' without naming yourself specifically", quality: 1, explain: "This reads as evasive once people look closely, and erodes trust more than a direct admission would." },
+      { label: "Focus the narrative entirely on the external trigger, not the decision", quality: 0, explain: "Avoiding the internal factor entirely tends to come across as spin, especially to your own employees." }
+    ]
+  },
+  { id: 4, question: "Recovering from this will cost real money. Where do you find it?",
+    options: [
+      { label: "Cut this quarter's marketing budget temporarily; protect supply chain investment", quality: 3, explain: "Protecting the function that prevents the next crisis is usually worth more than one quarter of marketing spend." },
+      { label: "Delay supplier payments to free up short-term cash", quality: 1, explain: "This solves your cash problem by creating one for your suppliers, right when you need their goodwill most." },
+      { label: "Take on short-term debt to protect all departments equally", quality: 2, explain: "A reasonable, balanced option, though it adds financial risk on top of operational risk." },
+      { label: "Cut the supply chain resilience budget since it 'didn't work' anyway", quality: 0, explain: "This punishes the exact investment that would reduce how bad the next crisis is." }
+    ]
+  },
+  { id: 5, question: "Six months from now, what do you want this crisis to have changed at the company?",
+    options: [
+      { label: "A genuinely more resilient, tested response process, not just this one fix", quality: 3, explain: "Treating this as a system upgrade instead of a one-off patch is what separates companies that keep getting blindsided from ones that don't." },
+      { label: "Nothing structural, just better luck next time", quality: 0, explain: "Hoping the next crisis simply doesn't happen is not a strategy." },
+      { label: "A bigger blame-free postmortem culture, even if processes don't change", quality: 2, explain: "Psychological safety matters, but without process change, the same gaps will surface again." },
+      { label: "Stricter rules and more approval layers to prevent it happening again", quality: 1, explain: "Over-correcting with bureaucracy often slows down the exact fast decisions a crisis requires." }
+    ]
+  }
+];
+
+const AI_OPTIONS = [
+  { id: "demand", name: "Demand Forecasting", icon: "📈", impact: { resilience: 10, costControl: 8, riskManagement: 4 }, why: "Predicts what customers will actually want next, so you stock the right things instead of guessing.", synergyCrises: ["shortage","flood"] },
+  { id: "inventory", name: "Inventory Optimization", icon: "🧮", impact: { costControl: 12, resilience: 8, riskManagement: 3 }, why: "Automatically decides how much stock to hold and where, balancing cost against the risk of running out.", synergyCrises: ["fire","flood","bankruptcy"] },
+  { id: "supplierrisk", name: "Supplier Risk Monitoring", icon: "🛡️", impact: { riskManagement: 14, resilience: 6 }, why: "Flags supplier financial trouble or political risk before it becomes your emergency.", synergyCrises: ["bankruptcy","conflict","strike"] },
+  { id: "warehouse", name: "Warehouse Vision", icon: "👁️", impact: { customerSatisfaction: 8, resilience: 4, costControl: 4 }, why: "Computer vision speeds up accuracy in picking, packing, and tracking stock on the warehouse floor.", synergyCrises: ["delay","strike"] },
+  { id: "procurement", name: "Procurement Copilot", icon: "🤖", impact: { costControl: 10, riskManagement: 6 }, why: "Gives your buying team AI-assisted sourcing and negotiation support for faster, sharper deals.", synergyCrises: ["shortage","bankruptcy"] }
+];
+
+const CRISIS_LESSONS = {
+  fire: ["Single-site production for critical lines is a single point of failure, even strong companies get caught by it.","Fire and disaster recovery plans are worth rehearsing before you need them, not during.","Geographic diversification of factories costs more day-to-day but pays for itself the day one factory goes dark."],
+  bankruptcy: ["Relying on one supplier for a critical input is a bet that their balance sheet stays healthy, worth checking regularly, not just at onboarding.","Dual-sourcing critical components costs a little more but removes your worst-case scenario entirely.","Supplier financial health is a leading indicator most companies only check after something breaks."],
+  strike: ["Labor disputes are predictable in timing even when their outcome isn't, contract renewal dates are public information worth tracking.","Multi-port routing flexibility turns a single port strike from a crisis into an inconvenience.","The companies least affected by port strikes usually built routing flexibility in calmer times."],
+  cyber: ["Operational systems need offline fallback procedures, not just IT security, paper backups feel old-fashioned until the day they save you.","Customer trust drops fast after a cyberattack and recovers slowly, communication speed matters as much as the technical fix.","Regular incident response drills make the real thing far less chaotic."],
+  flood: ["Climate-related disruptions are increasing in frequency, 'once in a generation' events are arriving more often than the name suggests.","Warehouses in flood-prone regions benefit from elevated storage and real flood insurance, not just hope.","Inventory spread across multiple regions limits how much one weather event can take out at once."],
+  shortage: ["Concentration in a single raw material source is a hidden risk that often only becomes visible once supply tightens.","Long-term supplier contracts with price protection clauses cushion the worst of a shortage spike.","Material substitution research done before a shortage is far cheaper than scrambling during one."],
+  conflict: ["Geopolitical risk is a supply chain risk, not just a headline, sourcing maps are worth stress-testing against it.","Insurance and legal review of cross-border routes matters more in volatile regions than most budgets reflect.","Companies with regional sourcing flexibility absorb political shocks that sink single-region competitors."],
+  delay: ["Chokepoints like major canals and straits carry outsized risk relative to how rarely they fail.","Buffer inventory sized around worst-case transit time, not average transit time, is what actually protects you.","Real-time shipment visibility turns a shipping delay into a managed inconvenience instead of a surprise."]
+};
+
+const CATEGORY_LESSONS = {
+  leadership: "Crisis leadership is judged less on having all the answers and more on how honestly you communicate while you find them.",
+  negotiation: "Supplier negotiations during a crisis set the tone for the relationship long after the crisis ends, short-term wins can cost long-term trust.",
+  resilience: "Resilience is built in calm periods through inventory buffers, dual-sourcing, and tested response plans, not invented during the crisis itself.",
+  costControl: "Cost control during a crisis is about spending precisely where it buys you the most recovery, not spending the least overall.",
+  riskManagement: "The companies least surprised by the next crisis are the ones who invested in seeing it coming.",
+  customerSatisfaction: "Customers tend to forgive disruption more than they forgive silence, proactive communication is one of the cheapest, highest-leverage moves available."
+};
+
+const CATEGORY_NAMES = {
+  leadership: "Leadership",
+  negotiation: "Negotiation",
+  resilience: "Resilience",
+  costControl: "Cost Control",
+  riskManagement: "Risk Management",
+  customerSatisfaction: "Customer Satisfaction"
+};
+
+const PHASE_LABELS = {
+  welcome: "Welcome",
+  builderCompany: "Your Company",
+  builderDecisions: "Build Chain",
+  builderDashboard: "Foundation Score",
+  bridge: "Stress Test?",
+  company: "Company",
+  crisis: "Crisis",
+  warroom: "War Room",
+  negotiation: "Negotiation",
+  boardroom: "Boardroom",
+  aistrategy: "AI Strategy",
+  dashboard: "Dashboard",
+  towerBrief: "Control Tower",
+  tower: "Live Operations",
+  towerDashboard: "Tower Debrief"
+};
+function getPhaseList(path, towerEngaged){
+  const towerTail = ["towerBrief", "tower", "towerDashboard"];
+  if(path === "crisis") return ["welcome","company","crisis","warroom","negotiation","boardroom","aistrategy","dashboard"].concat(towerEngaged ? towerTail : []);
+  if(path === "build") return ["welcome","builderCompany","builderDecisions","builderDashboard"];
+  if(path === "tower") return ["welcome","towerBrief","tower","towerDashboard"];
+  if(path === "journey") return ["welcome","builderCompany","builderDecisions","builderDashboard","bridge","crisis","warroom","negotiation","boardroom","aistrategy","dashboard"].concat(towerEngaged ? towerTail : []);
+  return ["welcome"];
+}
+
+/* ============================== SHARED COMPONENTS ============================== */
+function WhyItMatters(props){
+  const mode = props.mode;
+  const [open, setOpen] = useState(mode === "beginner");
+  if(mode === "expert"){
+    return React.createElement("p", { className: "why-terse" }, "Why this matters: " + (props.short || props.text));
+  }
+  return React.createElement("div", { className: "why-box" },
+    mode === "beginner"
+      ? React.createElement("p", { className: "why-text" }, "💡 ", React.createElement("strong", null, "Why this matters: "), props.text)
+      : React.createElement(React.Fragment, null,
+          React.createElement("button", { type: "button", className: "why-toggle", onClick: function(){ setOpen(!open); } }, open ? "Hide why this matters ▲" : "Why this matters ▼"),
+          open ? React.createElement("p", { className: "why-text", style: { marginTop: "8px" } }, props.text) : null
+        )
+  );
+}
+
+function MetricBar(props){
+  const v = clamp(props.value);
+  return React.createElement("div", { className: "metric-bar" },
+    React.createElement("div", { className: "metric-bar-top" },
+      React.createElement("span", { className: "metric-bar-label" }, metricIcon(props.metricKey) + " " + metricLabel(props.metricKey)),
+      React.createElement("span", { className: "metric-bar-value", style: { color: barColor(v) } }, Math.round(v))
+    ),
+    React.createElement("div", { className: "metric-bar-track" },
+      React.createElement("div", { className: "metric-bar-fill", style: { width: v + "%", background: barColor(v) } })
+    )
+  );
+}
+
+function LabeledBar(props){
+  const v = clamp(props.value);
+  return React.createElement("div", { className: "metric-bar" },
+    React.createElement("div", { className: "metric-bar-top" },
+      React.createElement("span", { className: "metric-bar-label" }, props.label),
+      React.createElement("span", { className: "metric-bar-value", style: { color: barColor(v) } }, props.display !== undefined ? props.display : Math.round(v))
+    ),
+    React.createElement("div", { className: "metric-bar-track" },
+      React.createElement("div", { className: "metric-bar-fill", style: { width: v + "%", background: barColor(v) } })
+    )
+  );
+}
+
+function ConsoleHeader(props){
+  const phase = props.phase;
+  const mode = props.mode;
+  const metrics = props.metrics;
+  const phaseList = props.phaseList || ["welcome"];
+  if(phase === "welcome") return null;
+  const showTicker = metrics && phase !== "company" && phase !== "builderCompany";
+  let avg = 78;
+  if(showTicker){
+    const keys = Object.keys(metrics);
+    avg = keys.reduce(function(a,k){ return a + metrics[k]; }, 0) / keys.length;
+  }
+  const dotClass = !showTicker ? "" : avg >= 65 ? "ok" : avg >= 40 ? "" : "danger";
+  const phaseIdx = phaseList.indexOf(phase);
+  return React.createElement("div", { className: "console-wrap" },
+    React.createElement("div", { className: "console-header" },
+      React.createElement("div", { className: "console-top" },
+        React.createElement("div", { className: "brand" },
+          React.createElement("span", { className: "status-dot " + dotClass }),
+          React.createElement("div", null,
+            React.createElement("div", { className: "brand-text" }, "Operation Lifeline"),
+            React.createElement("div", { className: "brand-sub" }, "Supply Chain Command Lab")
+          )
+        ),
+        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: "10px" } },
+          mode ? React.createElement("span", { className: "mode-pill " + mode }, mode + " mode") : null,
+          React.createElement(SoundToggle, null)
+        )
+      ),
+      showTicker ? React.createElement("div", { className: "ticker" },
+        Object.keys(metrics).map(function(k){
+          const v = metrics[k];
+          const cls = v >= 70 ? "good" : v >= 45 ? "warn" : "bad";
+          return React.createElement("div", { className: "ticker-item", key: k },
+            React.createElement("span", null, metricIcon(k) + " " + metricLabel(k)),
+            React.createElement("span", { className: "ticker-val " + cls }, Math.round(v))
+          );
+        }),
+        mode === "expert" ? React.createElement("div", { className: "ticker-item" },
+          React.createElement("span", null, "🧭 Severity Index"),
+          React.createElement("span", { className: "ticker-val bad" }, Math.round(100 - avg))
+        ) : null
+      ) : null,
+      React.createElement("div", { className: "stepper" },
+        phaseList.filter(function(p){ return p !== "welcome"; }).map(function(p){
+          const idx = phaseList.indexOf(p);
+          const cls = p === phase ? "active" : idx < phaseIdx ? "done" : "";
+          return React.createElement("div", { className: "step-node " + cls, key: p }, PHASE_LABELS[p]);
+        })
+      )
+    )
+  );
+}
+
+/* ============================== WELCOME ============================== */
+function RouteStrip(){
+  return React.createElement("div", { className: "route-strip" },
+    React.createElement("svg", { viewBox: "0 0 760 64" },
+      React.createElement("defs", null,
+        React.createElement("linearGradient", { id: "routeGrad", x1: "0", y1: "0", x2: "1", y2: "0" },
+          React.createElement("stop", { offset: "0%", stopColor: "#FFB43C" }),
+          React.createElement("stop", { offset: "50%", stopColor: "#FF6FCB" }),
+          React.createElement("stop", { offset: "100%", stopColor: "#4FC3FF" })
+        )
+      ),
+      React.createElement("path", { className: "route-path", d: "M20,32 Q 190,-10 380,32 T 740,32" }),
+      React.createElement("path", { className: "route-path-glow", d: "M20,32 Q 190,-10 380,32 T 740,32" }),
+      React.createElement("text", { x: "10", y: "44", className: "route-node" }, "🏭"),
+      React.createElement("text", { x: "230", y: "12", className: "route-node" }, "🚢"),
+      React.createElement("text", { x: "460", y: "50", className: "route-node" }, "📦"),
+      React.createElement("text", { x: "715", y: "44", className: "route-node" }, "🏬")
+    ),
+    React.createElement("div", { className: "route-vehicle", style: { position: "absolute", top: 0, left: 0 } }, "✈️")
+  );
+}
+
+function WelcomeScreen(props){
+  const [mode, setMode] = useState(null);
+  const [path, setPath] = useState(null);
+  const modes = [
+    { id: "beginner", label: "Beginner", dot: "var(--teal)", desc: "Full explanations on every decision, gentler consequences, and clear hints about which moves fit. Best if supply chain strategy is new to you." },
+    { id: "intermediate", label: "Intermediate", dot: "var(--amber)", desc: "Standard stakes with collapsible explanations. You'll need to reason about fit yourself, with help available on demand." },
+    { id: "expert", label: "Expert", dot: "var(--red)", desc: "Sharper consequences, wider randomness, no synergy hints, and an extra risk metric to track. Built for people who already think in tradeoffs." }
+  ];
+  const ready = mode && path;
+  return React.createElement("div", { className: "app-shell screen" },
+    React.createElement("div", { className: "hero" },
+      React.createElement("h1", { className: "hero-title" }, "Operation ", React.createElement("span", null, "Lifeline")),
+      React.createElement("p", { className: "hero-sub" }, "A hands-on supply chain command center. Design a chain from scratch, respond to a live crisis, or do both and see how one shapes the other. You'll walk away with a scored, personalized breakdown and concrete lessons."),
+      React.createElement(RouteStrip, null),
+
+      React.createElement("div", { style: { marginBottom: "10px" } },
+        React.createElement("div", { className: "eyebrow" }, "Step 1 · Choose Your Path")
+      ),
+      React.createElement("div", { className: "mode-grid", style: { marginBottom: "30px" } },
+        PATH_OPTIONS.map(function(p){
+          return React.createElement("div", {
+            key: p.id,
+            className: "mode-card path-card" + (path === p.id ? " selected path-" + p.id : ""),
+            onClick: function(){ setPath(p.id); playSelect(); }
+          },
+            React.createElement("h3", null, React.createElement("span", { style: { fontSize: "18px", marginRight: "8px" } }, p.icon), p.label),
+            React.createElement("p", null, p.desc)
+          );
+        })
+      ),
+
+      React.createElement("div", { style: { marginBottom: "10px" } },
+        React.createElement("div", { className: "eyebrow" }, "Step 2 · Choose Your Difficulty")
+      ),
+      React.createElement("div", { className: "mode-grid" },
+        modes.map(function(m){
+          return React.createElement("div", {
+            key: m.id,
+            className: "mode-card" + (mode === m.id ? " selected " + m.id : ""),
+            onClick: function(){ setMode(m.id); playSelect(); }
+          },
+            React.createElement("h3", null, React.createElement("span", { className: "mode-dot", style: { background: m.dot, color: m.dot } }), m.label),
+            React.createElement("p", null, m.desc)
+          );
+        })
+      ),
+      React.createElement("div", { className: "btn-row", style: { justifyContent: "center" } },
+        React.createElement("button", {
+          className: "btn btn-primary",
+          disabled: !ready,
+          onClick: function(){ playWhoosh(); props.onStart(mode, path); }
+        }, "🚀 Start"),
+        !ready ? React.createElement("span", { style: { fontSize: "13px", color: "var(--text-faint)" } }, "Pick a path and a difficulty above first") : null
+      )
+    )
+  );
+}
+
+/* ============================== COMPANY ============================== */
+function CompanyScreen(props){
+  const c = props.company;
+  const mode = props.mode;
+  const stats = [
+    { icon: c.industry.icon, label: "Industry", value: c.industry.name },
+    { icon: "💵", label: "Annual Revenue", value: fmtMoney(c.revenue) },
+    { icon: "🏭", label: "Factories", value: c.factories },
+    { icon: "🏬", label: "Warehouses", value: c.warehouses },
+    { icon: "🔗", label: "Active Suppliers", value: c.suppliers }
+  ];
+  return React.createElement("div", { className: "app-shell screen" },
+    React.createElement("div", { style: { paddingTop: "30px" } },
+      React.createElement("span", { className: "eyebrow" }, props.stepLabel || "Step 1"),
+      React.createElement("h2", { className: "section-title" }, c.name),
+      React.createElement("p", { className: "section-sub" }, "This is the company you're about to run through a live crisis. Take a moment to understand its shape, because every number below changes how dangerous the crisis on the next screen really is."),
+      React.createElement("div", { className: "card-grid" },
+        stats.map(function(s){
+          return React.createElement("div", { className: "card", key: s.label },
+            React.createElement("span", { className: "stat-icon" }, s.icon),
+            React.createElement("div", { className: "stat-label" }, s.label),
+            React.createElement("div", { className: "stat-value" }, s.value)
+          );
+        }),
+        React.createElement("div", { className: "card" },
+          React.createElement("span", { className: "stat-icon" }, "⏳"),
+          React.createElement("div", { className: "stat-label" }, "Inventory Days"),
+          React.createElement("div", { className: "stat-value" }, c.inventoryDays + " days"),
+          React.createElement(WhyItMatters, { mode: mode,
+            text: "This is how many days the company could keep shipping if every factory and supplier stopped today. Lower means leaner and cheaper to run, but also more fragile in a crisis. Higher means safer, but more cash tied up sitting on shelves.",
+            short: "Lower inventory days = leaner but fragile. Higher = safer but costlier." })
+        ),
+        React.createElement("div", { className: "card" },
+          React.createElement("span", { className: "stat-icon" }, "🕐"),
+          React.createElement("div", { className: "stat-label" }, "Supplier Lead Time"),
+          React.createElement("div", { className: "stat-value" }, c.leadTime + " days"),
+          React.createElement(WhyItMatters, { mode: mode,
+            text: "This is how long it takes from placing an order to actually receiving it. A long lead time means that once a crisis hits, you can't just 'order more' and have it arrive next week, recovery takes real time.",
+            short: "Longer lead time = slower recovery from any disruption." })
+        )
+      ),
+      React.createElement("div", { className: "card", style: { marginTop: "14px" } },
+        React.createElement("div", { className: "stat-label" }, "Countries In The Footprint"),
+        React.createElement("div", { style: { marginTop: "8px" } },
+          c.countries.map(function(country){ return React.createElement("span", { className: "chip", key: country }, country); })
+        )
+      ),
+      React.createElement("div", { className: "btn-row" },
+        React.createElement("button", { className: "btn btn-primary", onClick: function(){ playWhoosh(); props.onNext(); } }, "Brief Me On The Crisis →")
+      )
+    )
+  );
+}
+
+/* ============================== CRISIS ============================== */
+function CrisisScreen(props){
+  const crisis = props.crisis;
+  const company = props.company;
+  const mode = props.mode;
+  const metrics = props.metrics;
+  const hitNames = crisis.primaryHit.map(metricLabel).join(" and ");
+  useEffect(function(){ playMeh(); }, []);
+  return React.createElement("div", { className: "app-shell screen" },
+    React.createElement("div", { style: { paddingTop: "30px" } },
+      React.createElement("span", { className: "eyebrow" }, "🚨 " + (props.stepLabel || "Step 2") + " · " + crisis.urgency + " Urgency"),
+      React.createElement("h2", { className: "section-title" }, crisis.icon + " " + crisis.name),
+      React.createElement("p", { className: "section-sub" }, crisis.desc(company)),
+      React.createElement("div", { className: "card" },
+        React.createElement("div", { className: "stat-label" }, "Business Impact"),
+        React.createElement("p", { style: { fontSize: "14.5px", color: "var(--text-dim)", lineHeight: "1.6", marginTop: "6px" } },
+          "This type of crisis hits " + hitNames + " hardest. Given that " + company.name + " carries " + company.inventoryDays + " days of inventory and a " + company.leadTime + "-day supplier lead time, " +
+          (company.inventoryDays < 20 || company.leadTime > 60 ? "this company has very little cushion to absorb the shock, expect the impact to bite fast." : "this company has a reasonable cushion, but the impact will still be felt across the metrics below.")
+        ),
+        React.createElement("div", { style: { marginTop: "18px" } },
+          Object.keys(metrics).map(function(k){
+            return React.createElement(MetricBar, { key: k, metricKey: k, value: metrics[k] });
+          })
+        ),
+        React.createElement(WhyItMatters, { mode: mode,
+          text: "These five numbers are your scoreboard for the whole simulation. They started around a healthy 78 each, and the crisis has already knocked down the metrics it affects most. Everything you choose from here either helps these recover or makes them worse.",
+          short: "These five metrics are your live scoreboard, every later choice moves them." })
+      ),
+      React.createElement("div", { className: "btn-row" },
+        React.createElement("button", { className: "btn btn-primary", onClick: function(){ playWhoosh(); props.onNext(); } }, "🎛️ Enter The War Room →")
+      )
+    )
+  );
+}
+
+/* ============================== BUILDER: COMPANY ============================== */
+function BuilderCompanyScreen(props){
+  const c = props.company;
+  const mode = props.mode;
+  return React.createElement("div", { className: "app-shell screen" },
+    React.createElement("div", { style: { paddingTop: "30px" } },
+      React.createElement("span", { className: "eyebrow" }, props.stepLabel || "Step 1"),
+      React.createElement("h2", { className: "section-title" }, "🧩 " + c.name),
+      React.createElement("p", { className: "section-sub" }, "Before you design anything, meet the company you're building for. Every decision you make next should serve what this business actually needs, not a generic textbook answer."),
+      React.createElement("div", { className: "card-grid" },
+        React.createElement("div", { className: "card" },
+          React.createElement("span", { className: "stat-icon" }, c.industry.icon),
+          React.createElement("div", { className: "stat-label" }, "Industry"),
+          React.createElement("div", { className: "stat-value" }, c.industry.name)
+        ),
+        React.createElement("div", { className: "card" },
+          React.createElement("span", { className: "stat-icon" }, "🛍️"),
+          React.createElement("div", { className: "stat-label" }, "Products"),
+          React.createElement("div", { className: "stat-value", style: { fontSize: "15px" } }, c.products.join(", "))
+        ),
+        React.createElement("div", { className: "card" },
+          React.createElement("span", { className: "stat-icon" }, "💵"),
+          React.createElement("div", { className: "stat-label" }, "Annual Revenue"),
+          React.createElement("div", { className: "stat-value" }, fmtMoney(c.revenue))
+        ),
+        React.createElement("div", { className: "card" },
+          React.createElement("span", { className: "stat-icon" }, "📊"),
+          React.createElement("div", { className: "stat-label" }, "Demand Pattern"),
+          React.createElement("div", { className: "stat-value", style: { fontSize: "16px" } }, c.demandLevel.label),
+          React.createElement(WhyItMatters, { mode: mode,
+            text: c.demandLevel.note + " Demand pattern shapes almost every choice ahead, a business with volatile demand needs more buffer and flexibility than one with steady, predictable orders.",
+            short: c.demandLevel.note })
+        )
+      ),
+      React.createElement("div", { className: "card", style: { marginTop: "14px" } },
+        React.createElement("div", { className: "stat-label" }, "Countries Served"),
+        React.createElement("div", { style: { marginTop: "8px" } },
+          c.countries.map(function(country){ return React.createElement("span", { className: "chip", key: country }, country); })
+        )
+      ),
+      React.createElement(WhyItMatters, { mode: mode,
+        text: "A supply chain is just the path a product takes from raw material to a customer's hands, and the promises each link makes to the next one. You're about to design that path from scratch: who supplies your materials, where you build, where you store, how you ship, and how much buffer stock you keep. Every choice trades something for something else, there's no version of this with zero downsides.",
+        short: "You're designing the full path from raw material to customer, every choice trades something for something." }),
+      React.createElement("div", { className: "btn-row" },
+        React.createElement("button", { className: "btn btn-primary", onClick: function(){ playWhoosh(); props.onNext(); } }, "🏗️ Start Building →")
+      )
+    )
+  );
+}
+
+/* ============================== BUILDER: DECISIONS ============================== */
+function BuilderDecisionScreen(props){
+  const mode = props.mode;
+  const metrics = props.metrics;
+  const setMetrics = props.setMetrics;
+  const choiceIds = props.choiceIds;
+  const setChoiceIds = props.setChoiceIds;
+
+  const [stepIdx, setStepIdx] = useState(0);
+  const [selectedOpt, setSelectedOpt] = useState(null);
+  const [toasts, pushToast] = useToasts();
+
+  const decision = BUILDER_DECISIONS[stepIdx];
+
+  function choose(opt){
+    if(selectedOpt) return;
+    playClick();
+    setSelectedOpt(opt);
+    const nextChoiceIds = Object.assign({}, choiceIds);
+    nextChoiceIds[decision.id] = opt.id;
+    setChoiceIds(nextChoiceIds);
+    setMetrics(function(prev){
+      const next = Object.assign({}, prev);
+      Object.keys(opt.deltas).forEach(function(k){ next[k] = clamp(prev[k] + opt.deltas[k]); });
+      return next;
+    });
+    const positiveCount = Object.keys(opt.deltas).filter(function(k){ return opt.deltas[k] > 0; }).length;
+    if(positiveCount >= 4){ playGreat(); pushToast(opt.label + " strengthens your chain", "great", "💪"); }
+    else if(positiveCount >= 2){ playSuccess(); pushToast(opt.label + " locked in", "good", "✅"); }
+    else { playMeh(); pushToast(opt.label + " comes with real tradeoffs", "meh", "⚖️"); }
+  }
+
+  function next(){
+    playWhoosh();
+    if(stepIdx < BUILDER_DECISIONS.length - 1){
+      setStepIdx(stepIdx + 1);
+      setSelectedOpt(null);
+    } else {
+      props.onComplete();
+    }
+  }
+
+  return React.createElement("div", { className: "app-shell screen" },
+    React.createElement(ToastStack, { toasts: toasts }),
+    React.createElement("div", { style: { paddingTop: "30px" } },
+      React.createElement("span", { className: "eyebrow" }, (props.stepLabel || "Step 2") + " · Decision " + (stepIdx + 1) + " of " + BUILDER_DECISIONS.length),
+      React.createElement("h2", { className: "section-title" }, decision.title),
+      React.createElement("div", { className: "why-box", style: { marginBottom: "20px" } },
+        React.createElement("p", { className: "why-text" }, "📘 ", React.createElement("strong", null, "The concept: "), decision.concept)
+      ),
+      React.createElement("div", { className: "card-grid" },
+        decision.options.map(function(opt){
+          const isSel = selectedOpt === opt;
+          const locked = selectedOpt && !isSel;
+          return React.createElement("div", {
+            key: opt.id,
+            className: "action-card" + (isSel ? " selected" : "") + (locked ? " locked" : ""),
+            onClick: function(){ if(!selectedOpt) choose(opt); }
+          },
+            isSel ? React.createElement("div", { className: "check-badge" }, "✓") : null,
+            React.createElement("span", { className: "action-icon" }, opt.icon),
+            React.createElement("div", { className: "action-title" }, opt.label),
+            React.createElement("p", { style: { fontSize: "13.5px", color: "var(--text-dim)", lineHeight: "1.5", margin: "4px 0 0" } }, opt.blurb),
+            isSel ? React.createElement("div", { className: "why-box", style: { marginTop: "12px" } },
+              React.createElement("p", { className: "why-text" }, "🔍 ", React.createElement("strong", null, "Trade-off: "), opt.tradeoff)
+            ) : null
+          );
+        })
+      ),
+      selectedOpt ? React.createElement("div", { className: "card", style: { marginTop: "24px" } },
+        React.createElement("div", { className: "stat-label" }, "Your Chain So Far"),
+        React.createElement("div", { style: { marginTop: "14px" } },
+          BUILDER_METRIC_KEYS.map(function(k){ return React.createElement(MetricBar, { key: k, metricKey: k, value: metrics[k] }); })
+        )
+      ) : null,
+      selectedOpt ? React.createElement("div", { className: "btn-row" },
+        React.createElement("button", { className: "btn btn-primary", onClick: next },
+          stepIdx < BUILDER_DECISIONS.length - 1 ? "Next Decision →" : "See My Foundation Score →")
+      ) : null
+    )
+  );
+}
+
+/* ============================== BUILDER: DASHBOARD ============================== */
+function BuilderDashboardScreen(props){
+  const company = props.company;
+  const metrics = props.metrics;
+  const choiceIds = props.choiceIds;
+  const [showConfetti, setShowConfetti] = useState(false);
+
+  const score = computeBuilderScore(metrics);
+  const feedback = generateBuilderFeedback(metrics, choiceIds, company);
+  const tier = score >= 80 ? { label: "Resilient By Design", tone: "This is the kind of foundation that shrugs off most disruptions instead of being flattened by them." }
+    : score >= 60 ? { label: "Workable Foundation", tone: "A reasonably solid setup with a few soft spots worth addressing before demand or disruption tests them." }
+    : { label: "Fragile Foundation", tone: "This chain has real exposure. It'll work fine until the day something goes wrong, and then it'll go wrong fast." };
+
+  useEffect(function(){
+    const t = setTimeout(function(){ setShowConfetti(true); if(score >= 70) playGreat(); else playSuccess(); }, 300);
+    return function(){ clearTimeout(t); };
+  }, []);
+
+  return React.createElement("div", { className: "app-shell screen" },
+    showConfetti ? React.createElement(Confetti, { big: score >= 80 }) : null,
+    React.createElement("div", { className: "score-hero" },
+      React.createElement("span", { className: "eyebrow" }, "🧩 Foundation Score"),
+      React.createElement("div", { className: "score-big" }, score),
+      React.createElement("div", { className: "score-tier" }, tier.label),
+      React.createElement("p", { className: "score-tone" }, tier.tone)
+    ),
+    React.createElement("div", { className: "category-grid" },
+      BUILDER_METRIC_KEYS.map(function(k){
+        return React.createElement("div", { className: "card", key: k },
+          React.createElement(LabeledBar, { label: metricIcon(k) + " " + metricLabel(k), value: metrics[k], display: Math.round(metrics[k]) })
+        );
+      })
+    ),
+    React.createElement("div", { className: "feedback-grid" },
+      React.createElement("div", { className: "feedback-card best-card" },
+        React.createElement("h4", null, "💪 Strengths"),
+        feedback.strengths.length ? React.createElement("ul", null, feedback.strengths.map(function(k){ return React.createElement("li", { key: k }, metricLabel(k) + " is a real asset here."); }))
+          : React.createElement("p", null, "Nothing stands out as a clear strength yet, everything sits in the middle of the pack.")
+      ),
+      React.createElement("div", { className: "feedback-card mistake-card" },
+        React.createElement("h4", null, "⚠️ Biggest Risk"),
+        React.createElement("p", null, feedback.biggestRisk)
+      ),
+      React.createElement("div", { className: "feedback-card" },
+        React.createElement("h4", null, "🧭 Three Practical Improvements"),
+        React.createElement("ul", null, feedback.improvements.map(function(tip, i){ return React.createElement("li", { key: i }, tip); }))
+      ),
+      React.createElement("div", { className: "feedback-card" },
+        React.createElement("h4", null, "📋 Your Choices"),
+        React.createElement("p", null,
+          BUILDER_DECISIONS.map(function(d){
+            const chosen = d.options.filter(function(o){ return o.id === choiceIds[d.id]; })[0];
+            return chosen ? (chosen.icon + " " + chosen.label) : "";
+          }).join("  ·  ")
+        )
+      )
+    ),
+    React.createElement("div", { className: "btn-row", style: { justifyContent: "center" } },
+      React.createElement("button", { className: "btn btn-ghost", onClick: function(){ playClick(); props.onReplay(); } }, "↻ Build Another Chain"),
+      React.createElement("button", { className: "btn btn-primary", onClick: function(){ playWhoosh(); props.onStressTest(); } }, "🚨 Stress-Test This Chain →")
+    )
+  );
+}
+
+/* ============================== BRIDGE: INDEPENDENT VS DEPENDENT ============================== */
+function BridgeScreen(props){
+  const foundationScore = props.foundationScore;
+  const [choice, setChoice] = useState(null);
+  return React.createElement("div", { className: "app-shell screen" },
+    React.createElement("div", { style: { paddingTop: "30px" } },
+      React.createElement("span", { className: "eyebrow" }, "🔗 Before The Crisis Hits"),
+      React.createElement("h2", { className: "section-title" }, "Should Your Build And Your Crisis Response Be Linked?"),
+      React.createElement("p", { className: "section-sub" }, "You finished building with a Foundation Score of " + foundationScore + ". Now decide how that score should relate to what happens next, this mirrors a real choice businesses face: does the quality of your original setup actually matter once a crisis hits, or does crisis response stand on its own?"),
+      React.createElement("div", { className: "card-grid" },
+        React.createElement("div", {
+          className: "mode-card" + (choice === "independent" ? " selected path-build" : ""),
+          onClick: function(){ setChoice("independent"); playSelect(); }
+        },
+          React.createElement("h3", null, "🧭 Independent"),
+          React.createElement("p", null, "Your crisis run starts from the company you just built, but it's scored purely on how you handle the crisis itself. Your Foundation Score stays separate, a clean read on your crisis-response skills alone.")
+        ),
+        React.createElement("div", {
+          className: "mode-card" + (choice === "dependent" ? " selected path-journey" : ""),
+          onClick: function(){ setChoice("dependent"); playSelect(); }
+        },
+          React.createElement("h3", null, "⚡ Dependent"),
+          React.createElement("p", null, "Your Foundation Score becomes part of the story. A strong build genuinely softens the crisis and gives you an edge, a weak one makes it hit harder, just like real business. You'll get one blended Supply Chain Command Score at the end.")
+        )
+      ),
+      React.createElement(WhyItMatters, { mode: props.mode,
+        text: "In the real world, the quality of a company's original supply chain design absolutely affects how badly a crisis hurts them. A business with diversified suppliers and healthy inventory buffers doesn't just 'perform better' during a disruption, it often faces a genuinely smaller disruption because it had already reduced its own exposure. Independent mode isolates your crisis-response skill for practice; Dependent mode shows you the fuller, messier picture.",
+        short: "Real businesses carry their foundation's strengths and weaknesses into every crisis. Dependent mode models that; Independent isolates crisis skill alone." }),
+      React.createElement("div", { className: "btn-row" },
+        React.createElement("button", {
+          className: "btn btn-primary",
+          disabled: !choice,
+          onClick: function(){ playWhoosh(); props.onChoose(choice); }
+        }, choice ? "Enter The Crisis →" : "Pick One Above First")
+      )
+    )
+  );
+}
+
+/* ============================== WAR ROOM ============================== */
+function WarRoomScreen(props){
+  const crisis = props.crisis;
+  const mode = props.mode;
+  const metrics = props.metrics;
+  const setMetrics = props.setMetrics;
+  const addDecision = props.addDecision;
+
+  const [selected, setSelected] = useState([]);
+  const [confirmed, setConfirmed] = useState(false);
+  const [confirmedActions, setConfirmedActions] = useState([]);
+  const [appliedCount, setAppliedCount] = useState(0);
+  const [animating, setAnimating] = useState(false);
+  const [log, setLog] = useState([]);
+  const [toasts, pushToast] = useToasts();
+  const [burst, setBurst] = useState(0);
+
+  useEffect(function(){
+    if(!animating) return;
+    if(appliedCount >= confirmedActions.length){
+      setAnimating(false);
+      return;
+    }
+    const timer = setTimeout(function(){
+      const actionId = confirmedActions[appliedCount];
+      const action = WAR_ROOM_ACTIONS.filter(function(a){ return a.id === actionId; })[0];
+      const result = getActionEffect(action, crisis, mode);
+      setMetrics(function(prev){
+        const next = Object.assign({}, prev);
+        Object.keys(result.deltas).forEach(function(k){
+          next[k] = clamp(prev[k] + result.deltas[k]);
+        });
+        return next;
+      });
+      addDecision({
+        phase: "War Room",
+        label: action.name,
+        quality: result.quality,
+        note: result.isSynergy ? "Strong fit for this crisis." : "A reasonable response, though not the strongest fit here."
+      });
+      setLog(function(prev){ return prev.concat([{ action: action, deltas: result.deltas, isSynergy: result.isSynergy }]); });
+      setAppliedCount(function(c){ return c + 1; });
+      if(result.isSynergy){ playGreat(); pushToast(action.name + " — excellent fit!", "great", "🎯"); setBurst(function(b){ return b + 1; }); }
+      else if(result.quality >= 2){ playSuccess(); pushToast(action.name + " deployed", "good", "✅"); }
+      else { playMeh(); pushToast(action.name + " had limited effect here", "meh", "⚠️"); }
+    }, 1100);
+    return function(){ clearTimeout(timer); };
+  }, [animating, appliedCount]);
+
+  function toggle(id){
+    if(confirmed) return;
+    playClick();
+    setSelected(function(prev){
+      if(prev.indexOf(id) !== -1) return prev.filter(function(x){ return x !== id; });
+      if(prev.length >= 3) return prev;
+      return prev.concat([id]);
+    });
+  }
+
+  function deploy(){
+    playWhoosh();
+    setConfirmedActions(selected);
+    setConfirmed(true);
+    setAnimating(true);
+  }
+
+  const done = confirmed && appliedCount >= confirmedActions.length;
+
+  return React.createElement("div", { className: "app-shell screen" },
+    React.createElement(ToastStack, { toasts: toasts }),
+    burst > 0 ? React.createElement(Confetti, { key: burst }) : null,
+    React.createElement("div", { style: { paddingTop: "30px" } },
+      React.createElement("span", { className: "eyebrow" }, props.stepLabel || "Step 3"),
+      React.createElement("h2", { className: "section-title" }, "🎛️ War Room: Choose Three Responses"),
+      React.createElement("p", { className: "section-sub" }, "Six possible responses are on the table. Pick exactly three, in any order. Every action helps some metrics and costs you on others, none of them are free wins, so think about what this specific crisis needs most."),
+      React.createElement("div", { className: "card-grid" },
+        WAR_ROOM_ACTIONS.map(function(action){
+          const isSel = selected.indexOf(action.id) !== -1;
+          const locked = confirmed && !isSel;
+          const isSynergy = action.synergyCrises.indexOf(crisis.id) !== -1;
+          return React.createElement("div", {
+            key: action.id,
+            className: "action-card" + (isSel ? " selected" : "") + (locked || (confirmed) ? " locked" : ""),
+            onClick: function(){ if(!confirmed) toggle(action.id); }
+          },
+            isSel ? React.createElement("div", { className: "check-badge" }, "✓") : null,
+            React.createElement("span", { className: "action-icon" }, action.icon),
+            React.createElement("div", { className: "action-title" }, action.name),
+            React.createElement(WhyItMatters, { mode: mode, text: action.why, short: action.why }),
+            React.createElement("div", { className: "target-tags" }, "Helps: " + action.targetMetrics.map(metricLabel).join(", ")),
+            (mode === "beginner" && isSynergy) ? React.createElement("div", { className: "synergy-hint" }, "✓ Especially effective for this kind of crisis") : null
+          );
+        })
+      ),
+      !confirmed ? React.createElement("div", { className: "selection-counter" }, selected.length + " of 3 actions selected") : null,
+      !confirmed ? React.createElement("div", { className: "btn-row" },
+        React.createElement("button", { className: "btn btn-primary", disabled: selected.length !== 3, onClick: deploy }, "🚨 Deploy Response (3 Actions)")
+      ) : null,
+      confirmed ? React.createElement("div", { className: "card", style: { marginTop: "24px" } },
+        React.createElement("div", { className: "stat-label" }, animating ? "Consequences unfolding…" : "Outcome"),
+        React.createElement("div", { style: { marginTop: "14px" } },
+          Object.keys(metrics).map(function(k){ return React.createElement(MetricBar, { key: k, metricKey: k, value: metrics[k] }); })
+        ),
+        React.createElement("div", { className: "log-feed" },
+          log.map(function(item, i){
+            return React.createElement("div", { className: "log-item" + (item.isSynergy ? " synergy" : ""), key: i },
+              React.createElement("div", null, item.action.icon + " " + item.action.name + (item.isSynergy ? " — 🌟 strong fit" : "")),
+              React.createElement("div", { className: "deltas" },
+                Object.keys(item.deltas).map(function(k){
+                  const d = item.deltas[k];
+                  if(d === 0) return null;
+                  return React.createElement("span", { key: k, style: { marginRight: "10px" } },
+                    metricLabel(k) + " ",
+                    React.createElement("span", { className: d > 0 ? "delta-pos" : "delta-neg" }, fmtSigned(d))
+                  );
+                })
+              )
+            );
+          })
+        )
+      ) : null,
+      done ? React.createElement("div", { className: "btn-row" },
+        React.createElement("button", { className: "btn btn-primary", onClick: function(){ playWhoosh(); props.onNext(); } }, "Continue To Negotiation →")
+      ) : null
+    )
+  );
+}
+
+/* ============================== NEGOTIATION ============================== */
+function priceScoreOf(price){ return clamp(50 - price * 1.3); }
+function leadTimeScoreOf(lt){ return clamp(50 - lt * 1.1); }
+function negotiationScoreOf(trust, price, lt){
+  return clamp(trust * 0.4 + priceScoreOf(price) * 0.35 + leadTimeScoreOf(lt) * 0.25);
+}
+
+function NegotiationScreen(props){
+  const company = props.company;
+  const crisis = props.crisis;
+  const mode = props.mode;
+  const addDecision = props.addDecision;
+
+  const [roundIdx, setRoundIdx] = useState(0);
+  const [trust, setTrust] = useState(50);
+  const [price, setPrice] = useState(0);
+  const [leadTime, setLeadTime] = useState(0);
+  const [chosenOption, setChosenOption] = useState(null);
+  const [toasts, pushToast] = useToasts();
+
+  const round = NEGOTIATION_ROUNDS[roundIdx];
+  const situationText = round.situation(company, crisis, trust);
+
+  function choose(opt){
+    if(chosenOption) return;
+    const newTrust = clamp(trust + opt.trust, 0, 100);
+    const newPrice = clamp(price + opt.price, -45, 45);
+    const newLeadTime = clamp(leadTime + opt.leadTime, -30, 30);
+    setTrust(newTrust);
+    setPrice(newPrice);
+    setLeadTime(newLeadTime);
+    setChosenOption(opt);
+    addDecision({ phase: "Negotiation · " + round.title, label: opt.label, quality: opt.quality, note: opt.rationale });
+    if(opt.quality >= 3){ playGreat(); pushToast("Strong move — trust is building", "great", "🤝"); }
+    else if(opt.quality === 2){ playSuccess(); pushToast("Reasonable call", "good", "👍"); }
+    else { playMeh(); pushToast("That one stung a little", "meh", "😬"); }
+  }
+
+  function continueRound(){
+    playClick();
+    if(roundIdx < NEGOTIATION_ROUNDS.length - 1){
+      setRoundIdx(roundIdx + 1);
+      setChosenOption(null);
+    } else {
+      const score = negotiationScoreOf(trust, price, leadTime);
+      playWhoosh();
+      props.onComplete({ trust: trust, price: price, leadTime: leadTime, score: score });
+    }
+  }
+
+  return React.createElement("div", { className: "app-shell screen" },
+    React.createElement(ToastStack, { toasts: toasts }),
+    React.createElement("div", { style: { paddingTop: "30px" } },
+      React.createElement("span", { className: "eyebrow" }, (props.stepLabel || "Step 4") + " · Round " + (roundIdx + 1) + " of " + NEGOTIATION_ROUNDS.length),
+      React.createElement("h2", { className: "section-title" }, "🤝 " + round.title),
+      React.createElement("p", { className: "section-sub" }, "Four rounds, one supplier relationship. How you open and close each round carries into the next, the supplier reacts to your tone, not just your terms."),
+      React.createElement("div", { className: "meter-row" },
+        React.createElement(LabeledBar, { label: "🤝 Trust", value: trust }),
+        React.createElement(LabeledBar, { label: "💵 Price vs Original", value: priceScoreOf(price), display: fmtSigned(price) + "%" }),
+        React.createElement(LabeledBar, { label: "⏱ Lead Time Change", value: leadTimeScoreOf(leadTime), display: fmtSigned(leadTime) + "d" })
+      ),
+      React.createElement(WhyItMatters, { mode: mode,
+        text: "Trust, price, and lead time pull against each other. Pushing hard on price often costs trust or speed. Building trust often costs you a little on price. There's rarely a move that wins on all three at once.",
+        short: "Trust, price, and lead time trade off against each other, rarely a free win." }),
+      React.createElement("div", { className: "situation-box" }, situationText),
+      React.createElement("div", { className: "option-list" },
+        round.options.map(function(opt, i){
+          const isChosen = chosenOption === opt;
+          const disabled = !!chosenOption;
+          return React.createElement("div", {
+            key: i,
+            className: "option-row tag-" + opt.tag.toLowerCase() + (isChosen ? " chosen" : "") + (disabled ? " disabled" : ""),
+            onClick: function(){ if(!disabled) choose(opt); }
+          },
+            React.createElement("div", { className: "option-tag" }, opt.tag),
+            React.createElement("div", { className: "option-label" }, opt.label)
+          );
+        })
+      ),
+      chosenOption ? React.createElement("div", { className: "rationale-box" },
+        React.createElement("strong", { style: { color: "var(--text)" } }, "What happened: "),
+        chosenOption.rationale,
+        React.createElement("div", { style: { marginTop: "8px", fontFamily: "var(--mono)", fontSize: "12px" } },
+          "Trust ", React.createElement("span", { className: chosenOption.trust >= 0 ? "delta-pos" : "delta-neg" }, fmtSigned(chosenOption.trust)),
+          "   Price ", React.createElement("span", { className: chosenOption.price <= 0 ? "delta-pos" : "delta-neg" }, fmtSigned(chosenOption.price) + "%"),
+          "   Lead Time ", React.createElement("span", { className: chosenOption.leadTime <= 0 ? "delta-pos" : "delta-neg" }, fmtSigned(chosenOption.leadTime) + "d")
+        )
+      ) : null,
+      chosenOption ? React.createElement("div", { className: "btn-row" },
+        React.createElement("button", { className: "btn btn-primary", onClick: continueRound },
+          roundIdx < NEGOTIATION_ROUNDS.length - 1 ? "Continue To Round " + (roundIdx + 2) + " →" : "Finalize The Deal →")
+      ) : null
+    )
+  );
+}
+
+/* ============================== BOARDROOM ============================== */
+function BoardroomScreen(props){
+  const mode = props.mode;
+  const addDecision = props.addDecision;
+  const [qIdx, setQIdx] = useState(0);
+  const [chosen, setChosen] = useState(null);
+  const [score, setScore] = useState(0);
+  const [toasts, pushToast] = useToasts();
+
+  const q = BOARDROOM_QUESTIONS[qIdx];
+
+  function choose(opt){
+    if(chosen) return;
+    setChosen(opt);
+    setScore(score + opt.quality);
+    addDecision({ phase: "Boardroom", label: q.question, quality: opt.quality, note: opt.explain });
+    if(opt.quality >= 3){ playGreat(); pushToast("Strong leadership call", "great", "🏆"); }
+    else if(opt.quality === 2){ playSuccess(); pushToast("A fair decision", "good", "👍"); }
+    else { playMeh(); pushToast("That's a risky precedent", "meh", "🤔"); }
+  }
+
+  function next(){
+    playClick();
+    if(qIdx < BOARDROOM_QUESTIONS.length - 1){
+      setQIdx(qIdx + 1);
+      setChosen(null);
+    } else {
+      const finalScore = score + (chosen ? 0 : 0);
+      const leadershipScore = clamp((score / (BOARDROOM_QUESTIONS.length * 3)) * 100);
+      playWhoosh();
+      props.onComplete({ rawScore: score, leadershipScore: leadershipScore });
+    }
+  }
+
+  return React.createElement("div", { className: "app-shell screen" },
+    React.createElement(ToastStack, { toasts: toasts }),
+    React.createElement("div", { style: { paddingTop: "30px" } },
+      React.createElement("span", { className: "eyebrow" }, (props.stepLabel || "Step 5") + " · Question " + (qIdx + 1) + " of " + BOARDROOM_QUESTIONS.length),
+      React.createElement("h2", { className: "section-title" }, "🏛️ CEO Boardroom"),
+      React.createElement("p", { className: "section-sub" }, "Five leadership moments. There's no single right personality here, but some answers protect trust and resilience far better than others."),
+      React.createElement("div", { className: "card" },
+        React.createElement("p", { style: { fontSize: "16px", fontWeight: 700, margin: "0 0 16px" } }, q.question),
+        React.createElement("div", { className: "option-list" },
+          q.options.map(function(opt, i){
+            const isChosen = chosen === opt;
+            const disabled = !!chosen;
+            return React.createElement("div", {
+              key: i,
+              className: "option-row" + (isChosen ? " chosen" : "") + (disabled ? " disabled" : ""),
+              onClick: function(){ if(!disabled) choose(opt); }
+            }, React.createElement("div", { className: "option-label" }, opt.label));
+          })
+        ),
+        chosen ? React.createElement("div", { className: "rationale-box" }, chosen.explain) : null
+      ),
+      chosen ? React.createElement("div", { className: "btn-row" },
+        React.createElement("button", { className: "btn btn-primary", onClick: next },
+          qIdx < BOARDROOM_QUESTIONS.length - 1 ? "Next Question →" : "Continue To AI Strategy →")
+      ) : null
+    )
+  );
+}
+
+/* ============================== AI STRATEGY ============================== */
+function AIStrategyScreen(props){
+  const mode = props.mode;
+  const crisis = props.crisis;
+  const addDecision = props.addDecision;
+  const [selected, setSelected] = useState([]);
+  const [toasts, pushToast] = useToasts();
+
+  function toggle(id){
+    playClick();
+    setSelected(function(prev){
+      if(prev.indexOf(id) !== -1) return prev.filter(function(x){ return x !== id; });
+      if(prev.length >= 2) return prev;
+      return prev.concat([id]);
+    });
+  }
+
+  function confirm(){
+    const chosenOptions = AI_OPTIONS.filter(function(o){ return selected.indexOf(o.id) !== -1; });
+    const totals = { resilience: 0, costControl: 0, riskManagement: 0, customerSatisfaction: 0 };
+    let anySynergy = false;
+    chosenOptions.forEach(function(o){
+      const synergy = o.synergyCrises.indexOf(crisis.id) !== -1;
+      if(synergy) anySynergy = true;
+      const mult = synergy ? 1.5 : 1;
+      Object.keys(o.impact).forEach(function(k){
+        totals[k] = (totals[k] || 0) + o.impact[k] * mult;
+      });
+      addDecision({ phase: "AI Strategy", label: o.name, quality: synergy ? 3 : 2, note: synergy ? "Especially valuable for this crisis." : "A solid general investment." });
+    });
+    if(anySynergy){ playGreat(); pushToast("Smart pick for this crisis type!", "great", "🤖"); }
+    else { playSuccess(); pushToast("Investment strategy locked in", "good", "✅"); }
+    setTimeout(function(){ props.onComplete({ chosen: chosenOptions, totals: totals }); }, 550);
+  }
+
+  return React.createElement("div", { className: "app-shell screen" },
+    React.createElement(ToastStack, { toasts: toasts }),
+    React.createElement("div", { style: { paddingTop: "30px" } },
+      React.createElement("span", { className: "eyebrow" }, props.stepLabel || "Step 6"),
+      React.createElement("h2", { className: "section-title" }, "🤖 AI Strategy: Choose Two Investments"),
+      React.createElement("p", { className: "section-sub" }, "Looking past this crisis, which two AI capabilities would do the most to make the next one smaller? Pick exactly two."),
+      React.createElement("div", { className: "card-grid" },
+        AI_OPTIONS.map(function(o){
+          const isSel = selected.indexOf(o.id) !== -1;
+          const locked = selected.length >= 2 && !isSel;
+          return React.createElement("div", {
+            key: o.id,
+            className: "ai-card" + (isSel ? " selected" : "") + (locked ? " locked" : ""),
+            onClick: function(){ if(!locked) toggle(o.id); }
+          },
+            isSel ? React.createElement("div", { className: "check-badge", style: { background: "linear-gradient(120deg, var(--violet), var(--pink))", color: "#1A1330" } }, "✓") : null,
+            React.createElement("span", { className: "action-icon" }, o.icon),
+            React.createElement("div", { className: "action-title" }, o.name),
+            React.createElement(WhyItMatters, { mode: mode, text: o.why, short: o.why }),
+            React.createElement("div", { style: { marginTop: "10px" } },
+              Object.keys(o.impact).map(function(k){
+                return React.createElement("span", { className: "impact-tag", key: k }, CATEGORY_NAMES[k] + " +" + o.impact[k]);
+              })
+            )
+          );
+        })
+      ),
+      React.createElement("div", { className: "selection-counter" }, selected.length + " of 2 investments selected"),
+      React.createElement("div", { className: "btn-row" },
+        React.createElement("button", { className: "btn btn-primary", disabled: selected.length !== 2, onClick: confirm }, "Confirm AI Strategy →")
+      )
+    )
+  );
+}
+
+/* ============================== DASHBOARD ============================== */
+function getTier(score){
+  if(score >= 85) return { label: "Crisis-Ready Operator", tone: "You handled this about as well as a seasoned ops leader could. Your instincts under pressure are genuinely strong." };
+  if(score >= 70) return { label: "Solid Operator", tone: "A genuinely competent response with a few rough edges worth sharpening." };
+  if(score >= 50) return { label: "Reactive Firefighter", tone: "You kept things from collapsing, but you were mostly reacting rather than steering the outcome." };
+  return { label: "Needs A Resilience Overhaul", tone: "This crisis exposed real gaps that would be worth fixing well before the next one hits." };
+}
+
+function computeBadges(categories, overallScore, negotiation, boardroom, synergyCount, decisionLog){
+  const badges = [];
+  if(overallScore >= 85) badges.push({ icon: "🏆", label: "Crisis Master" });
+  if(categories.leadership >= 85) badges.push({ icon: "🏛️", label: "Boardroom Natural" });
+  if(categories.negotiation >= 80) badges.push({ icon: "🤝", label: "Master Negotiator" });
+  if(negotiation.trust >= 80) badges.push({ icon: "💚", label: "Trust Builder" });
+  if(synergyCount >= 2) badges.push({ icon: "🎯", label: "Sharp Responder" });
+  if(categories.riskManagement >= 80) badges.push({ icon: "🛡️", label: "Risk Radar" });
+  if(categories.customerSatisfaction >= 80) badges.push({ icon: "😊", label: "Customer Champion" });
+  const perfectDecisions = decisionLog.filter(function(d){ return d.quality >= 3; }).length;
+  if(perfectDecisions >= 5) badges.push({ icon: "⭐", label: "Five-Star Decision Maker" });
+  if(badges.length === 0) badges.push({ icon: "🧗", label: "First Crisis Survived" });
+  return badges;
+}
+
+function DashboardScreen(props){
+  const company = props.company;
+  const crisis = props.crisis;
+  const mode = props.mode;
+  const metrics = props.metrics;
+  const warRoomLog = props.warRoomLog;
+  const negotiation = props.negotiation;
+  const boardroom = props.boardroom;
+  const aiStrategy = props.aiStrategy;
+  const decisionLog = props.decisionLog;
+  const linkMode = props.linkMode || null;
+  const foundationScore = props.foundationScore;
+  const [showConfetti, setShowConfetti] = useState(false);
+
+  const synergyCount = warRoomLog.filter(function(item){ return item.isSynergy; }).length;
+  const leadershipScore = boardroom.leadershipScore;
+  const negotiationScore = negotiation.score;
+  const priceScoreComp = priceScoreOf(negotiation.price);
+
+  const resilienceScore = clamp(
+    (company.inventoryDays / 55) * 30 +
+    ((120 - company.leadTime) / 120) * 20 +
+    metrics.inventory * 0.3 +
+    (synergyCount / 3) * 20 +
+    (aiStrategy.totals.resilience || 0)
+  );
+
+  const costControlScore = clamp(
+    metrics.cost * 0.55 +
+    priceScoreComp * 0.25 +
+    Math.min(20, (aiStrategy.totals.costControl || 0))
+  );
+
+  const riskManagementScore = clamp(
+    30 +
+    (aiStrategy.totals.riskManagement || 0) * 2.2 +
+    synergyCount * 6
+  );
+
+  const customerSatisfactionScore = clamp(metrics.customerSatisfaction + (aiStrategy.totals.customerSatisfaction || 0) * 0.5);
+
+  const categories = {
+    leadership: leadershipScore,
+    negotiation: negotiationScore,
+    resilience: resilienceScore,
+    costControl: costControlScore,
+    riskManagement: riskManagementScore,
+    customerSatisfaction: customerSatisfactionScore
+  };
+
+  const overallScore = Math.round(
+    leadershipScore * 0.15 +
+    negotiationScore * 0.15 +
+    resilienceScore * 0.20 +
+    costControlScore * 0.15 +
+    riskManagementScore * 0.15 +
+    customerSatisfactionScore * 0.20
+  );
+
+  const combinedScore = (linkMode === "dependent" && typeof foundationScore === "number")
+    ? Math.round(foundationScore * 0.4 + overallScore * 0.6)
+    : null;
+
+  const tier = getTier(linkMode === "dependent" && combinedScore !== null ? combinedScore : overallScore);
+  const badges = computeBadges(categories, overallScore, negotiation, boardroom, synergyCount, decisionLog);
+
+  useEffect(function(){
+    const t = setTimeout(function(){
+      setShowConfetti(true);
+      if(overallScore >= 70){ playGreat(); } else { playSuccess(); }
+    }, 300);
+    return function(){ clearTimeout(t); };
+  }, []);
+
+  let weakestKey = Object.keys(categories)[0];
+  Object.keys(categories).forEach(function(k){
+    if(categories[k] < categories[weakestKey]) weakestKey = k;
+  });
+
+  let bestEntry = decisionLog.length ? decisionLog[0] : null;
+  let worstEntry = decisionLog.length ? decisionLog[0] : null;
+  decisionLog.forEach(function(d){
+    if(d.quality > bestEntry.quality) bestEntry = d;
+    if(d.quality < worstEntry.quality) worstEntry = d;
+  });
+
+  const crisisLessons = CRISIS_LESSONS[crisis.id] || [];
+  const lessons = [crisisLessons[0], crisisLessons[1], CATEGORY_LESSONS[weakestKey]].filter(Boolean);
+
+  return React.createElement("div", { className: "app-shell screen" },
+    showConfetti ? React.createElement(Confetti, { big: true }) : null,
+    React.createElement("div", { className: "score-hero" },
+      React.createElement("span", { className: "eyebrow" }, linkMode ? "🎉 Crisis Response Debrief" : "🎉 Final Debrief"),
+      React.createElement("div", { className: "score-big" }, linkMode === "dependent" && combinedScore !== null ? combinedScore : overallScore),
+      React.createElement("div", { className: "score-tier" }, tier.label),
+      React.createElement("p", { className: "score-tone" }, tier.tone),
+      React.createElement("div", { className: "badge-row" },
+        badges.map(function(b, i){
+          return React.createElement("div", { className: "badge-pill", key: i, style: { animationDelay: (i * 0.08) + "s" } },
+            React.createElement("span", { className: "badge-icon" }, b.icon), b.label
+          );
+        })
+      )
+    ),
+    linkMode === "dependent" && combinedScore !== null ? React.createElement("div", { className: "card", style: { marginBottom: "20px", borderColor: "rgba(79,195,255,0.35)" } },
+      React.createElement("div", { className: "stat-label" }, "🔗 Supply Chain Command Score (Blended)"),
+      React.createElement("p", { style: { fontSize: "14px", color: "var(--text-dim)", lineHeight: "1.6", marginTop: "8px" } },
+        "This blends 40% of your Foundation Score (" + foundationScore + ") with 60% of your Crisis Response Score (" + overallScore + ") into one number: " + combinedScore + ". " +
+        (foundationScore >= 65 ? "Your strong original build genuinely softened this crisis before it even started, that's the payoff of good design work done early." :
+         foundationScore < 45 ? "Your original build had real gaps, and this crisis very likely hit harder than it needed to because of them. That's the real-world cost of an underbuilt foundation." :
+         "Your original build was reasonably balanced, neither a major cushion nor a major liability once the crisis hit.")
+      )
+    ) : null,
+    linkMode === "independent" ? React.createElement("div", { className: "card", style: { marginBottom: "20px" } },
+      React.createElement("div", { className: "stat-label" }, "🧭 Foundation Score (Kept Independent)"),
+      React.createElement("p", { style: { fontSize: "14px", color: "var(--text-dim)", lineHeight: "1.6", marginTop: "8px" } },
+        "Your Chain Builder foundation scored " + foundationScore + ", but by choice, it isn't blended into this Crisis Response Score of " + overallScore + ". This run measures your crisis-handling skill in isolation."
+      )
+    ) : null,
+    React.createElement("div", { className: "category-grid" },
+      Object.keys(categories).map(function(k){
+        return React.createElement("div", { className: "card", key: k },
+          React.createElement(LabeledBar, { label: CATEGORY_NAMES[k], value: categories[k], display: Math.round(categories[k]) })
+        );
+      })
+    ),
+    React.createElement("div", { className: "feedback-grid" },
+      worstEntry ? React.createElement("div", { className: "feedback-card mistake-card" },
+        React.createElement("h4", null, "⚠️ Biggest Mistake"),
+        React.createElement("p", null, React.createElement("strong", { style: { color: "var(--text)" } }, worstEntry.phase + ": "), worstEntry.label),
+        React.createElement("p", null, worstEntry.note)
+      ) : null,
+      bestEntry ? React.createElement("div", { className: "feedback-card best-card" },
+        React.createElement("h4", null, "✅ Best Decision"),
+        React.createElement("p", null, React.createElement("strong", { style: { color: "var(--text)" } }, bestEntry.phase + ": "), bestEntry.label),
+        React.createElement("p", null, bestEntry.note)
+      ) : null,
+      React.createElement("div", { className: "feedback-card" },
+        React.createElement("h4", null, "🧭 Expert Recommendation"),
+        React.createElement("p", null, "Your weakest area was " + CATEGORY_NAMES[weakestKey] + ". " + CATEGORY_LESSONS[weakestKey] + " Given this was a " + crisis.name.toLowerCase() + ", that's the highest-leverage place to focus before the next disruption hits.")
+      ),
+      React.createElement("div", { className: "feedback-card" },
+        React.createElement("h4", null, "📚 Lessons Learned"),
+        React.createElement("ul", null, lessons.map(function(l, i){ return React.createElement("li", { key: i }, l); }))
+      )
+    ),
+    React.createElement("div", { className: "btn-row", style: { justifyContent: "center" } },
+      React.createElement("button", { className: "btn btn-ghost", onClick: function(){ playClick(); props.onReplay(); } }, "↻ Run A New Simulation"),
+      React.createElement("button", { className: "btn btn-primary", onClick: function(){ playWhoosh(); props.onRunTower(); } }, "🗼 Run Your Control Tower →")
+    )
+  );
+}
+
+/* ============================== APP ROOT ============================== */
+/* ============================== CONTROL TOWER: BRIEFING ============================== */
+function TowerBriefingScreen(props){
+  const mode = props.mode;
+  const linkMode = props.linkMode;
+  const foundationScore = props.foundationScore;
+  const linkage = computeTowerLinkage(linkMode, foundationScore);
+  const cfg = TOWER_DIFFICULTY_CONFIG[mode];
+
+  return React.createElement("div", { className: "app-shell screen" },
+    React.createElement("div", { style: { paddingTop: "30px" } },
+      React.createElement("span", { className: "eyebrow" }, props.stepLabel || "Control Tower"),
+      React.createElement("h2", { className: "section-title" }, "🗼 Welcome To The Control Tower"),
+      React.createElement("p", { className: "section-sub" }, "You're now Head of Operations, watching the entire network live. Small problems will appear as quiet signals first. Left alone, they get worse on their own, exactly like real operational issues do. Your job is to catch them while they're still cheap to fix."),
+      React.createElement("div", { className: "card" },
+        React.createElement("div", { className: "stat-label" }, "How This Works"),
+        React.createElement("ul", { style: { fontSize: "14px", color: "var(--text-dim)", lineHeight: "1.8", marginTop: "10px", paddingLeft: "20px" } },
+          React.createElement("li", null, "Alerts appear over time. Each one starts small, a ", React.createElement("strong", { style: { color: "var(--amber)" } }, "Signal"), "."),
+          React.createElement("li", null, "Ignore it too long and it escalates to ", React.createElement("strong", { style: { color: "var(--red)" } }, "Elevated"), ", then ", React.createElement("strong", { style: { color: "var(--red)" } }, "Critical"), ", getting more expensive at every stage."),
+          React.createElement("li", null, "Pick the action that actually matches the problem. The right fix, caught early, barely costs you anything. The right fix, caught late, is just damage control."),
+          React.createElement("li", null, "The wrong fix wastes the move, the alert stays live and keeps ticking."),
+          React.createElement("li", null, "You can also choose to ", React.createElement("strong", null, "Ignore"), " or ", React.createElement("strong", null, "Delay"), " deliberately, sometimes the smartest move is triaging a worse fire first.")
+        )
+      ),
+      linkMode === "dependent" ? React.createElement("div", { className: "why-box", style: { marginTop: "16px" } },
+        React.createElement("p", { className: "why-text" }, "🔗 ", React.createElement("strong", null, "Linked to your build: "), "Your Foundation Score of " + foundationScore + " is already shaping this run. " +
+          (foundationScore >= 65 ? "Your solid build means alerts will come in slower and escalate more slowly, you've earned some breathing room." :
+           foundationScore < 45 ? "Your build had real gaps, so expect alerts more often and escalating faster, this is the cost of that earlier exposure showing up now." :
+           "Your build was middling, so this run starts at a fairly neutral pace."))
+      ) : null,
+      React.createElement(WhyItMatters, { mode: mode,
+        text: "This mirrors a real distinction in supply chain management. A basic control tower just shows you problems as they happen, reactive. A good one shows you problems before they're actually problems, predictive. The skill you're practicing here, noticing a small signal and acting before it snowballs, is exactly what separates operations teams that stay calm from ones that are constantly firefighting.",
+        short: "Reactive tools show you problems as they happen. Predictive skill catches them before they become problems at all." }),
+      React.createElement("div", { className: "btn-row" },
+        React.createElement("button", { className: "btn btn-primary", onClick: function(){ playWhoosh(); props.onStart(linkage); } }, "🚨 Take Command →")
+      )
+    )
+  );
+}
+
+/* ============================== CONTROL TOWER: LIVE GAME ============================== */
+function TowerGameScreen(props){
+  const mode = props.mode;
+  const linkage = props.linkage;
+  const cfg = TOWER_DIFFICULTY_CONFIG[mode];
+
+  const [metrics, setMetrics] = useState({
+    cost: linkage.startingBaseline, inventory: linkage.startingBaseline,
+    deliverySpeed: linkage.startingBaseline, customerSatisfaction: linkage.startingBaseline,
+    efficiency: linkage.startingBaseline
+  });
+  const [alerts, setAlerts] = useState([]);
+  const [score, setScore] = useState(0);
+  const [revenueProtected, setRevenueProtected] = useState(0);
+  const [timeRemainingMs, setTimeRemainingMs] = useState(cfg.gameDurationMs);
+  const [spawnMsRemaining, setSpawnMsRemaining] = useState(cfg.baseSpawnIntervalMs * linkage.spawnIntervalMultiplier);
+  const [log, setLog] = useState([]);
+  const [resolvedCount, setResolvedCount] = useState(0);
+  const [wrongCount, setWrongCount] = useState(0);
+  const [missedCount, setMissedCount] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+  const [inspecting, setInspecting] = useState(null);
+  const [toasts, pushToast] = useToasts();
+
+  const gameOverRef = useRef(false);
+  const stateRef = useRef({ metrics, alerts, score, revenueProtected, timeRemainingMs, spawnMsRemaining, resolvedCount, wrongCount, missedCount });
+  useEffect(function(){
+    stateRef.current = { metrics, alerts, score, revenueProtected, timeRemainingMs, spawnMsRemaining, resolvedCount, wrongCount, missedCount };
+  });
+
+  function addLog(text, tone){
+    setLog(function(prev){ return prev.concat([{ id: prev.length, text: text, tone: tone || "" }]).slice(-40); });
+  }
+
+  useEffect(function(){
+    const effectivelyPaused = paused || (cfg.autoPauseOnInspect && inspecting);
+    if(effectivelyPaused) return;
+    const TICK_MS = 400;
+    const interval = setInterval(function(){
+      const s = stateRef.current;
+      if(gameOverRef.current) return;
+
+      let newTimeRemaining = s.timeRemainingMs - TICK_MS;
+      if(newTimeRemaining <= 0){
+        gameOverRef.current = true;
+        setTimeRemainingMs(0);
+        props.onGameOver({ metrics: s.metrics, resolvedCount: s.resolvedCount, wrongCount: s.wrongCount, missedCount: s.missedCount, score: s.score, revenueProtected: s.revenueProtected });
+        return;
+      }
+      setTimeRemainingMs(newTimeRemaining);
+
+      const timeProgressFactor = clamp(1 - (1 - newTimeRemaining / cfg.gameDurationMs) * 0.5, 0.5, 1);
+
+      const tickResult = tickAlerts(s.alerts, TICK_MS, mode, linkage.escalationMultiplier);
+      let metricsAfterEvents = Object.assign({}, s.metrics);
+      let scoreAfterEvents = s.score;
+      let missedAfterEvents = s.missedCount;
+      tickResult.events.forEach(function(ev){
+        if(ev.type === "escalate"){
+          const pen = escalationPenalty(ev.alert);
+          Object.keys(pen).forEach(function(k){ metricsAfterEvents[k] = clamp(metricsAfterEvents[k] + pen[k]); });
+          addLog(ev.alert.icon + " " + ev.alert.label + " escalated to " + TOWER_STAGE_NAMES[ev.alert.stage] + ".", "meh");
+        } else if(ev.type === "detonate"){
+          const d = detonationPenalty(ev.alert);
+          Object.keys(d.deltas).forEach(function(k){ metricsAfterEvents[k] = clamp(metricsAfterEvents[k] + d.deltas[k]); });
+          scoreAfterEvents += d.scoreDelta;
+          missedAfterEvents += 1;
+          addLog(ev.alert.icon + " " + ev.alert.label + " went unresolved and fully broke down.", "meh");
+          playMeh();
+          pushToast(ev.alert.label + " got away from you", "meh", "💥");
+        }
+      });
+
+      let nextSpawnMs = s.spawnMsRemaining - TICK_MS;
+      let nextAlerts = tickResult.alerts;
+      if(nextSpawnMs <= 0){
+        if(nextAlerts.length < cfg.maxConcurrentAlerts){
+          const newAlert = createAlertInstance(mode, linkage.escalationMultiplier);
+          nextAlerts = nextAlerts.concat([newAlert]);
+          addLog(newAlert.icon + " New signal: " + newAlert.label, "");
+        }
+        nextSpawnMs = cfg.baseSpawnIntervalMs * linkage.spawnIntervalMultiplier * timeProgressFactor;
+      }
+
+      setMetrics(metricsAfterEvents);
+      setScore(scoreAfterEvents);
+      setMissedCount(missedAfterEvents);
+      setAlerts(nextAlerts);
+      setSpawnMsRemaining(nextSpawnMs);
+    }, TICK_MS);
+    return function(){ clearInterval(interval); };
+  }, [paused, inspecting, mode]);
+
+  function handleAction(alert, actionId){
+    const result = resolveAlertAction(alert, actionId, mode);
+    setMetrics(function(prev){
+      const next = Object.assign({}, prev);
+      Object.keys(result.deltas).forEach(function(k){ next[k] = clamp(next[k] + result.deltas[k]); });
+      return next;
+    });
+    setScore(function(s){ return s + result.scoreDelta; });
+    setRevenueProtected(function(r){ return r + result.revenueDelta; });
+
+    if(result.resolved){
+      setAlerts(function(prev){ return prev.filter(function(a){ return a.uid !== alert.uid; }); });
+      setResolvedCount(function(c){ return c + 1; });
+      if(alert.stage === 0){ playGreat(); pushToast(alert.label + " caught early!", "great", "🎯"); }
+      else { playSuccess(); pushToast(alert.label + " resolved", "good", "✅"); }
+      addLog(alert.icon + " " + alert.label + " resolved. " + result.message, "good");
+    } else if(actionId === "delay_decision"){
+      setAlerts(function(prev){ return prev.map(function(a){ return a.uid === alert.uid ? Object.assign({}, a, { stageMsRemaining: a.stageMsRemaining + result.extraTimeMs }) : a; }); });
+      playClick();
+      addLog(alert.icon + " " + alert.label + ": " + result.message, "");
+    } else if(actionId === "ignore"){
+      playClick();
+      addLog(alert.icon + " " + alert.label + ": " + result.message, "");
+    } else {
+      setWrongCount(function(c){ return c + 1; });
+      playMeh();
+      pushToast("Wrong call on " + alert.label, "meh", "⚠️");
+      addLog(alert.icon + " " + alert.label + ": " + result.message, "meh");
+    }
+    setInspecting(null);
+  }
+
+  const timerSeconds = Math.ceil(timeRemainingMs / 1000);
+  const timerLow = timerSeconds <= 20;
+
+  return React.createElement("div", { className: "app-shell screen" },
+    React.createElement(ToastStack, { toasts: toasts }),
+    paused ? React.createElement("div", { className: "pause-overlay" },
+      React.createElement("div", { className: "pause-panel" },
+        React.createElement("div", { style: { fontSize: "40px", marginBottom: "10px" } }, "⏸️"),
+        React.createElement("h3", { style: { margin: "0 0 10px" } }, "Paused"),
+        React.createElement("p", { style: { color: "var(--text-dim)", fontSize: "14px", marginBottom: "20px" } }, "The network keeps running in real life. Take a breath, then get back in."),
+        React.createElement("button", { className: "btn btn-primary", onClick: function(){ playClick(); setPaused(false); } }, "Resume")
+      )
+    ) : null,
+    showHelp ? React.createElement("div", { className: "help-modal-overlay", onClick: function(){ setShowHelp(false); } },
+      React.createElement("div", { className: "help-modal", onClick: function(e){ e.stopPropagation(); } },
+        React.createElement("h3", { style: { marginTop: 0 } }, "🗼 Control Tower Quick Reference"),
+        React.createElement("p", { style: { fontSize: "13.5px", color: "var(--text-dim)", lineHeight: "1.7" } },
+          "Every alert has a best-fit action. Match the tool to the problem: use Backup Supplier or Increase Production for anything upstream or stock-related, Reroute or Air Freight for anything about movement or speed, Transfer Inventory for local stock imbalances, and Expedite for anything already late. Ignore and Delay are legitimate choices when you're juggling something worse."
+        ),
+        React.createElement("div", { className: "btn-row" }, React.createElement("button", { className: "btn btn-primary", onClick: function(){ setShowHelp(false); } }, "Got it"))
+      )
+    ) : null,
+
+    React.createElement("div", { style: { paddingTop: "24px" } },
+      React.createElement("div", { className: "tower-topbar" },
+        React.createElement("div", { className: "tower-counter" },
+          React.createElement("div", { className: "tower-counter-label" }, "⏱ Time Left"),
+          React.createElement("div", { className: "tower-counter-value" + (timerLow ? " timer-low" : "") }, Math.floor(timerSeconds / 60) + ":" + String(timerSeconds % 60).padStart(2, "0"))
+        ),
+        React.createElement("div", { className: "tower-counter" },
+          React.createElement("div", { className: "tower-counter-label" }, "🏆 Score"),
+          React.createElement("div", { className: "tower-counter-value" }, score)
+        ),
+        React.createElement("div", { className: "tower-counter" },
+          React.createElement("div", { className: "tower-counter-label" }, "💵 Revenue Protected"),
+          React.createElement("div", { className: "tower-counter-value", style: { fontSize: "17px" } }, fmtDollarsShort(revenueProtected))
+        ),
+        React.createElement("div", { className: "tower-controls" },
+          React.createElement("button", { className: "tower-icon-btn", title: "Help", onClick: function(){ setShowHelp(true); } }, "❓"),
+          React.createElement("button", { className: "tower-icon-btn", title: "Pause", onClick: function(){ playClick(); setPaused(true); } }, "⏸️"),
+          React.createElement(SoundToggle, null)
+        )
+      ),
+
+      React.createElement("div", { className: "tower-kpi-strip" },
+        ["cost", "inventory", "deliverySpeed", "customerSatisfaction", "efficiency"].map(function(k){
+          return React.createElement("div", { className: "card", key: k, style: { padding: "14px" } },
+            React.createElement(MetricBar, { metricKey: k, value: metrics[k] })
+          );
+        })
+      ),
+
+      React.createElement("div", { className: "eyebrow" }, "Active Signals (" + alerts.length + " / " + cfg.maxConcurrentAlerts + ")"),
+      alerts.length === 0 ? React.createElement("p", { style: { color: "var(--text-faint)", fontSize: "13.5px", margin: "10px 0 20px" } }, "All quiet. Enjoy it while it lasts.") : null,
+      React.createElement("div", { className: "alert-grid" },
+        alerts.map(function(a){
+          const pct = clamp((a.stageMsRemaining / a.stageWindowMs) * 100);
+          const isInspecting = inspecting === a.uid;
+          return React.createElement("div", { className: "alert-card stage-" + a.stage, key: a.uid },
+            React.createElement("div", { className: "alert-card-top" },
+              React.createElement("div", { className: "alert-card-title" }, a.icon + " " + a.label),
+              React.createElement("span", { className: "alert-stage-tag stage-" + a.stage }, TOWER_STAGE_NAMES[a.stage])
+            ),
+            React.createElement("p", { className: "alert-desc" }, a.desc),
+            React.createElement("div", { className: "alert-timer-track" },
+              React.createElement("div", { className: "alert-timer-fill", style: { width: pct + "%", background: TOWER_STAGE_COLORS[a.stage] } })
+            ),
+            (mode !== "expert" && !isInspecting) ? React.createElement("button", {
+              className: "btn-ghost", style: { fontSize: "11.5px", padding: "6px 10px", borderRadius: "8px", marginBottom: "8px", cursor: "pointer" },
+              onClick: function(){ setInspecting(a.uid); }
+            }, "Which action fits? 🔍") : null,
+            (mode !== "expert" && isInspecting) ? React.createElement("div", { className: "why-box", style: { marginBottom: "10px" } },
+              React.createElement("p", { className: "why-text" }, "This affects " + a.hitMetrics.map(metricLabel).join(" and ") + ". Think about whether this is an upstream supply problem, a movement/speed problem, or a local stock imbalance, then pick the closest tool below.")
+            ) : null,
+            React.createElement("div", { className: "alert-action-grid" },
+              TOWER_ACTIONS.map(function(act){
+                return React.createElement("button", {
+                  key: act.id,
+                  className: "alert-action-btn" + (act.id === "ignore" ? " ignore-btn" : ""),
+                  onClick: function(){ handleAction(a, act.id); }
+                }, act.icon + " " + act.label);
+              })
+            )
+          );
+        })
+      ),
+
+      React.createElement("div", { className: "eyebrow" }, "Operations Log"),
+      React.createElement("div", { className: "tower-log-feed" },
+        log.slice().reverse().map(function(item){
+          return React.createElement("div", { className: "log-item" + (item.tone === "good" ? " synergy" : ""), key: item.id, style: { fontSize: "12.5px" } }, item.text);
+        })
+      )
+    )
+  );
+}
+
+/* ============================== CONTROL TOWER: DASHBOARD ============================== */
+function TowerDashboardScreen(props){
+  const result = props.result;
+  const mode = props.mode;
+  const linkMode = props.linkMode;
+  const foundationScore = props.foundationScore;
+  const overallJourneyScore = props.overallJourneyScore;
+  const [showConfetti, setShowConfetti] = useState(false);
+
+  const perf = computeTowerPerformance(result.metrics, result.resolvedCount, result.wrongCount, result.missedCount);
+
+  useEffect(function(){
+    const t = setTimeout(function(){ setShowConfetti(true); if(perf.towerScore >= 70) playGreat(); else playSuccess(); }, 300);
+    return function(){ clearTimeout(t); };
+  }, []);
+
+  const summary = perf.towerScore >= 85
+    ? "You ran a genuinely calm operation. Most signals were caught before they cost you anything real, that's what a mature control tower looks like in practice."
+    : perf.towerScore >= 65
+    ? "A solid, workable run. You caught more than you missed, though a few things escalated further than they needed to."
+    : perf.towerScore >= 45
+    ? "You spent a lot of this run firefighting instead of preventing. That's normal early on, the goal is catching things earlier next time."
+    : "This one got away from you more than it should have. Missed alerts compound fast, worth revisiting which alert types you kept misreading.";
+
+  return React.createElement("div", { className: "app-shell screen" },
+    showConfetti ? React.createElement(Confetti, { big: perf.towerScore >= 80 }) : null,
+    React.createElement("div", { className: "score-hero" },
+      React.createElement("span", { className: "eyebrow" }, "🗼 Control Tower Debrief"),
+      React.createElement("div", { className: "score-big" }, perf.towerScore),
+      React.createElement("div", { className: "score-tier" }, "Grade: " + perf.grade),
+      React.createElement("p", { className: "score-tone" }, summary)
+    ),
+    React.createElement("div", { className: "category-grid" },
+      ["cost", "inventory", "deliverySpeed", "customerSatisfaction", "efficiency"].map(function(k){
+        return React.createElement("div", { className: "card", key: k },
+          React.createElement(LabeledBar, { label: metricIcon(k) + " " + metricLabel(k), value: result.metrics[k], display: Math.round(result.metrics[k]) })
+        );
+      })
+    ),
+    React.createElement("div", { className: "feedback-grid" },
+      React.createElement("div", { className: "feedback-card best-card" },
+        React.createElement("h4", null, "✅ Session Stats"),
+        React.createElement("p", null, "Resolved: " + result.resolvedCount + "  ·  Wrong calls: " + result.wrongCount + "  ·  Missed entirely: " + result.missedCount),
+        React.createElement("p", null, "Final Score: " + result.score + "  ·  Revenue Protected: " + fmtDollarsShort(result.revenueProtected))
+      ),
+      result.missedCount > 0 ? React.createElement("div", { className: "feedback-card mistake-card" },
+        React.createElement("h4", null, "⚠️ What Got Away"),
+        React.createElement("p", null, result.missedCount + " alert" + (result.missedCount > 1 ? "s" : "") + " ran all the way to detonation without ever being addressed. Those are the most expensive outcomes possible, cheaper to catch something wrong once than to let something ride all the way to critical.")
+      ) : React.createElement("div", { className: "feedback-card best-card" },
+        React.createElement("h4", null, "🏆 Clean Run"),
+        React.createElement("p", null, "Nothing detonated on your watch this run. That's the real signature of a well-run control tower.")
+      ),
+      React.createElement("div", { className: "feedback-card" },
+        React.createElement("h4", null, "🧭 What This Teaches"),
+        React.createElement("p", null, CATEGORY_LESSONS.riskManagement + " Everything you just practiced, noticing a small deviation and acting before it compounds, is the exact skill that prevents a Crisis Simulator scenario from happening in the first place.")
+      ),
+      (linkMode === "dependent" && overallJourneyScore !== null) ? React.createElement("div", { className: "feedback-card", style: { borderColor: "rgba(79,195,255,0.35)" } },
+        React.createElement("h4", null, "🔗 Full Journey Score"),
+        React.createElement("p", null, "Blending your Foundation Score (" + foundationScore + "), your Crisis Response, and this Control Tower run together: " + overallJourneyScore + " / 100. This is the complete arc, design, survive, then prevent.")
+      ) : null
+    ),
+    React.createElement("div", { className: "btn-row", style: { justifyContent: "center" } },
+      React.createElement("button", { className: "btn btn-primary", onClick: function(){ playWhoosh(); props.onReplay(); } }, "↻ Run A New Simulation")
+    )
+  );
+}
+
+function App(){
+  const [phase, setPhase] = useState("welcome");
+  const [mode, setMode] = useState(null);
+  const [path, setPath] = useState(null);
+  const [company, setCompany] = useState(null);
+  const [crisis, setCrisis] = useState(null);
+  const [metrics, setMetrics] = useState(null);
+  const [decisionLog, setDecisionLog] = useState([]);
+  const [warRoomLog, setWarRoomLog] = useState([]);
+  const [negotiation, setNegotiation] = useState(null);
+  const [boardroom, setBoardroom] = useState(null);
+  const [aiStrategy, setAiStrategy] = useState(null);
+
+  const [builderCompany, setBuilderCompany] = useState(null);
+  const [builderMetrics, setBuilderMetrics] = useState(null);
+  const [builderChoiceIds, setBuilderChoiceIds] = useState({});
+  const [foundationScore, setFoundationScore] = useState(null);
+  const [linkMode, setLinkMode] = useState(null);
+
+  const [towerEngaged, setTowerEngaged] = useState(false);
+  const [towerLinkage, setTowerLinkage] = useState(null);
+  const [towerResult, setTowerResult] = useState(null);
+  const [crisisOverallScore, setCrisisOverallScore] = useState(null);
+
+  const phaseList = getPhaseList(path, towerEngaged);
+
+  function addDecision(entry){
+    setDecisionLog(function(prev){ return prev.concat([entry]); });
+  }
+
+  function stepLabelFor(phaseName){
+    const idx = phaseList.indexOf(phaseName);
+    const totalNonWelcome = phaseList.length - 1;
+    if(idx <= 0) return "Step 1";
+    return "Step " + idx + " of " + totalNonWelcome;
+  }
+
+  function handleStart(chosenMode, chosenPath){
+    setMode(chosenMode);
+    setPath(chosenPath);
+    setDecisionLog([]);
+    setWarRoomLog([]);
+    setLinkMode(null);
+    setFoundationScore(null);
+    setTowerEngaged(false);
+    setTowerResult(null);
+    setCrisisOverallScore(null);
+
+    if(chosenPath === "crisis"){
+      const c = generateCompany();
+      const cr = generateCrisis(chosenMode);
+      const m = applyCrisisImpact(cr);
+      setCompany(c);
+      setCrisis(cr);
+      setMetrics(m);
+      setPhase("company");
+    } else if(chosenPath === "tower"){
+      setPhase("towerBrief");
+    } else {
+      const bc = generateCompany();
+      setBuilderCompany(bc);
+      setBuilderMetrics({ cost: 50, deliverySpeed: 50, risk: 50, customerSatisfaction: 50, sustainability: 50 });
+      setBuilderChoiceIds({});
+      setPhase("builderCompany");
+    }
+  }
+
+  function beginStressTest(){
+    setPath("journey");
+    setPhase("bridge");
+  }
+
+  function handleBridgeChoice(choice){
+    setLinkMode(choice);
+    const fScore = computeBuilderScore(builderMetrics);
+    setFoundationScore(fScore);
+
+    const refinedCompany = applyBuilderChoicesToCompany(builderCompany, builderChoiceIds);
+    let severityMultiplier = 1;
+    let baseline = 78;
+    if(choice === "dependent"){
+      const resilienceFactor = (fScore - 50) / 100;
+      severityMultiplier = clamp(1 - resilienceFactor * 0.4, 0.7, 1.3);
+      baseline = clamp(50 + fScore * 0.35, 40, 90);
+    }
+    const cr = generateCrisis(mode, severityMultiplier);
+    const m = applyCrisisImpact(cr, baseline);
+    setCompany(refinedCompany);
+    setCrisis(cr);
+    setMetrics(m);
+    setPhase("company");
+  }
+
+  function beginControlTower(overallScoreFromCrisis){
+    setCrisisOverallScore(overallScoreFromCrisis);
+    setTowerEngaged(true);
+    setTowerLinkage(computeTowerLinkage(linkMode, foundationScore));
+    setPhase("towerBrief");
+  }
+
+  function handleTowerGameOver(result){
+    setTowerResult(result);
+    setPhase("towerDashboard");
+  }
+
+  function handleReplay(){
+    setPhase("welcome");
+    setMode(null);
+    setPath(null);
+    setCompany(null);
+    setCrisis(null);
+    setMetrics(null);
+    setDecisionLog([]);
+    setWarRoomLog([]);
+    setNegotiation(null);
+    setBoardroom(null);
+    setAiStrategy(null);
+    setBuilderCompany(null);
+    setBuilderMetrics(null);
+    setBuilderChoiceIds({});
+    setFoundationScore(null);
+    setLinkMode(null);
+    setTowerEngaged(false);
+    setTowerLinkage(null);
+    setTowerResult(null);
+    setCrisisOverallScore(null);
+  }
+
+  let body = null;
+  if(phase === "welcome"){
+    body = React.createElement(WelcomeScreen, { onStart: handleStart });
+  } else if(phase === "builderCompany"){
+    body = React.createElement(BuilderCompanyScreen, {
+      company: builderCompany, mode: mode, stepLabel: stepLabelFor("builderCompany"),
+      onNext: function(){ setPhase("builderDecisions"); }
+    });
+  } else if(phase === "builderDecisions"){
+    body = React.createElement(BuilderDecisionScreen, {
+      mode: mode, metrics: builderMetrics, setMetrics: setBuilderMetrics,
+      choiceIds: builderChoiceIds, setChoiceIds: setBuilderChoiceIds,
+      stepLabel: stepLabelFor("builderDecisions"),
+      onComplete: function(){ setPhase("builderDashboard"); }
+    });
+  } else if(phase === "builderDashboard"){
+    body = React.createElement(BuilderDashboardScreen, {
+      company: builderCompany, metrics: builderMetrics, choiceIds: builderChoiceIds,
+      onReplay: handleReplay,
+      onStressTest: beginStressTest
+    });
+  } else if(phase === "bridge"){
+    body = React.createElement(BridgeScreen, {
+      mode: mode, foundationScore: computeBuilderScore(builderMetrics),
+      onChoose: handleBridgeChoice
+    });
+  } else if(phase === "company"){
+    body = React.createElement(CompanyScreen, { company: company, mode: mode, stepLabel: stepLabelFor("company"), onNext: function(){ setPhase("crisis"); } });
+  } else if(phase === "crisis"){
+    body = React.createElement(CrisisScreen, { company: company, crisis: crisis, mode: mode, metrics: metrics, stepLabel: stepLabelFor("crisis"), onNext: function(){ setPhase("warroom"); } });
+  } else if(phase === "warroom"){
+    body = React.createElement(WarRoomScreen, {
+      crisis: crisis, mode: mode, metrics: metrics, setMetrics: setMetrics, addDecision: addDecision,
+      stepLabel: stepLabelFor("warroom"),
+      onNext: function(){
+        setPhase("negotiation");
+      }
+    });
+  } else if(phase === "negotiation"){
+    body = React.createElement(NegotiationScreen, {
+      company: company, crisis: crisis, mode: mode, addDecision: addDecision,
+      stepLabel: stepLabelFor("negotiation"),
+      onComplete: function(result){ setNegotiation(result); setPhase("boardroom"); }
+    });
+  } else if(phase === "boardroom"){
+    body = React.createElement(BoardroomScreen, {
+      mode: mode, addDecision: addDecision,
+      stepLabel: stepLabelFor("boardroom"),
+      onComplete: function(result){ setBoardroom(result); setPhase("aistrategy"); }
+    });
+  } else if(phase === "aistrategy"){
+    body = React.createElement(AIStrategyScreen, {
+      mode: mode, crisis: crisis, addDecision: addDecision,
+      stepLabel: stepLabelFor("aistrategy"),
+      onComplete: function(result){ setAiStrategy(result); setPhase("dashboard"); }
+    });
+  } else if(phase === "dashboard"){
+    body = React.createElement(DashboardScreen, {
+      company: company, crisis: crisis, mode: mode, metrics: metrics,
+      warRoomLog: decisionLog.filter(function(d){ return d.phase === "War Room"; }).map(function(d){ return { isSynergy: d.note.indexOf("Strong fit") !== -1 }; }),
+      negotiation: negotiation, boardroom: boardroom, aiStrategy: aiStrategy, decisionLog: decisionLog,
+      linkMode: linkMode, foundationScore: foundationScore,
+      onReplay: handleReplay,
+      onRunTower: function(){
+        const overallCrisisScore = decisionLog.length ? Math.round(decisionLog.reduce(function(a, d){ return a + d.quality; }, 0) / decisionLog.length * 33.3) : 60;
+        beginControlTower(overallCrisisScore);
+      }
+    });
+  } else if(phase === "towerBrief"){
+    body = React.createElement(TowerBriefingScreen, {
+      mode: mode, linkMode: (path === "tower" ? null : linkMode), foundationScore: foundationScore,
+      stepLabel: stepLabelFor("towerBrief"),
+      onStart: function(linkage){ setTowerLinkage(linkage); setPhase("tower"); }
+    });
+  } else if(phase === "tower"){
+    body = React.createElement(TowerGameScreen, {
+      mode: mode, linkage: towerLinkage || computeTowerLinkage(null, null),
+      onGameOver: handleTowerGameOver
+    });
+  } else if(phase === "towerDashboard"){
+    const journeyBlend = (linkMode === "dependent" && foundationScore !== null && crisisOverallScore !== null && towerResult)
+      ? Math.round(foundationScore * 0.25 + crisisOverallScore * 0.35 + computeTowerPerformance(towerResult.metrics, towerResult.resolvedCount, towerResult.wrongCount, towerResult.missedCount).towerScore * 0.40)
+      : null;
+    body = React.createElement(TowerDashboardScreen, {
+      result: towerResult, mode: mode, linkMode: linkMode, foundationScore: foundationScore,
+      overallJourneyScore: journeyBlend,
+      onReplay: handleReplay
+    });
+  }
+
+  return React.createElement(React.Fragment, null,
+    React.createElement(ParticleField, null),
+    React.createElement(ConsoleHeader, { phase: phase, mode: mode, phaseList: phaseList, metrics: (phase === "welcome" || phase === "company" || phase === "builderCompany" || phase === "bridge" || phase === "towerBrief") ? null : (phase.indexOf("builder") === 0 ? builderMetrics : metrics) }),
+    body
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
+window.__lifelineMounted = true;
+</script>
+</body>
+</html>
