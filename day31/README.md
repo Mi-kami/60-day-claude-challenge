@@ -3,7 +3,7 @@
 A single-file, browser-based supply chain simulator built entirely with React (via CDN) and vanilla JavaScript. No build tools, no backend, no external assets beyond the CDN scripts that load React and Babel. Open the HTML file in a browser and it runs.
 
 Built as part of the ABTalks 60-Day Claude AI Mastery Challenge.
-
+Live link: https://oplifeline.netlify.app/
 ---
 
 ## What's new in V3
