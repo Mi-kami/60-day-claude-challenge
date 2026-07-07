@@ -2,6 +2,8 @@
 
 A single-file, fully offline media literacy trainer. Built as Day 33 of the #ABTalksOnAI 60-day build challenge, as the companion piece to Day 32's Marketing Strategist simulator.
 
+Live Link: https://menalysis.netlify.app/
+
 ---
 
 ## Why this exists
