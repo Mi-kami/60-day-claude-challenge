@@ -2,6 +2,7 @@
 
 A single-file, offline-capable simulation that teaches marketing strategy by making the user *make the decisions*, instead of reading about them. Built as Day 32 of the #ABTalksOnAI 60-day build challenge.
 
+Live Link: https://tlams.netlify.app/
 ---
 
 ## Why this exists
