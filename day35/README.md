@@ -3,6 +3,7 @@
 A single-file, zero-dependency web app that turns prompt engineering into a game. No signup, no server, no API calls. Open the HTML file and you're playing.
 
 **Part of the ABTalks 60-Day Claude AI Mastery Challenge.**
+Live link: https://prompt-puzzle.netlify.app/
 
 ---
 
