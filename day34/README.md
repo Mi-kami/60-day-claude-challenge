@@ -2,6 +2,8 @@
 
 A single-file, fully offline detective game that teaches marketing diagnosis through casework instead of case studies. Built as Day 34 of the #ABTalksOnAI 60-day build challenge, closing out a three-part arc with Day 32 (Marketing Strategist) and Day 33 (Media Integrity Analyzer).
 
+Live Link: http://detectivemarket.netlify.app/
+
 ---
 
 ## Why this exists
