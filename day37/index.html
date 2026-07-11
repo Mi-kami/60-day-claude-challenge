@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task Compass — Find where your workflow breaks</title>
+<style>
+  :root{
+    --bg: #0a0e1a;
+    --bg2: #131a2c;
+    --bg3: #1a2340;
+    --green: #00f5a8;
+    --amber: #ffb020;
+    --pink: #ff5fa2;
+    --cyan: #4fd8ff;
+    --purple: #a78bfa;
+    --red: #ff6b6b;
+    --text: #f2f5fb;
+    --text-dim: #98a3bd;
+    --border: rgba(255,255,255,0.10);
+    --card: rgba(255,255,255,0.045);
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+    position:relative;
+    overflow-x:hidden;
+  }
+  @media (prefers-reduced-motion: reduce){ *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;} }
+
+  /* ---------- Ambient animated backdrop (the "brightness" fix) ---------- */
+  .blob-field{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;}
+  .blob{position:absolute;border-radius:50%;filter:blur(70px);opacity:0.55;}
+  .blob1{width:520px;height:520px;background:radial-gradient(circle,var(--green),transparent 70%);top:-160px;left:-140px;animation:drift1 22s ease-in-out infinite;}
+  .blob2{width:460px;height:460px;background:radial-gradient(circle,var(--pink),transparent 70%);top:20%;right:-160px;animation:drift2 26s ease-in-out infinite;}
+  .blob3{width:480px;height:480px;background:radial-gradient(circle,var(--cyan),transparent 70%);bottom:-180px;left:10%;animation:drift3 30s ease-in-out infinite;}
+  .blob4{width:380px;height:380px;background:radial-gradient(circle,var(--amber),transparent 70%);bottom:5%;right:5%;animation:drift1 24s ease-in-out infinite reverse;}
+  @keyframes drift1{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(60px,40px) scale(1.15);}}
+  @keyframes drift2{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(-50px,60px) scale(1.1);}}
+  @keyframes drift3{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(40px,-50px) scale(1.2);}}
+
+  .app{max-width:940px;margin:0 auto;padding:28px 20px 80px;position:relative;z-index:1;}
+
+  /* ---------- Header / progress ---------- */
+  .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:34px;flex-wrap:wrap;gap:12px;}
+  .brand{display:flex;align-items:center;gap:13px;}
+  .brand-mark-wrap{width:44px;height:44px;flex-shrink:0;filter:drop-shadow(0 0 14px rgba(0,245,168,0.45));}
+  .brand-mark{width:44px;height:44px;animation:idle-spin 7s linear infinite;}
+  @keyframes idle-spin{0%{transform:rotate(0deg);}45%{transform:rotate(18deg);}55%{transform:rotate(-10deg);}100%{transform:rotate(360deg);}}
+  .brand h1{
+    font-size:22px;margin:0;letter-spacing:-0.01em;font-weight:800;
+    background:linear-gradient(100deg,var(--green),var(--cyan) 60%,var(--purple));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .brand p{margin:0;font-size:12.5px;color:var(--text-dim);letter-spacing:0.02em;}
+  .heading-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:var(--green);margin:0 0 10px;font-weight:700;}
+
+  .bearing-track{display:flex;gap:6px;align-items:center;background:rgba(255,255,255,0.04);padding:8px 12px;border-radius:100px;border:1px solid var(--border);}
+  .bearing-dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:all .35s;}
+  .bearing-dot.done{background:var(--green);box-shadow:0 0 8px var(--green);}
+  .bearing-dot.active{background:var(--amber);width:22px;border-radius:5px;box-shadow:0 0 8px var(--amber);}
+  .bearing-label{font-family:var(--mono);font-size:11px;color:var(--text-dim);margin-left:6px;white-space:nowrap;font-weight:700;}
+
+  /* ---------- Cards / panels ---------- */
+  .panel{
+    background:linear-gradient(165deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+    border:1px solid var(--border);
+    border-radius:22px;
+    padding:32px;
+    backdrop-filter:blur(18px);
+    animation:rise .5s cubic-bezier(.2,.8,.2,1) both;
+    box-shadow:0 20px 60px rgba(0,0,0,0.35);
+  }
+  @keyframes rise{from{opacity:0;transform:translateY(14px) scale(0.99);}to{opacity:1;transform:translateY(0) scale(1);}}
+
+  h2.title{font-size:27px;margin:0 0 8px;letter-spacing:-0.015em;font-weight:800;}
+  p.sub{color:var(--text-dim);font-size:15px;line-height:1.6;margin:0 0 26px;}
+
+  /* ---------- Buttons ---------- */
+  button{font-family:var(--sans);cursor:pointer;}
+  .btn{
+    background:linear-gradient(100deg, var(--green), #00d69b);
+    color:#04160f;
+    border:none;
+    padding:15px 28px;
+    border-radius:14px;
+    font-weight:800;
+    font-size:15px;
+    letter-spacing:0.01em;
+    transition:transform .18s, box-shadow .18s, filter .18s;
+    box-shadow:0 6px 20px rgba(0,245,168,0.28);
+  }
+  .btn:hover:not(:disabled){transform:translateY(-3px) scale(1.02);box-shadow:0 12px 28px rgba(0,245,168,0.4);filter:brightness(1.05);}
+  .btn:active:not(:disabled){transform:translateY(-1px) scale(0.99);}
+  .btn:disabled{background:#2a3548;color:#6b7690;cursor:not-allowed;box-shadow:none;}
+  .btn-ghost{
+    background:rgba(255,255,255,0.04);border:1.5px solid var(--border);color:var(--text);
+    padding:14px 24px;border-radius:14px;font-size:14.5px;font-weight:700;
+    transition:border-color .18s, background .18s, transform .18s;
+  }
+  .btn-ghost:hover{border-color:var(--green);background:rgba(0,245,168,0.08);transform:translateY(-2px);}
+  .btn-row{display:flex;gap:12px;margin-top:28px;flex-wrap:wrap;}
+
+  /* ---------- Form ---------- */
+  label.field-label{display:block;font-size:12.5px;color:var(--text-dim);margin:0 0 7px;font-weight:700;letter-spacing:0.01em;}
+  input[type=text], textarea, select{
+    width:100%;background:rgba(255,255,255,0.04);border:1.5px solid var(--border);color:var(--text);
+    padding:12px 14px;border-radius:12px;font-size:14.5px;font-family:var(--sans);
+    transition:border-color .18s, box-shadow .18s;
+  }
+  input[type=text]:focus, textarea:focus, select:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px rgba(0,245,168,0.15);}
+  textarea{resize:vertical;min-height:64px;line-height:1.5;}
+  .field{margin-bottom:18px;}
+  .field-row{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;margin-bottom:10px;}
+  @media (max-width:560px){.field-row{grid-template-columns:1fr;}}
+  .role-row-remove{background:transparent;border:1.5px solid var(--border);color:var(--text-dim);border-radius:12px;padding:12px 14px;font-size:13px;font-weight:700;}
+  .role-row-remove:hover{border-color:var(--red);color:var(--red);}
+  .add-role-btn{background:rgba(0,245,168,0.06);border:1.5px dashed var(--green);color:var(--green);border-radius:12px;padding:11px 16px;font-size:13.5px;font-weight:700;width:100%;margin-top:4px;}
+  .add-role-btn:hover{background:rgba(0,245,168,0.12);}
+  .section-divider{border:none;border-top:1px solid var(--border);margin:28px 0;}
+  .hint{font-size:12px;color:var(--text-dim);margin-top:-10px;margin-bottom:16px;}
+
+  /* ---------- Ticket / scenario card ---------- */
+  .ticket{
+    background:linear-gradient(155deg, var(--bg3), var(--bg2));
+    border:1px solid var(--border);
+    border-left:5px solid var(--amber);
+    border-radius:16px;
+    padding:24px 26px;
+    margin-bottom:26px;
+    position:relative;
+    box-shadow:0 10px 30px rgba(0,0,0,0.25);
+  }
+  .ticket-id{font-family:var(--mono);font-size:11px;color:var(--amber);letter-spacing:0.1em;font-weight:700;}
+  .ticket-title{font-size:19px;font-weight:800;margin:9px 0 7px;}
+  .ticket-desc{font-size:14.5px;color:#d3dae8;line-height:1.65;}
+
+  /* ---------- Role chips ---------- */
+  .chip-grid{display:flex;flex-wrap:wrap;gap:11px;margin:22px 0;}
+  .chip{
+    border-radius:14px;padding:13px 17px;border:2px solid var(--border);
+    background:rgba(255,255,255,0.03);cursor:pointer;transition:all .2s cubic-bezier(.2,.8,.2,1);
+    font-size:14px;font-weight:700;display:flex;flex-direction:column;gap:3px;min-width:130px;
+    position:relative;
+  }
+  .chip:hover{transform:translateY(-4px) rotate(-0.5deg);border-color:var(--dept-color, var(--green));box-shadow:0 8px 18px rgba(0,0,0,0.25);}
+  .chip .chip-dept{font-size:10.5px;font-weight:800;color:var(--dept-color, var(--text-dim));text-transform:uppercase;letter-spacing:0.06em;display:flex;align-items:center;gap:5px;}
+  .chip .chip-icon{font-size:14px;}
+  .chip.selected{background:rgba(0,245,168,0.15);border-color:var(--green);box-shadow:0 0 0 2px var(--green) inset, 0 8px 20px rgba(0,245,168,0.25);}
+  .chip.order-picked{background:rgba(255,176,32,0.15);border-color:var(--amber);}
+  .chip.reveal-ideal{border-color:var(--green);box-shadow:0 0 22px rgba(0,245,168,0.5);}
+  .chip.reveal-assist{border-color:var(--amber);box-shadow:0 0 14px rgba(255,176,32,0.35);}
+  .chip-order-badge{
+    position:absolute;top:-10px;right:-10px;background:var(--amber);color:#241900;
+    width:24px;height:24px;border-radius:50%;font-size:12.5px;font-weight:900;
+    display:flex;align-items:center;justify-content:center;box-shadow:0 3px 8px rgba(0,0,0,0.3);
+  }
+
+  /* ---------- Reveal box ---------- */
+  .reveal{
+    margin-top:24px;padding:22px;border-radius:16px;
+    background:linear-gradient(140deg, rgba(0,245,168,0.1), rgba(79,216,255,0.05));
+    border:1.5px solid rgba(0,245,168,0.35);
+    animation:rise .45s cubic-bezier(.2,.8,.2,1) both;
+  }
+  .reveal h4{margin:0 0 9px;font-size:14px;color:var(--green);text-transform:uppercase;letter-spacing:0.05em;font-weight:800;}
+  .reveal p{margin:0 0 10px;font-size:14.5px;line-height:1.65;color:#e2e8f3;}
+  .reveal .assist-line{font-size:13px;color:var(--text-dim);}
+
+  .flow-row{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin:16px 0;}
+  .flow-node{background:linear-gradient(140deg,var(--bg3),var(--bg2));border:1.5px solid var(--green);border-radius:10px;padding:9px 14px;font-size:13px;font-weight:700;opacity:0;animation:flowin .45s ease forwards;box-shadow:0 4px 12px rgba(0,245,168,0.15);}
+  @keyframes flowin{from{opacity:0;transform:scale(.7) translateY(6px);}to{opacity:1;transform:scale(1) translateY(0);}}
+  .flow-arrow{color:var(--amber);font-size:18px;font-weight:800;}
+
+  /* ---------- Loading ---------- */
+  .loading-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:64px 20px;text-align:center;}
+  .compass-spin{width:72px;height:72px;margin-bottom:24px;animation:spin 1.8s cubic-bezier(.4,0,.2,1) infinite;filter:drop-shadow(0 0 16px rgba(0,245,168,0.5));}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .loading-msg{font-family:var(--mono);font-size:13.5px;color:var(--text-dim);letter-spacing:0.02em;font-weight:600;}
+
+  /* ---------- Report ---------- */
+  .compass-rose{width:100%;max-width:360px;margin:0 auto;display:block;filter:drop-shadow(0 0 18px rgba(0,245,168,0.25));}
+  .report-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:26px 0;}
+  @media (max-width:640px){.report-grid{grid-template-columns:1fr;}}
+  .report-card{background:linear-gradient(150deg,var(--bg3),var(--bg2));border:1.5px solid var(--border);border-radius:16px;padding:20px 22px;}
+  .report-card h4{margin:0 0 11px;font-size:13px;text-transform:uppercase;letter-spacing:0.05em;color:var(--amber);font-weight:800;}
+  .report-card ul{margin:0;padding-left:18px;}
+  .report-card li{font-size:13.5px;line-height:1.65;color:#d3dae8;margin-bottom:7px;}
+  .insight-banner{
+    background:linear-gradient(120deg, rgba(0,245,168,0.14), rgba(255,95,162,0.1), rgba(255,176,32,0.1));
+    border:1.5px solid rgba(0,245,168,0.35);border-radius:16px;padding:22px 24px;margin:24px 0;
+    font-size:15.5px;line-height:1.65;font-weight:600;
+  }
+  table.raci{width:100%;border-collapse:collapse;margin-top:14px;font-size:13.5px;}
+  table.raci th{text-align:left;font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:0.05em;color:var(--amber);padding:9px 11px;border-bottom:2px solid var(--border);font-weight:800;}
+  table.raci td{padding:11px;border-bottom:1px solid var(--border);vertical-align:top;}
+  table.raci tr:hover td{background:rgba(255,255,255,0.03);}
+
+  .error-box{background:rgba(255,107,107,0.1);border:1.5px solid rgba(255,107,107,0.4);color:#ffb3b3;border-radius:12px;padding:15px 17px;font-size:13.5px;margin:16px 0;line-height:1.55;}
+  .celebrate{position:fixed;inset:0;pointer-events:none;z-index:50;}
+  footer.note{text-align:center;color:var(--text-dim);font-size:11.5px;margin-top:40px;font-family:var(--mono);}
+
+  .stage-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,176,32,0.12);border:1px solid rgba(255,176,32,0.4);color:var(--amber);padding:6px 14px;border-radius:100px;font-size:12px;font-weight:800;letter-spacing:0.03em;margin-bottom:14px;}
+</style>
+</head>
+<body>
+<div class="blob-field"><div class="blob blob1"></div><div class="blob blob2"></div><div class="blob blob3"></div><div class="blob blob4"></div></div>
+<div class="app" id="app"></div>
+
+<script>
+/* ============================================================
+   TASK COMPASS — org-aware workflow diagnostic
+   Frontend calls /api/generate (a Netlify Function) which holds
+   the Gemini key server-side. No end-user API key required.
+   ============================================================ */
+
+const STATE = {
+  screen: 'welcome',
+  model: 'gemini-flash-latest',
+  org: {
+    name: '', industry: 'Tech Company',
+    roles: [ {name:'', dept:''}, {name:'', dept:''}, {name:'', dept:''} ],
+    firstToKnow: '', escalatesTo: '', painPoint: ''
+  },
+  scenarios: null,
+  currentStageIdx: 0,
+  playLog: [],
+  report: null,
+  errorMsg: ''
+};
+
+const DEPT_PALETTE = ['#00f5a8','#ffb020','#4fd8ff','#ff5fa2','#a78bfa','#5fd3d3','#f5a35c','#89e08c'];
+function deptColor(dept){
+  const depts = [...new Set(STATE.org.roles.map(r=>r.dept).filter(Boolean))];
+  const idx = depts.indexOf(dept);
+  return DEPT_PALETTE[idx % DEPT_PALETTE.length] || '#00f5a8';
+}
+const DEPT_ICON_MAP = [
+  [/support|success|care/i,'🎧'], [/eng|dev|backend|frontend|platform|infra/i,'⚙️'],
+  [/design|ux|ui|creative/i,'🎨'], [/sales|business dev|bd/i,'📈'],
+  [/market/i,'📣'], [/product/i,'🧭'], [/finance|account/i,'💰'],
+  [/hr|people|talent/i,'🧑‍🤝‍🧑'], [/ops|operation|logistic/i,'📦'],
+  [/qa|quality|test/i,'🔍'], [/legal|compliance/i,'⚖️'], [/kitchen|chef|food/i,'🍳'],
+  [/nurse|clinical|patient|health/i,'🩺'], [/teacher|faculty|academic/i,'📚'],
+  [/manufactur|factory|production/i,'🏭'], [/media|content|editor/i,'🎬']
+];
+function deptIcon(dept){
+  for(const [re, icon] of DEPT_ICON_MAP){ if(re.test(dept)) return icon; }
+  return '⭐';
+}
+
+function el(html){ const d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstChild; }
+function $(sel, root=document){ return root.querySelector(sel); }
+function $all(sel, root=document){ return [...root.querySelectorAll(sel)]; }
+
+/* ---------------- PERSISTENCE (so an error never wipes what you typed) ---------------- */
+const SAVE_KEY = 'taskCompassState_v1';
+function saveState(){
+  try{
+    // Transient loading screens aren't safe resume points — map them to the nearest stable one.
+    const resumeScreen = (STATE.screen === 'loadingScenarios') ? 'orgform'
+                        : (STATE.screen === 'loadingReport') ? 'play'
+                        : STATE.screen;
+    const snapshot = { ...STATE, screen: resumeScreen };
+    localStorage.setItem(SAVE_KEY, JSON.stringify(snapshot));
+  }catch(e){ /* storage full or unavailable — fail silently, not critical */ }
+}
+function loadState(){
+  try{
+    const raw = localStorage.getItem(SAVE_KEY);
+    if(!raw) return null;
+    return JSON.parse(raw);
+  }catch(e){ return null; }
+}
+function clearState(){
+  try{ localStorage.removeItem(SAVE_KEY); }catch(e){}
+}
+function hasSavedProgress(saved){
+  if(!saved) return false;
+  const hasRoleInfo = (saved.org?.roles||[]).some(r=>r.name?.trim() && r.dept?.trim());
+  return hasRoleInfo || saved.screen !== 'welcome';
+}
+
+/* ---------------- COMPASS SVG ASSETS ---------------- */
+function brandMarkSvg(){
+  return `<div class="brand-mark-wrap"><svg class="brand-mark" viewBox="0 0 40 40" fill="none">
+    <defs><linearGradient id="bm-g" x1="0" y1="0" x2="40" y2="40"><stop offset="0%" stop-color="#00f5a8"/><stop offset="100%" stop-color="#4fd8ff"/></linearGradient></defs>
+    <circle cx="20" cy="20" r="18" stroke="url(#bm-g)" stroke-width="2" opacity="0.7"/>
+    <path d="M20 5 L25 20 L20 35 L15 20 Z" fill="#ffb020" opacity="0.95"/>
+    <path d="M20 5 L25 20 L20 20 Z" fill="#00f5a8"/>
+    <circle cx="20" cy="20" r="2.6" fill="#fff"/>
+  </svg></div>`;
+}
+function compassSpinSvg(){
+  return `<svg class="compass-spin" viewBox="0 0 40 40" fill="none">
+    <defs><linearGradient id="cs-g" x1="0" y1="0" x2="40" y2="40"><stop offset="0%" stop-color="#00f5a8"/><stop offset="100%" stop-color="#ff5fa2"/></linearGradient></defs>
+    <circle cx="20" cy="20" r="17" stroke="var(--border)" stroke-width="2"/>
+    <circle cx="20" cy="20" r="17" stroke="url(#cs-g)" stroke-width="2" stroke-dasharray="34 76" stroke-linecap="round"/>
+    <path d="M20 7 L23.5 20 L20 33 L16.5 20 Z" fill="var(--amber)"/>
+  </svg>`;
+}
+
+/* ============================================================
+   RENDER ROUTER
+   ============================================================ */
+function render(){
+  const app = $('#app');
+  app.innerHTML = '';
+  app.appendChild(topbar());
+  let body;
+  switch(STATE.screen){
+    case 'welcome': body = screenWelcome(); break;
+    case 'orgform': body = screenOrgForm(); break;
+    case 'loadingScenarios': body = screenLoading('Reading your org structure…','Mapping roles to real scenarios…','Calibrating the compass…'); break;
+    case 'play': body = screenPlay(); break;
+    case 'loadingReport': body = screenLoading('Comparing choices to best practice…','Drafting your RACI matrix…','Finding the blind spots…'); break;
+    case 'report': body = screenReport(); break;
+    default: body = screenWelcome();
+  }
+  app.appendChild(body);
+  const foot = el(`<footer class="note">TASK COMPASS · scenarios generated live via Gemini, powered behind the scenes</footer>`);
+  app.appendChild(foot);
+  saveState();
+}
+
+function topbar(){
+  const totalScenarios = 9;
+  const doneCount = STATE.playLog.length;
+  let dots = '';
+  for(let i=0;i<totalScenarios;i++){
+    let cls = 'bearing-dot';
+    if(i < doneCount) cls += ' done';
+    else if(i === doneCount && STATE.screen === 'play') cls += ' active';
+    dots += `<div class="${cls}"></div>`;
+  }
+  const showBearing = STATE.screen === 'play';
+  return el(`<div class="topbar">
+    <div class="brand">${brandMarkSvg()}<div><h1>Task Compass</h1><p>Learn how work flows through real organizations.</p></div></div>
+    ${showBearing ? `<div class="bearing-track">${dots}<span class="bearing-label">${doneCount}/9</span></div>` : ''}
+  </div>`);
+}
+
+/* ============================================================
+   SCREEN: WELCOME  (no API key needed anymore)
+   ============================================================ */
+function screenWelcome(){
+  const saved = PENDING_RESUME;
+  const canResume = hasSavedProgress(saved);
+  const wrap = el(`<div class="panel">
+    <p class="heading-eyebrow">Org Diagnostic · AI-Generated</p>
+    <h2 class="title">Find where your team's workflow actually breaks.</h2>
+    <p class="sub">Tell us who's on your team and how escalation currently works. We'll generate realistic incidents built from your real roles, then compare how your team routes them against standard practice — and hand you a draft RACI matrix you can actually use.</p>
+    ${canResume ? `<div class="reveal" style="margin-bottom:4px;">
+      <h4>👋 Welcome back</h4>
+      <p>We saved your progress${saved.org?.name ? ` for <strong>${escapeHtml(saved.org.name)}</strong>` : ''} — pick up where you left off, or start fresh.</p>
+    </div>` : ''}
+    <div class="btn-row">
+      ${canResume ? `<button class="btn" id="resumeBtn">Resume where I left off →</button>
+      <button class="btn-ghost" id="freshBtn">Start fresh</button>`
+      : `<button class="btn" id="startBtn">Start diagnostic →</button>`}
+    </div>
+  </div>`);
+  if(canResume){
+    $('#resumeBtn', wrap).onclick = () => {
+      Object.assign(STATE, saved);
+      PENDING_RESUME = null;
+      render();
+    };
+    $('#freshBtn', wrap).onclick = () => {
+      clearState();
+      PENDING_RESUME = null;
+      STATE.org = { name:'', industry:'Tech Company', roles:[{name:'',dept:''},{name:'',dept:''},{name:'',dept:''}], firstToKnow:'', escalatesTo:'', painPoint:'' };
+      STATE.scenarios = null; STATE.playLog = []; STATE.currentStageIdx = 0; STATE.report = null;
+      STATE.screen = 'orgform';
+      render();
+    };
+  } else {
+    $('#startBtn', wrap).onclick = () => { STATE.screen = 'orgform'; render(); };
+  }
+  return wrap;
+}
+
+/* ============================================================
+   SCREEN: ORG FORM
+   ============================================================ */
+function screenOrgForm(){
+  const wrap = el(`<div class="panel">
+    <span class="stage-badge">📋 Step 1 of 3</span>
+    <h2 class="title">Tell us about your team</h2>
+    <p class="sub">A few honest sentences here make the difference between a generic quiz and a diagnostic that actually reflects your org.</p>
+
+    <div class="field">
+      <label class="field-label">Team or company name</label>
+      <input type="text" id="orgName" placeholder="e.g. Riverside Logistics" value="${escapeAttr(STATE.org.name)}"/>
+    </div>
+    <div class="field">
+      <label class="field-label">Industry</label>
+      <select id="orgIndustry">
+        ${['Tech Company','Startup','Corporate Office','Café / Restaurant','Retail Business','Hospital / Healthcare','School / University','Manufacturing','Media / Creative Agency','Freelancer / Small Business','Other']
+          .map(i=>`<option value="${i}" ${STATE.org.industry===i?'selected':''}>${i}</option>`).join('')}
+      </select>
+    </div>
+
+    <hr class="section-divider"/>
+    <label class="field-label">Roles on your team (name + department)</label>
+    <p class="hint">Add 4–8 roles. Real names or just titles both work.</p>
+    <div id="rolesList"></div>
+    <button class="add-role-btn" id="addRoleBtn">✦ Add another role</button>
+
+    <hr class="section-divider"/>
+    <div class="field">
+      <label class="field-label">🔎 When something breaks or a customer complains, who usually finds out first?</label>
+      <textarea id="firstToKnow" placeholder="e.g. Customer support usually sees it first, in the shared inbox.">${escapeHtml(STATE.org.firstToKnow)}</textarea>
+    </div>
+    <div class="field">
+      <label class="field-label">🚨 When it's bigger than one person can handle, who do people escalate to?</label>
+      <textarea id="escalatesTo" placeholder="e.g. Support pings the eng lead directly on Slack, no formal process.">${escapeHtml(STATE.org.escalatesTo)}</textarea>
+    </div>
+    <div class="field">
+      <label class="field-label">💭 Optional: a recent situation where it wasn't clear who should own it</label>
+      <textarea id="painPoint" placeholder="e.g. Last month a delayed shipment sat for two days because no one was sure if it was Ops or Sales' problem.">${escapeHtml(STATE.org.painPoint)}</textarea>
+    </div>
+
+    <div class="error-box" id="formError" style="display:none;"></div>
+    <div class="btn-row">
+      <button class="btn-ghost" id="backBtn">← Back</button>
+      <button class="btn" id="generateBtn">Generate my scenarios ✨</button>
+    </div>
+  </div>`);
+
+  function renderRoles(){
+    const list = $('#rolesList', wrap);
+    list.innerHTML = '';
+    STATE.org.roles.forEach((r, idx)=>{
+      const row = el(`<div class="field-row">
+        <div><label class="field-label">Role / name</label><input type="text" class="roleName" data-idx="${idx}" value="${escapeAttr(r.name)}" placeholder="e.g. Amaka"/></div>
+        <div><label class="field-label">Department</label><input type="text" class="roleDept" data-idx="${idx}" value="${escapeAttr(r.dept)}" placeholder="e.g. Customer Support"/></div>
+        <button class="role-row-remove" data-idx="${idx}" ${STATE.org.roles.length<=3?'disabled':''}>✕</button>
+      </div>`);
+      list.appendChild(row);
+    });
+    $all('.roleName', list).forEach(inp => inp.oninput = e => STATE.org.roles[+e.target.dataset.idx].name = e.target.value);
+    $all('.roleDept', list).forEach(inp => inp.oninput = e => STATE.org.roles[+e.target.dataset.idx].dept = e.target.value);
+    $all('.role-row-remove', list).forEach(btn => btn.onclick = e => {
+      if(STATE.org.roles.length<=3) return;
+      STATE.org.roles.splice(+e.target.dataset.idx,1);
+      renderRoles();
+    });
+  }
+  renderRoles();
+
+  $('#addRoleBtn', wrap).onclick = () => {
+    if(STATE.org.roles.length >= 8) return;
+    STATE.org.roles.push({name:'',dept:''});
+    renderRoles();
+  };
+  $('#orgName', wrap).oninput = e => STATE.org.name = e.target.value;
+  $('#orgIndustry', wrap).onchange = e => STATE.org.industry = e.target.value;
+  $('#firstToKnow', wrap).oninput = e => STATE.org.firstToKnow = e.target.value;
+  $('#escalatesTo', wrap).oninput = e => STATE.org.escalatesTo = e.target.value;
+  $('#painPoint', wrap).oninput = e => STATE.org.painPoint = e.target.value;
+  $('#backBtn', wrap).onclick = () => { STATE.screen='welcome'; render(); };
+  $('#generateBtn', wrap).onclick = () => submitOrgForm(wrap);
+
+  return wrap;
+}
+
+function submitOrgForm(wrap){
+  const errBox = $('#formError', wrap);
+  const filledRoles = STATE.org.roles.filter(r=>r.name.trim() && r.dept.trim());
+  if(filledRoles.length < 3){
+    errBox.style.display='block';
+    errBox.textContent = 'Add at least 3 roles with both a name and a department before generating scenarios.';
+    return;
+  }
+  if(!STATE.org.firstToKnow.trim() || !STATE.org.escalatesTo.trim()){
+    errBox.style.display='block';
+    errBox.textContent = 'Fill in both "who finds out first" and "who they escalate to" — these ground every scenario in how your team really works.';
+    return;
+  }
+  errBox.style.display='none';
+  STATE.org.roles = filledRoles;
+  STATE.screen = 'loadingScenarios';
+  render();
+  generateScenarios();
+}
+
+/* ============================================================
+   SCREEN: LOADING
+   ============================================================ */
+function screenLoading(...messages){
+  const wrap = el(`<div class="panel"><div class="loading-wrap">
+    ${compassSpinSvg()}
+    <div class="loading-msg" id="loadingMsg">${messages[0]}</div>
+  </div></div>`);
+  let i = 0;
+  const msgEl = $('#loadingMsg', wrap);
+  const timer = setInterval(()=>{
+    i = (i+1) % messages.length;
+    if(msgEl) msgEl.textContent = messages[i];
+    else clearInterval(timer);
+  }, 1800);
+  return wrap;
+}
+
+/* ============================================================
+   BACKEND CALLS  (hits our own serverless function, not Gemini directly)
+   ============================================================ */
+async function callBackend(systemInstruction, prompt, schema){
+  const res = await fetch('/api/generate', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ systemInstruction, prompt, schema, model: STATE.model })
+  });
+  const data = await res.json().catch(()=>({}));
+  if(!res.ok){
+    throw new Error(data?.error || `Server error (${res.status})`);
+  }
+  try{
+    return JSON.parse(data.result);
+  }catch(e){
+    throw new Error('The AI returned malformed data. Try generating again.');
+  }
+}
+
+function roleNamesCsv(){
+  return STATE.org.roles.map(r=>`${r.name} (${r.dept})`).join(', ');
+}
+
+const STAGE1_SCHEMA = {
+  type:'object',
+  properties:{ scenarios: { type:'array', items:{ type:'object', properties:{
+    id:{type:'string'}, title:{type:'string'}, description:{type:'string'},
+    idealOwner:{type:'string'}, reasoning:{type:'string'},
+    assistingRoles:{type:'array', items:{type:'string'}}
+  }, required:['id','title','description','idealOwner','reasoning','assistingRoles'] } } },
+  required:['scenarios']
+};
+const STAGE2_SCHEMA = {
+  type:'object',
+  properties:{ scenarios: { type:'array', items:{ type:'object', properties:{
+    id:{type:'string'}, title:{type:'string'}, description:{type:'string'},
+    idealOrder:{type:'array', items:{type:'string'}}, reasoning:{type:'string'}
+  }, required:['id','title','description','idealOrder','reasoning'] } } },
+  required:['scenarios']
+};
+const STAGE3_SCHEMA = {
+  type:'object',
+  properties:{ scenarios: { type:'array', items:{ type:'object', properties:{
+    id:{type:'string'}, title:{type:'string'}, description:{type:'string'},
+    idealPrimaryOwner:{type:'string'},
+    idealSupportingRoles:{type:'array', items:{type:'string'}},
+    reasoning:{type:'string'}, communicationFlow:{type:'string'}
+  }, required:['id','title','description','idealPrimaryOwner','idealSupportingRoles','reasoning','communicationFlow'] } } },
+  required:['scenarios']
+};
+
+function orgContextBlock(){
+  return `Company: ${STATE.org.name || 'this team'}
+Industry: ${STATE.org.industry}
+Roles (name — department): ${roleNamesCsv()}
+How things work today — who finds out first when something breaks: ${STATE.org.firstToKnow}
+How things work today — who escalation currently goes to: ${STATE.org.escalatesTo}
+A real recent pain point (may be blank): ${STATE.org.painPoint || 'none provided'}`;
+}
+
+async function generateScenarios(){
+  try{
+    const commonSys = `You are an organizational design expert who writes realistic workplace incident scenarios and determines the best-practice response using RACI-style reasoning (who is Responsible, who is Accountable, who should be Consulted or Informed). You always ground scenarios in the exact role names and departments given to you. You never invent role names that weren't provided. Keep descriptions to 1-3 sentences, concrete and specific to the stated industry.`;
+
+    const stage1Prompt = `${orgContextBlock()}
+
+Generate exactly 3 scenarios for STAGE 1 ("Who Owns This?"), using ONLY the role names provided above. Each is a single, fairly contained task or incident. For each, name the ideal single owner (must be one of the provided roles, exact name match) and which 1-2 other roles might reasonably assist. Vary the situations so they don't repeat each other. Keep every scenario plausible for a ${STATE.org.industry} team of this shape.`;
+
+    const stage2Prompt = `${orgContextBlock()}
+
+Generate exactly 3 scenarios for STAGE 2 ("Task Routing"), using ONLY the role names provided above. Each is a task that needs to move through 3-5 roles in a specific order to get resolved (e.g. first noticed by one role, investigated by another, fixed by another, verified, then closed). idealOrder must be an ordered array of role names (exact match), 3 to 5 entries. Vary the situations so they don't repeat each other. Keep every scenario plausible for a ${STATE.org.industry} team of this shape.`;
+
+    const stage3Prompt = `${orgContextBlock()}
+
+Generate exactly 3 scenarios for STAGE 3 ("Collaboration Challenge"), using ONLY the role names provided above. Each is a bigger, ambiguous situation (a metric shifts suddenly, a wave of complaints, a delay affecting multiple teams) where no single person can resolve it alone. Name one idealPrimaryOwner plus 1-3 idealSupportingRoles (exact name matches), and briefly describe the communication flow between them. Vary the situations so they don't repeat each other. Keep every scenario plausible for a ${STATE.org.industry} team of this shape.`;
+
+    const [s1, s2, s3] = await Promise.all([
+      callBackend(commonSys, stage1Prompt, STAGE1_SCHEMA),
+      callBackend(commonSys, stage2Prompt, STAGE2_SCHEMA),
+      callBackend(commonSys, stage3Prompt, STAGE3_SCHEMA)
+    ]);
+
+    STATE.scenarios = { stage1: s1.scenarios, stage2: s2.scenarios, stage3: s3.scenarios };
+    STATE.currentStageIdx = 0;
+    STATE.playLog = [];
+    STATE.screen = 'play';
+    render();
+  }catch(err){
+    STATE.screen = 'orgform';
+    render();
+    setTimeout(()=>{
+      const errBox = document.getElementById('formError');
+      if(errBox){ errBox.style.display='block'; errBox.textContent = 'Could not generate scenarios: ' + err.message; }
+    }, 50);
+  }
+}
+
+/* ============================================================
+   SCREEN: PLAY (stages 1, 2, 3 — 3 scenarios each, 9 total)
+   ============================================================ */
+function currentScenarioMeta(){
+  const idx = STATE.currentStageIdx;
+  if(idx < 3) return { stageNum:1, stageKey:'stage1', scenario: STATE.scenarios.stage1[idx] };
+  if(idx < 6) return { stageNum:2, stageKey:'stage2', scenario: STATE.scenarios.stage2[idx-3] };
+  return { stageNum:3, stageKey:'stage3', scenario: STATE.scenarios.stage3[idx-6] };
+}
+
+function screenPlay(){
+  if(STATE.currentStageIdx >= 9){
+    STATE.screen = 'loadingReport';
+    setTimeout(()=>{ render(); generateReport(); }, 10);
+    return el(`<div class="panel"><div class="loading-wrap">${compassSpinSvg()}<div class="loading-msg">Wrapping up stage three…</div></div></div>`);
+  }
+  const meta = currentScenarioMeta();
+  const stageEmoji = {1:'🎯',2:'🔀',3:'🤝'};
+  const stageLabels = {1:'Who Owns This?', 2:'Task Routing', 3:'Collaboration Challenge'};
+  const stageSubs = {
+    1:'Drag intuition aside for a second — who is the single best owner of this?',
+    2:'Build the order this should move through your team, step by step.',
+    3:'Bigger problems rarely have one owner. Pick up to four roles.'
+  };
+
+  const wrap = el(`<div class="panel">
+    <span class="stage-badge">${stageEmoji[meta.stageNum]} Stage ${meta.stageNum} · ${stageLabels[meta.stageNum]}</span>
+    <h2 class="title">${stageLabels[meta.stageNum]}</h2>
+    <p class="sub">${stageSubs[meta.stageNum]}</p>
+    <div class="ticket">
+      <div class="ticket-id">🎫 TICKET #${(STATE.currentStageIdx+1).toString().padStart(3,'0')}</div>
+      <div class="ticket-title">${escapeHtml(meta.scenario.title)}</div>
+      <div class="ticket-desc">${escapeHtml(meta.scenario.description)}</div>
+    </div>
+    <div id="interactionZone"></div>
+  </div>`);
+
+  const zone = $('#interactionZone', wrap);
+  if(meta.stageNum === 1) zone.appendChild(stage1Interaction(meta.scenario));
+  else if(meta.stageNum === 2) zone.appendChild(stage2Interaction(meta.scenario));
+  else zone.appendChild(stage3Interaction(meta.scenario));
+
+  return wrap;
+}
+
+function roleChip(role, extraClass=''){
+  const c = deptColor(role.dept);
+  const icon = deptIcon(role.dept);
+  return el(`<div class="chip ${extraClass}" style="--dept-color:${c}" data-name="${escapeAttr(role.name)}">
+    <span class="chip-dept"><span class="chip-icon">${icon}</span>${escapeHtml(role.dept)}</span>
+    <span>${escapeHtml(role.name)}</span>
+  </div>`);
+}
+
+/* ---- Stage 1: pick single owner ---- */
+function stage1Interaction(scenario){
+  const box = el(`<div></div>`);
+  const grid = el(`<div class="chip-grid"></div>`);
+  let selected = null;
+  STATE.org.roles.forEach(r=>{
+    const chip = roleChip(r);
+    chip.onclick = ()=>{
+      if(box.dataset.done) return;
+      selected = r.name;
+      $all('.chip', grid).forEach(c=>c.classList.remove('selected'));
+      chip.classList.add('selected');
+      submitBtn.disabled = false;
+    };
+    grid.appendChild(chip);
+  });
+  box.appendChild(grid);
+  const submitBtn = el(`<button class="btn" disabled>Assign owner</button>`);
+  const btnRow1 = el(`<div class="btn-row"></div>`);
+  btnRow1.appendChild(submitBtn);
+  box.appendChild(btnRow1);
+
+  submitBtn.onclick = ()=>{
+    box.dataset.done = '1';
+    submitBtn.remove();
+    $all('.chip', grid).forEach(c=>{
+      if(c.dataset.name === scenario.idealOwner) c.classList.add('reveal-ideal');
+      else if(scenario.assistingRoles.includes(c.dataset.name)) c.classList.add('reveal-assist');
+    });
+    const reveal = el(`<div class="reveal">
+      <h4>✓ Primary Owner — ${escapeHtml(scenario.idealOwner)}</h4>
+      <p>${escapeHtml(scenario.reasoning)}</p>
+      <p class="assist-line">May assist: ${scenario.assistingRoles.map(escapeHtml).join(', ') || 'no one else needed here'}</p>
+    </div>`);
+    box.appendChild(reveal);
+    box.appendChild(nextButton(scenario, {chosenOwner:selected}, 'stage1'));
+  };
+  return box;
+}
+
+/* ---- Stage 2: build order ---- */
+function stage2Interaction(scenario){
+  const box = el(`<div></div>`);
+  const grid = el(`<div class="chip-grid"></div>`);
+  const picked = [];
+  STATE.org.roles.forEach(r=>{
+    const chip = roleChip(r);
+    chip.onclick = ()=>{
+      if(box.dataset.done) return;
+      const already = picked.indexOf(r.name);
+      if(already>-1){
+        picked.splice(already,1);
+        renumber();
+      } else {
+        picked.push(r.name);
+        const badge = el(`<div class="chip-order-badge">${picked.length}</div>`);
+        chip.appendChild(badge);
+        chip.classList.add('order-picked');
+      }
+      submitBtn.disabled = picked.length < 3;
+    };
+    grid.appendChild(chip);
+  });
+  function renumber(){
+    $all('.chip', grid).forEach(c=>{
+      c.classList.remove('order-picked');
+      const b = c.querySelector('.chip-order-badge'); if(b) b.remove();
+      const idx = picked.indexOf(c.dataset.name);
+      if(idx>-1){ c.classList.add('order-picked'); c.appendChild(el(`<div class="chip-order-badge">${idx+1}</div>`)); }
+    });
+  }
+  box.appendChild(grid);
+  box.appendChild(el(`<p class="hint">Tap roles in the order work should move through them. Tap again to remove.</p>`));
+  const btnRow = el(`<div class="btn-row"></div>`);
+  const submitBtn = el(`<button class="btn" disabled>Lock in routing</button>`);
+  btnRow.appendChild(submitBtn);
+  box.appendChild(btnRow);
+
+  submitBtn.onclick = ()=>{
+    box.dataset.done = '1';
+    submitBtn.disabled = true;
+    const flow = el(`<div class="reveal"><h4>Recommended routing</h4><div class="flow-row" id="flowRow"></div><p></p></div>`);
+    box.appendChild(flow);
+    const flowRow = $('#flowRow', flow);
+    scenario.idealOrder.forEach((name, i)=>{
+      const node = el(`<div class="flow-node" style="animation-delay:${i*0.15}s">${escapeHtml(name)}</div>`);
+      flowRow.appendChild(node);
+      if(i < scenario.idealOrder.length-1){
+        flowRow.appendChild(el(`<span class="flow-arrow" style="animation-delay:${i*0.15}s">→</span>`));
+      }
+    });
+    flow.querySelector('p').textContent = scenario.reasoning;
+    box.appendChild(nextButton(scenario, {chosenOrder:[...picked]}, 'stage2'));
+  };
+  return box;
+}
+
+/* ---- Stage 3: pick up to 4 ---- */
+function stage3Interaction(scenario){
+  const box = el(`<div></div>`);
+  const grid = el(`<div class="chip-grid"></div>`);
+  const picked = [];
+  STATE.org.roles.forEach(r=>{
+    const chip = roleChip(r);
+    chip.onclick = ()=>{
+      if(box.dataset.done) return;
+      const already = picked.indexOf(r.name);
+      if(already>-1){ picked.splice(already,1); chip.classList.remove('selected'); }
+      else{
+        if(picked.length>=4) return;
+        picked.push(r.name); chip.classList.add('selected');
+      }
+      submitBtn.disabled = picked.length < 1;
+    };
+    grid.appendChild(chip);
+  });
+  box.appendChild(grid);
+  box.appendChild(el(`<p class="hint">Select up to 4 roles you'd pull in for this. Think about who owns it versus who supports.</p>`));
+  const btnRow = el(`<div class="btn-row"></div>`);
+  const submitBtn = el(`<button class="btn" disabled>Assemble response</button>`);
+  btnRow.appendChild(submitBtn);
+  box.appendChild(btnRow);
+
+  submitBtn.onclick = ()=>{
+    box.dataset.done = '1';
+    submitBtn.disabled = true;
+    $all('.chip', grid).forEach(c=>{
+      if(c.dataset.name === scenario.idealPrimaryOwner) c.classList.add('reveal-ideal');
+      else if(scenario.idealSupportingRoles.includes(c.dataset.name)) c.classList.add('reveal-assist');
+    });
+    const reveal = el(`<div class="reveal">
+      <h4>Primary Owner — ${escapeHtml(scenario.idealPrimaryOwner)}</h4>
+      <p><strong>Supporting:</strong> ${scenario.idealSupportingRoles.map(escapeHtml).join(', ')}</p>
+      <p>${escapeHtml(scenario.reasoning)}</p>
+      <p class="assist-line">Communication flow: ${escapeHtml(scenario.communicationFlow)}</p>
+    </div>`);
+    box.appendChild(reveal);
+    box.appendChild(nextButton(scenario, {chosenRoles:[...picked]}, 'stage3'));
+  };
+  return box;
+}
+
+function nextButton(scenario, choiceObj, stageKey){
+  const row = el(`<div class="btn-row"></div>`);
+  const isLast = STATE.currentStageIdx === 8;
+  const btn = el(`<button class="btn">${isLast ? 'See my diagnostic 🧭' : 'Next scenario →'}</button>`);
+  btn.onclick = ()=>{
+    STATE.playLog.push({
+      stage: stageKey,
+      scenarioId: scenario.id,
+      title: scenario.title,
+      choice: choiceObj,
+      ideal: stageKey==='stage1' ? {owner:scenario.idealOwner, assisting:scenario.assistingRoles}
+           : stageKey==='stage2' ? {order:scenario.idealOrder}
+           : {primary:scenario.idealPrimaryOwner, supporting:scenario.idealSupportingRoles},
+      reasoning: scenario.reasoning
+    });
+    STATE.currentStageIdx++;
+    render();
+  };
+  row.appendChild(btn);
+  return row;
+}
+
+/* ============================================================
+   REPORT GENERATION
+   ============================================================ */
+const REPORT_REFLECTION_SCHEMA = {
+  type:'object',
+  properties:{
+    understoodWell: { type:'array', items:{type:'string'} },
+    overAssigned: { type:'array', items:{type:'string'} },
+    underestimatedCollaboration: { type:'array', items:{type:'string'} },
+    insight: { type:'string' },
+    dimensions: { type:'object', properties:{
+      ownership:{type:'number'}, delegation:{type:'number'}, collaboration:{type:'number'}, workflowThinking:{type:'number'}
+    }, required:['ownership','delegation','collaboration','workflowThinking'] }
+  },
+  required:['understoodWell','overAssigned','underestimatedCollaboration','insight','dimensions']
+};
+const REPORT_RACI_SCHEMA = {
+  type:'object',
+  properties:{
+    raci: { type:'array', items:{ type:'object', properties:{
+      situation:{type:'string'}, responsible:{type:'string'}, accountable:{type:'string'},
+      consulted:{type:'string'}, informed:{type:'string'}
+    }, required:['situation','responsible','accountable','consulted','informed'] } }
+  },
+  required:['raci']
+};
+
+function buildLogSummary(){
+  return STATE.playLog.map((l,i)=>{
+    let choiceStr = l.stage==='stage1' ? `chose owner: ${l.choice.chosenOwner}`
+      : l.stage==='stage2' ? `chose order: ${l.choice.chosenOrder.join(' -> ')}`
+      : `chose roles: ${l.choice.chosenRoles.join(', ')}`;
+    let idealStr = l.stage==='stage1' ? `ideal owner: ${l.ideal.owner}, assisting: ${l.ideal.assisting.join(', ')}`
+      : l.stage==='stage2' ? `ideal order: ${l.ideal.order.join(' -> ')}`
+      : `ideal primary: ${l.ideal.primary}, supporting: ${l.ideal.supporting.join(', ')}`;
+    return `${i+1}. [${l.stage}] "${l.title}" — player ${choiceStr}. ${idealStr}.`;
+  }).join('\n');
+}
+
+async function generateReport(){
+  try{
+    const sys = `You are an organizational consultant writing a short, honest diagnostic reflection for someone who just role-played 9 workplace scenarios for their own team. Avoid absolute language ("always", "never"). Be specific, reference actual role and department names given. Scores are 0-100 and should genuinely vary based on how closely the player's choices matched the ideal answers — do not default to giving everyone high scores.`;
+    const context = `Company: ${STATE.org.name || 'this team'} (${STATE.org.industry})
+Roles: ${roleNamesCsv()}
+Current escalation habits: ${STATE.org.escalatesTo}
+Known pain point: ${STATE.org.painPoint || 'none provided'}
+
+Here is the full play log comparing the player's choices to the ideal best-practice answer for all 9 scenarios:
+${buildLogSummary()}`;
+
+    const reflectionPrompt = `${context}
+
+Based on this, write:
+- understoodWell: 2-4 short bullet points on where their instincts matched best practice
+- overAssigned: 1-3 bullet points on situations where they gave ownership to one person when it should have been shared, or escalated less clearly than ideal (empty array if none apply)
+- underestimatedCollaboration: 1-3 bullet points on stage 3 situations specifically where they picked fewer supporting roles than recommended, or missed a key collaborator
+- insight: one thoughtful, non-absolute sentence about how organizations like theirs actually get work done
+- dimensions: scores 0-100 for ownership, delegation, collaboration, workflowThinking, genuinely reflecting how closely their 9 choices matched the ideal answers`;
+
+    const raciPrompt = `${context}
+
+Based on this, write a draft RACI matrix ("raci"): one row per DISTINCT situation TYPE you can infer from the scenarios (3-6 rows), using their real role names, marking Responsible/Accountable/Consulted/Informed based on best practice, not necessarily what the player picked.`;
+
+    const [reflection, raciResult] = await Promise.all([
+      callBackend(sys, reflectionPrompt, REPORT_REFLECTION_SCHEMA),
+      callBackend(sys, raciPrompt, REPORT_RACI_SCHEMA)
+    ]);
+
+    STATE.report = { ...reflection, raci: raciResult.raci };
+    STATE.screen = 'report';
+    render();
+    celebrate();
+  }catch(err){
+    STATE.errorMsg = err.message;
+    STATE.screen = 'report';
+    STATE.report = null;
+    render();
+  }
+}
+
+/* ============================================================
+   SCREEN: REPORT
+   ============================================================ */
+function compassRoseSvg(dims){
+  const cx=170, cy=170, maxR=130;
+  const vals = [dims.ownership, dims.delegation, dims.collaboration, dims.workflowThinking].map(v=>Math.max(4,Math.min(100,v)));
+  const angles = [-90, 0, 90, 180].map(d=>d*Math.PI/180);
+  const pts = vals.map((v,i)=>{
+    const r = (v/100)*maxR;
+    return [cx + r*Math.cos(angles[i]), cy + r*Math.sin(angles[i])];
+  });
+  const poly = pts.map(p=>p.join(',')).join(' ');
+  const rings = [0.25,0.5,0.75,1].map(f=>`<circle cx="${cx}" cy="${cy}" r="${maxR*f}" stroke="var(--border)" stroke-width="1" fill="none"/>`).join('');
+  const spokes = angles.map(a=>`<line x1="${cx}" y1="${cy}" x2="${cx+maxR*Math.cos(a)}" y2="${cy+maxR*Math.sin(a)}" stroke="var(--border)" stroke-width="1"/>`).join('');
+  const labels = [
+    {t:'OWNERSHIP', x:cx, y:cy-maxR-14, anchor:'middle'},
+    {t:'DELEGATION', x:cx+maxR+10, y:cy+4, anchor:'start'},
+    {t:'COLLABORATION', x:cx, y:cy+maxR+22, anchor:'middle'},
+    {t:'WORKFLOW', x:cx-maxR-10, y:cy+4, anchor:'end'},
+  ];
+  const labelSvg = labels.map(l=>`<text x="${l.x}" y="${l.y}" text-anchor="${l.anchor}" font-family="var(--mono)" font-size="10" letter-spacing="1" fill="var(--text-dim)" font-weight="700">${l.t}</text>`).join('');
+  return `<svg class="compass-rose" viewBox="0 0 340 350">
+    <defs><linearGradient id="rose-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00f5a8"/><stop offset="100%" stop-color="#4fd8ff"/></linearGradient></defs>
+    ${rings}${spokes}
+    <polygon points="${poly}" fill="rgba(0,245,168,0.22)" stroke="url(#rose-g)" stroke-width="2.5"/>
+    ${pts.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="5" fill="var(--amber)"/>`).join('')}
+    ${labelSvg}
+  </svg>`;
+}
+
+function screenReport(){
+  if(!STATE.report){
+    return el(`<div class="panel">
+      <h2 class="title">Something went wrong generating your report</h2>
+      <div class="error-box">${escapeHtml(STATE.errorMsg || 'Unknown error.')}</div>
+      <div class="btn-row"><button class="btn" id="retryReport">Try again</button></div>
+    </div>`);
+  }
+  const r = STATE.report;
+  const wrap = el(`<div class="panel">
+    <span class="stage-badge">🏁 Diagnostic Complete</span>
+    <h2 class="title">${escapeHtml(STATE.org.name || 'Your team')}'s workflow compass</h2>
+    <p class="sub">Not a score — a reflection of where your instincts are sharp, and where your team's real structure might need a clearer line.</p>
+    ${compassRoseSvg(r.dimensions)}
+    <div class="insight-banner">💡 ${escapeHtml(r.insight)}</div>
+    <div class="report-grid">
+      <div class="report-card"><h4>✅ What you understood well</h4><ul>${r.understoodWell.map(x=>`<li>${escapeHtml(x)}</li>`).join('') || '<li>—</li>'}</ul></div>
+      <div class="report-card"><h4>⚠️ Where ownership got over-assigned</h4><ul>${r.overAssigned.map(x=>`<li>${escapeHtml(x)}</li>`).join('') || '<li>No major over-assignment detected.</li>'}</ul></div>
+      <div class="report-card" style="grid-column:1/-1;"><h4>🤝 Where collaboration was underestimated</h4><ul>${r.underestimatedCollaboration.map(x=>`<li>${escapeHtml(x)}</li>`).join('') || '<li>You consistently pulled in the right amount of support.</li>'}</ul></div>
+    </div>
+    <hr class="section-divider"/>
+    <h2 class="title" style="font-size:20px;">📊 Draft RACI matrix for ${escapeHtml(STATE.org.name || 'your team')}</h2>
+    <p class="sub">A starting point — adjust it against how your team actually wants to work.</p>
+    <table class="raci">
+      <thead><tr><th>Situation</th><th>Responsible</th><th>Accountable</th><th>Consulted</th><th>Informed</th></tr></thead>
+      <tbody>
+        ${r.raci.map(row=>`<tr><td>${escapeHtml(row.situation)}</td><td>${escapeHtml(row.responsible)}</td><td>${escapeHtml(row.accountable)}</td><td>${escapeHtml(row.consulted)}</td><td>${escapeHtml(row.informed)}</td></tr>`).join('')}
+      </tbody>
+    </table>
+    <div class="btn-row">
+      <button class="btn-ghost" id="copyRaci">📋 Copy RACI matrix as text</button>
+      <button class="btn" id="restartBtn">Run another diagnostic</button>
+    </div>
+  </div>`);
+
+  const copyBtn = $('#copyRaci', wrap);
+  if(copyBtn) copyBtn.onclick = ()=>{
+    const text = 'RACI Matrix — ' + (STATE.org.name || 'Team') + '\n' +
+      r.raci.map(row=>`${row.situation}\n  Responsible: ${row.responsible}\n  Accountable: ${row.accountable}\n  Consulted: ${row.consulted}\n  Informed: ${row.informed}`).join('\n\n');
+    navigator.clipboard?.writeText(text).then(()=>{ copyBtn.textContent = '✓ Copied'; setTimeout(()=>copyBtn.textContent='📋 Copy RACI matrix as text',1800); });
+  };
+  const restartBtn = $('#restartBtn', wrap);
+  if(restartBtn) restartBtn.onclick = ()=>{
+    STATE.screen='orgform'; STATE.scenarios=null; STATE.playLog=[]; STATE.currentStageIdx=0; STATE.report=null;
+    render();
+  };
+  const retryBtn = $('#retryReport', wrap);
+  if(retryBtn) retryBtn.onclick = ()=>{ STATE.screen='loadingReport'; render(); generateReport(); };
+
+  return wrap;
+}
+
+function celebrate(){
+  const layer = document.createElement('div');
+  layer.className = 'celebrate';
+  document.body.appendChild(layer);
+  const colors = ['#00f5a8','#ffb020','#4fd8ff','#ff5fa2','#a78bfa'];
+  for(let i=0;i<40;i++){
+    const p = document.createElement('div');
+    const size = 6+Math.random()*8;
+    p.style.cssText = `position:absolute;top:-10px;left:${Math.random()*100}%;width:${size}px;height:${size}px;background:${colors[i%colors.length]};border-radius:${Math.random()>0.5?'50%':'2px'};opacity:0.95;transform:rotate(${Math.random()*360}deg);animation:fallpiece ${2+Math.random()*1.5}s ease-in forwards;animation-delay:${Math.random()*0.4}s;`;
+    layer.appendChild(p);
+  }
+  const styleTag = document.createElement('style');
+  styleTag.textContent = `@keyframes fallpiece{to{top:110%;transform:rotate(${360+Math.random()*360}deg);opacity:0.15;}}`;
+  document.head.appendChild(styleTag);
+  setTimeout(()=>layer.remove(), 4000);
+}
+
+/* ---------------- utils ---------------- */
+function escapeHtml(str){
+  return String(str??'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function escapeAttr(str){ return escapeHtml(str); }
+
+/* ---------------- boot ---------------- */
+let PENDING_RESUME = loadState();
+if(!hasSavedProgress(PENDING_RESUME)) PENDING_RESUME = null;
+render();
+</script>
+</body>
+</html>
