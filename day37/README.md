@@ -4,7 +4,7 @@
 > as part of the #ABTalksOnAI 60-day build challenge. It's provided here
 > so the build is properly documented as a deliverable for the challenge.
 > The live, maintained version of Task Compass lives in its own dedicated
-> repository — [add repo link here] — and that repo, not this folder, is
+> repository — [Task Compass](https://github.com/Mi-kami/task-compass) — and that repo, not this folder, is
 > the source of truth for anyone deploying or contributing to the project
 > going forward.
 
